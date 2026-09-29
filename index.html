@@ -1,110 +1,35 @@
-def game():
-    print("=== DE VERGETEN SLEUTEL ===")
-    print("Je wordt wakker in een verlaten bibliotheek.")
-    print("Voor je zie je:")
-    print("1. Een trap naar boven")
-    print("2. Een donkere gang")
-    print("3. Een houten deur met cijferslot")
+<!doctype html>
+<html dir="ltr" lang="nl" rounded-icons>
+  <head>
+    <meta charset="utf-8">
+    <title>Nieuw tabblad</title>
+    <style>
+      body {
+        background: #FFF8F6;
+        margin: 0;
+      }
 
-    keuze = input("\nKies (1-3): ")
+      #backgroundImage {
+        border: none;
+        height: 100%;
+        pointer-events: none;
+        position: fixed;
+        top: 0;
+        visibility: hidden;
+        width: 100%;
+      }
 
-    if keuze == "1":
-        print("\nJe loopt de trap op.")
-        print("In de kamer zie je:")
-        print("1. Een open boek")
-        print("2. Een kist")
-        print("3. Een tapijt")
-
-        keuze = input("\nKies (1-3): ")
-
-        if keuze == "1":
-            print("\nJe leest een raadsel.")
-            print("Een zwart boek steekt uit de boekenkast.")
-
-            keuze = input(
-                "\n1. Trek het zwarte boek eruit\n"
-                "2. Onderzoek de kist\n"
-                "3. Kijk onder het tapijt\n"
-                "Kies: "
-            )
-
-            if keuze == "1":
-                print("\nEen geheime nis opent!")
-                print("Je vindt:")
-                print("- Een zilveren sleutel")
-                print("- Een kaart")
-                print("- Een briefje met 729")
-
-                keuze = input(
-                    "\n1. Verstop je\n"
-                    "2. Pak alles en ren weg\n"
-                    "3. Blijf staan\n"
-                    "Kies: "
-                )
-
-                if keuze == "2":
-                    print("\nJe rent naar beneden.")
-                    print("Een figuur achtervolgt je.")
-
-                    keuze = input(
-                        "\n1. Probeer code 729\n"
-                        "2. Ren de donkere gang in\n"
-                        "3. Kijk wie je achtervolgt\n"
-                        "4. Onderzoek de sleutel\n"
-                        "Kies: "
-                    )
-
-                    if keuze == "4":
-                        print("\nOp de sleutel staat:")
-                        print("'Niet voor de deur die je ziet.'")
-
-                        keuze = input(
-                            "\n1. Ren de donkere gang in\n"
-                            "2. Probeer toch deur 729\n"
-                            "3. Vraag wie hij is\n"
-                            "4. Gooi de sleutel\n"
-                            "Kies: "
-                        )
-
-                        if keuze == "4":
-                            print("\nDe figuur vangt de sleutel.")
-                            print("Maar een gouden sleutel valt uit zijn mantel!")
-
-                            keuze = input(
-                                "\n1. Pak de gouden sleutel\n"
-                                "2. Vlucht\n"
-                                "3. Vraag wie hij is\n"
-                                "4. Doe alsof je opgeeft\n"
-                                "Kies: "
-                            )
-
-                            if keuze == "3":
-                                print("\nDe figuur blijkt de bibliothecaris.")
-                                print("Hij geeft je de gouden sleutel.")
-
-                                keuze = input(
-                                    "\n1. Voer code 729 in\n"
-                                    "2. Vraag wat erachter zit\n"
-                                    "3. Verlaat de bibliotheek\n"
-                                    "4. Onderzoek de sleutel\n"
-                                    "Kies: "
-                                )
-
-                                if keuze == "1":
-                                    print("\nDe deur gaat open!")
-                                    print("Je vindt het Boek van Mogelijkheden.")
-                                    print("Het boek kan één vraag beantwoorden.")
-                                    vraag = input("\nWelke vraag stel je? ")
-
-                                    print("\nHet boek denkt na...")
-                                    print(f"\nJe vroeg: '{vraag}'")
-                                    print("Het antwoord verschijnt langzaam...")
-                                    print("\n=== EINDE ===")
-                                    return
-
-    print("\nJe avontuur eindigt hier.")
-    print("GAME OVER")
-
-
-if __name__ == "__main__":
-    game()
+      [show-background-image] #backgroundImage {
+        visibility: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe id="backgroundImage" src="chrome-untrusted://new-tab-page/custom_background_image?url=https%3A%2F%2Flh3.googleusercontent.com%2Fproxy%2FaBWuCTABU6vvznZeIZ3LqxuGU5iAZUmCxH1K4NHezIzeSLxOKCWJZhNvdKfv1HePQGwEnK4yXmwLzdEjHicu3rph11H7x6LjOYJhGTHysYw1rNbDYfABcPHKGrXRyL4VaFyspS5FP9HsCqw%3Dw3840-h2160-p-k-no-nd-mv"></iframe>
+    <ntp-app></ntp-app>
+    <script type="module" src="new_tab_page.js"></script>
+    <link rel="stylesheet" href="chrome://resources/css/text_defaults_md.css">
+    <link rel="stylesheet" href="chrome://theme/colors.css?sets=ui,chrome">
+    <link rel="stylesheet" href="shared_vars.css">
+  </body>
+</html>
