@@ -1,35 +1,588 @@
-<!doctype html>
-<html dir="ltr" lang="nl" rounded-icons>
-  <head>
-    <meta charset="utf-8">
-    <title>Nieuw tabblad</title>
-    <style>
-      body {
-        background: #FFF8F6;
-        margin: 0;
-      }
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-      #backgroundImage {
-        border: none;
-        height: 100%;
-        pointer-events: none;
-        position: fixed;
-        top: 0;
-        visibility: hidden;
-        width: 100%;
-      }
+    <title>EchoBound — The Lost Signal</title>
 
-      [show-background-image] #backgroundImage {
-        visibility: visible;
-      }
-    </style>
-  </head>
-  <body>
-    <iframe id="backgroundImage" src="chrome-untrusted://new-tab-page/custom_background_image?url=https%3A%2F%2Flh3.googleusercontent.com%2Fproxy%2FaBWuCTABU6vvznZeIZ3LqxuGU5iAZUmCxH1K4NHezIzeSLxOKCWJZhNvdKfv1HePQGwEnK4yXmwLzdEjHicu3rph11H7x6LjOYJhGTHysYw1rNbDYfABcPHKGrXRyL4VaFyspS5FP9HsCqw%3Dw3840-h2160-p-k-no-nd-mv"></iframe>
-    <ntp-app></ntp-app>
-    <script type="module" src="new_tab_page.js"></script>
-    <link rel="stylesheet" href="chrome://resources/css/text_defaults_md.css">
-    <link rel="stylesheet" href="chrome://theme/colors.css?sets=ui,chrome">
-    <link rel="stylesheet" href="shared_vars.css">
-  </body>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- 3D GAME -->
+    <canvas id="game"></canvas>
+
+
+    <!-- =========================================
+         TOP NAVIGATION
+    ========================================== -->
+
+    <header class="topNav">
+
+        <a href="index.html" class="brand">
+
+            <div class="brandMark">
+                E
+            </div>
+
+            <div class="brandText">
+                <strong>ECHOBOUND</strong>
+                <span>THE LOST SIGNAL</span>
+            </div>
+
+        </a>
+
+
+        <nav class="navigation">
+
+            <a
+                href="index.html"
+                class="navItem active">
+                GAME
+            </a>
+
+            <a
+                href="shop.html"
+                class="navItem">
+                SHOP
+            </a>
+
+            <a
+                href="shop.html#inventory"
+                class="navItem">
+                INVENTORY
+            </a>
+
+            <button
+                id="achievementsButton"
+                class="navItem"
+                type="button">
+                ACHIEVEMENTS
+            </button>
+
+        </nav>
+
+
+        <div class="systemStatus">
+
+            <span></span>
+
+            SYSTEM ONLINE
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         MAIN MENU
+    ========================================== -->
+
+    <div id="menu">
+
+        <main class="homeTerminal">
+
+
+            <!-- LEFT -->
+
+            <section class="homeHero">
+
+                <div class="sectionTop">
+
+                    <span>
+                        ECHOBOUND NETWORK
+                    </span>
+
+                    <span>
+                        SEC-07
+                    </span>
+
+                </div>
+
+
+                <div class="heroMain">
+
+                    <div class="signal">
+
+                        <i></i>
+
+                        SIGNAL DETECTED
+
+                    </div>
+
+
+                    <h1>
+
+                        THE LOST
+
+                        <span>
+                            SIGNAL
+                        </span>
+
+                    </h1>
+
+
+                    <p>
+
+                        Explore the unknown.<br>
+                        Recover the lost signal.<br>
+                        Survive what is waiting beyond.
+
+                    </p>
+
+
+                    <div class="missionGrid">
+
+                        <div>
+
+                            <small>
+                                MISSION
+                            </small>
+
+                            <strong>
+                                LOST SIGNAL
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <small>
+                                SECTOR
+                            </small>
+
+                            <strong>
+                                07-A
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <small>
+                                THREAT
+                            </small>
+
+                            <strong>
+                                UNKNOWN
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="sectionBottom">
+
+                    <span>
+                        LOCAL SAVE SYSTEM
+                    </span>
+
+                    <span>
+                        ECHOBOUND // 3D
+                    </span>
+
+                </div>
+
+            </section>
+
+
+            <!-- RIGHT -->
+
+            <section class="commandPanel">
+
+                <div class="panelTitle">
+
+                    <div>
+
+                        <small>
+                            MISSION CONTROL
+                        </small>
+
+                        <h2>
+                            MAIN MENU
+                        </h2>
+
+                    </div>
+
+                    <b>
+                        EB-07
+                    </b>
+
+                </div>
+
+
+                <div class="menuButtons">
+
+                    <button
+                        id="newGame"
+                        class="menuButton primary"
+                        type="button">
+
+                        <span class="number">
+                            01
+                        </span>
+
+                        <span class="buttonInfo">
+
+                            <strong>
+                                NEW RUN
+                            </strong>
+
+                            <small>
+                                START A NEW EXPEDITION
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            ›
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        id="loadGame"
+                        class="menuButton"
+                        type="button">
+
+                        <span class="number">
+                            02
+                        </span>
+
+                        <span class="buttonInfo">
+
+                            <strong>
+                                CONTINUE
+                            </strong>
+
+                            <small>
+                                RESUME SAVED RUN
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            ›
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        id="achievementsButtonGame"
+                        class="menuButton"
+                        type="button">
+
+                        <span class="number">
+                            03
+                        </span>
+
+                        <span class="buttonInfo">
+
+                            <strong>
+                                ACHIEVEMENTS
+                            </strong>
+
+                            <small>
+                                VIEW YOUR RECORDS
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            ›
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        id="controlsButton"
+                        class="menuButton"
+                        type="button">
+
+                        <span class="number">
+                            04
+                        </span>
+
+                        <span class="buttonInfo">
+
+                            <strong>
+                                CONTROLS
+                            </strong>
+
+                            <small>
+                                VIEW GAME CONTROLS
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            ›
+                        </span>
+
+                    </button>
+
+
+                    <a
+                        href="shop.html"
+                        class="menuButton shopButton">
+
+                        <span class="number">
+                            05
+                        </span>
+
+                        <span class="buttonInfo">
+
+                            <strong>
+                                SUPPLY TERMINAL
+                            </strong>
+
+                            <small>
+                                OPEN THE ECHOBOUND SHOP
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            ›
+                        </span>
+
+                    </a>
+
+                </div>
+
+
+                <div class="panelBottom">
+
+                    <div class="saveStatus">
+
+                        <i></i>
+
+                        SAVE DATA: LOCAL
+
+                    </div>
+
+                    <div>
+                        READY
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================================
+         HUD
+    ========================================== -->
+
+    <div id="hud">
+
+
+        <div class="topLeft">
+
+            <div class="hudTitle">
+                ECHOBOUND
+            </div>
+
+
+            <div class="statLabel">
+                HEALTH
+            </div>
+
+            <div class="bar">
+
+                <div
+                    id="healthBar"
+                    class="healthBar">
+                </div>
+
+            </div>
+
+
+            <div class="statLabel">
+                ENERGY
+            </div>
+
+            <div class="bar">
+
+                <div
+                    id="energyBar"
+                    class="energyBar">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div id="objective">
+            FIND THE SIGNAL
+        </div>
+
+
+        <div class="topRight">
+
+            <div id="zone">
+                UNKNOWN SECTOR
+            </div>
+
+            <div id="kills">
+                KILLS: 0
+            </div>
+
+            <div id="credits">
+                CREDITS: 0
+            </div>
+
+        </div>
+
+
+        <div class="bottomLeft">
+
+            WASD MOVE
+            &nbsp; • &nbsp;
+            MOUSE AIM
+            &nbsp; • &nbsp;
+            CLICK SHOOT
+            &nbsp; • &nbsp;
+            SHIFT SPRINT
+            &nbsp; • &nbsp;
+            SPACE DASH
+            &nbsp; • &nbsp;
+            ESC PAUSE
+
+        </div>
+
+
+        <div class="weapon">
+
+            <div class="weaponName">
+                PULSE
+            </div>
+
+            <div id="ammo">
+                12 / ∞
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         PAUSE
+    ========================================== -->
+
+    <div id="pause">
+
+        <div class="pauseBox">
+
+            <div class="pauseSmall">
+                ECHOBOUND
+            </div>
+
+            <h2>
+                PAUSED
+            </h2>
+
+
+            <button
+                id="resume"
+                class="menuButton primary"
+                type="button">
+                RESUME
+            </button>
+
+
+            <button
+                id="save"
+                class="menuButton"
+                type="button">
+                SAVE RUN
+            </button>
+
+
+            <button
+                id="quit"
+                class="menuButton"
+                type="button">
+                QUIT TO MENU
+            </button>
+
+
+            <a
+                href="shop.html"
+                class="menuButton shopButton">
+                SHOP
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         ACHIEVEMENT
+    ========================================== -->
+
+    <div id="achievement">
+
+        <div class="achievementTop">
+            ACHIEVEMENT UNLOCKED
+        </div>
+
+        <div id="achievementName">
+            FIRST ECHO
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         MAP
+    ========================================== -->
+
+    <div id="map">
+
+        <div class="mapBox">
+
+            <div class="mapHeader">
+
+                <h2>
+                    SECTOR MAP
+                </h2>
+
+                <button
+                    id="closeMap"
+                    type="button">
+                    CLOSE
+                </button>
+
+            </div>
+
+            <canvas id="mapCanvas"></canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- THREE.JS -->
+
+    <script type="module" src="app.js"></script>
+
+</body>
 </html>
