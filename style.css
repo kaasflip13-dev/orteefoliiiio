@@ -1,17 +1,17 @@
 :root {
 
     --bg: #02070a;
-    --panel: rgba(4, 12, 17, .94);
+    --panel: rgba(4, 13, 18, .95);
 
-    --cyan: #57e8ff;
-    --cyanSoft: rgba(87, 232, 255, .16);
+    --cyan: #58e9ff;
+    --cyanDark: rgba(88, 233, 255, .14);
 
     --white: #effcff;
-    --text: #a7bbc3;
-    --muted: #536b74;
+    --text: #a8bdc5;
+    --muted: #587079;
 
-    --line: rgba(87, 232, 255, .22);
-    --lineStrong: rgba(87, 232, 255, .65);
+    --line: rgba(88, 233, 255, .2);
+    --lineStrong: rgba(88, 233, 255, .7);
 
 }
 
@@ -53,18 +53,18 @@ body::before {
 
     pointer-events: none;
 
-    z-index: 90;
+    z-index: 100;
 
     background-image:
 
         linear-gradient(
-            rgba(87,232,255,.025) 1px,
+            rgba(88,233,255,.025) 1px,
             transparent 1px
         ),
 
         linear-gradient(
             90deg,
-            rgba(87,232,255,.025) 1px,
+            rgba(88,233,255,.025) 1px,
             transparent 1px
         );
 
@@ -83,22 +83,18 @@ body::after {
 
     pointer-events: none;
 
-    z-index: 91;
+    z-index: 101;
 
     background:
         repeating-linear-gradient(
             0deg,
             transparent 0,
             transparent 4px,
-            rgba(255,255,255,.01) 5px
+            rgba(255,255,255,.012) 5px
         );
 
 }
 
-
-/* =====================================================
-   CANVAS
-===================================================== */
 
 #game {
 
@@ -114,9 +110,9 @@ body::after {
 }
 
 
-/* =====================================================
+/* =================================================
    MENU
-===================================================== */
+================================================= */
 
 #menu {
 
@@ -131,39 +127,36 @@ body::after {
     flex-direction: column;
 
     background:
+
         radial-gradient(
-            circle at 70% 50%,
-            rgba(35,115,135,.12),
+            circle at 75% 45%,
+            rgba(40,130,150,.12),
             transparent 45%
         ),
 
         linear-gradient(
             120deg,
-            rgba(2,7,10,.97),
-            rgba(2,10,15,.88)
+            rgba(2,7,10,.98),
+            rgba(2,10,15,.9)
         );
 
 }
 
 
-.menuTop {
+.topbar {
 
     height: 78px;
 
     display: flex;
 
-    align-items: center;
-
     justify-content: space-between;
 
-    padding:
-        0 34px;
+    align-items: center;
+
+    padding: 0 34px;
 
     border-bottom:
         1px solid var(--line);
-
-    background:
-        rgba(2,8,12,.86);
 
 }
 
@@ -179,7 +172,7 @@ body::after {
 }
 
 
-.brandIcon {
+.brandMark {
 
     width: 42px;
     height: 42px;
@@ -196,9 +189,6 @@ body::after {
     font-weight: 900;
 
     font-size: 20px;
-
-    box-shadow:
-        inset 0 0 20px rgba(87,232,255,.06);
 
 }
 
@@ -224,14 +214,12 @@ body::after {
 
     font-size: 7px;
 
-    font-weight: 900;
-
     letter-spacing: 2px;
 
 }
 
 
-.online {
+.systemStatus {
 
     display: flex;
 
@@ -239,7 +227,7 @@ body::after {
 
     gap: 8px;
 
-    color: #71858d;
+    color: #6c8188;
 
     font-size: 8px;
 
@@ -250,7 +238,7 @@ body::after {
 }
 
 
-.online i {
+.systemStatus i {
 
     width: 7px;
     height: 7px;
@@ -265,15 +253,18 @@ body::after {
 }
 
 
-/* =====================================================
+/* =================================================
    MENU CONTENT
-===================================================== */
+================================================= */
 
-.menuContent {
+.menuLayout {
 
     flex: 1;
 
-    width: min(1200px, calc(100% - 50px));
+    width: min(
+        1200px,
+        calc(100% - 50px)
+    );
 
     margin: auto;
 
@@ -282,23 +273,17 @@ body::after {
     grid-template-columns:
         1.25fr .75fr;
 
-    gap: 1px;
+    background: var(--line);
 
     border:
         1px solid var(--line);
 
-    background:
-        var(--line);
-
 }
 
 
-.hero {
+.intro {
 
-    position: relative;
-
-    padding:
-        70px 65px;
+    padding: 70px 65px;
 
     background:
         linear-gradient(
@@ -306,32 +291,6 @@ body::after {
             rgba(6,18,24,.98),
             rgba(2,8,12,.98)
         );
-
-    overflow: hidden;
-
-}
-
-
-.hero::before {
-
-    content: "";
-
-    position: absolute;
-
-    width: 500px;
-    height: 500px;
-
-    right: -180px;
-    bottom: -230px;
-
-    border-radius: 50%;
-
-    border:
-        1px solid rgba(87,232,255,.09);
-
-    box-shadow:
-        0 0 0 30px rgba(87,232,255,.015),
-        0 0 0 60px rgba(87,232,255,.01);
 
 }
 
@@ -349,12 +308,10 @@ body::after {
 }
 
 
-.hero h1 {
+.intro h1 {
 
     margin:
         25px 0 20px;
-
-    max-width: 650px;
 
     font-size:
         clamp(55px, 7vw, 95px);
@@ -366,21 +323,21 @@ body::after {
 }
 
 
-.hero h1 span {
+.intro h1 span {
 
     display: block;
 
     color: var(--cyan);
 
     text-shadow:
-        0 0 35px rgba(87,232,255,.18);
+        0 0 35px rgba(88,233,255,.2);
 
 }
 
 
-.hero p {
+.intro p {
 
-    max-width: 520px;
+    max-width: 530px;
 
     color: var(--text);
 
@@ -391,7 +348,7 @@ body::after {
 }
 
 
-.missionStats {
+.stats {
 
     display: grid;
 
@@ -407,20 +364,20 @@ body::after {
 }
 
 
-.missionStats div {
+.stats div {
 
     padding: 15px;
 
     border:
-        1px solid rgba(87,232,255,.12);
+        1px solid rgba(88,233,255,.12);
 
     background:
-        rgba(87,232,255,.025);
+        rgba(88,233,255,.025);
 
 }
 
 
-.missionStats small {
+.stats small {
 
     display: block;
 
@@ -435,7 +392,7 @@ body::after {
 }
 
 
-.missionStats strong {
+.stats strong {
 
     display: block;
 
@@ -448,11 +405,11 @@ body::after {
 }
 
 
-/* =====================================================
-   MENU PANEL
-===================================================== */
+/* =================================================
+   COMMAND PANEL
+================================================= */
 
-.menuPanel {
+.commandPanel {
 
     display: flex;
 
@@ -464,13 +421,13 @@ body::after {
 }
 
 
-.panelHeader {
+.panelTitle {
 
     display: flex;
 
-    justify-content: space-between;
-
     align-items: center;
+
+    justify-content: space-between;
 
     padding: 25px;
 
@@ -480,20 +437,18 @@ body::after {
 }
 
 
-.panelHeader small {
+.panelTitle small {
 
     color: var(--muted);
 
     font-size: 7px;
-
-    font-weight: 900;
 
     letter-spacing: 2px;
 
 }
 
 
-.panelHeader h2 {
+.panelTitle h2 {
 
     margin: 6px 0 0;
 
@@ -504,15 +459,13 @@ body::after {
 }
 
 
-.panelHeader span {
+.panelTitle span {
 
     color: var(--cyan);
 
     font-size: 8px;
 
     font-weight: 900;
-
-    letter-spacing: 2px;
 
 }
 
@@ -547,7 +500,7 @@ body::after {
     padding: 10px 15px;
 
     border:
-        1px solid rgba(87,232,255,.15);
+        1px solid rgba(88,233,255,.15);
 
     background:
         rgba(255,255,255,.015);
@@ -577,7 +530,7 @@ body::after {
         var(--lineStrong);
 
     background:
-        var(--cyanSoft);
+        var(--cyanDark);
 
 }
 
@@ -588,23 +541,23 @@ body::after {
         var(--cyan);
 
     background:
-        rgba(87,232,255,.08);
+        rgba(88,233,255,.08);
 
 }
 
 
-.menuButton > b {
+.menuButton b {
 
     width: 25px;
 
-    color: #4c6872;
+    color: #49656e;
 
     font-size: 8px;
 
 }
 
 
-.menuButton.primary > b {
+.menuButton.primary b {
 
     color: var(--cyan);
 
@@ -646,7 +599,7 @@ body::after {
 
 .menuButton em {
 
-    color: #54727d;
+    color: #55727b;
 
     font-size: 25px;
 
@@ -668,8 +621,7 @@ body::after {
 
     justify-content: space-between;
 
-    padding:
-        15px 20px;
+    padding: 15px 20px;
 
     border-top:
         1px solid var(--line);
@@ -734,9 +686,9 @@ body::after {
 }
 
 
-/* =====================================================
+/* =================================================
    HUD
-===================================================== */
+================================================= */
 
 #hud {
 
@@ -753,12 +705,12 @@ body::after {
 }
 
 
-.hudTopLeft {
+.playerHUD {
 
     position: absolute;
 
-    top: 28px;
     left: 28px;
+    top: 28px;
 
     width: 225px;
 
@@ -832,15 +784,12 @@ body::after {
 
     background: var(--cyan);
 
-    box-shadow:
-        0 0 10px rgba(87,232,255,.4);
-
 }
 
 
 .bar.energy span {
 
-    background: #7c9fff;
+    background: #7d9fff;
 
 }
 
@@ -856,8 +805,7 @@ body::after {
     transform:
         translateX(-50%);
 
-    padding:
-        10px 18px;
+    padding: 10px 18px;
 
     border:
         1px solid var(--line);
@@ -898,13 +846,12 @@ body::after {
 }
 
 
-.hudTopRight {
+.rightHUD {
 
     position: absolute;
 
-    top: 30px;
-
     right: 28px;
+    top: 30px;
 
     text-align: right;
 
@@ -921,16 +868,16 @@ body::after {
 }
 
 
-.hudTopRight #zone {
+.rightHUD #zone {
 
     color: var(--cyan);
 
 }
 
 
-/* =====================================================
+/* =================================================
    CROSSHAIR
-===================================================== */
+================================================= */
 
 .crosshair {
 
@@ -939,8 +886,8 @@ body::after {
     top: 50%;
     left: 50%;
 
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
 
     transform:
         translate(-50%, -50%);
@@ -952,7 +899,7 @@ body::after {
 
     position: absolute;
 
-    background: rgba(255,255,255,.9);
+    background: white;
 
 }
 
@@ -960,9 +907,9 @@ body::after {
 .crosshair span:nth-child(1) {
 
     width: 2px;
-    height: 9px;
+    height: 8px;
 
-    left: 14px;
+    left: 13px;
     top: 0;
 
 }
@@ -971,9 +918,9 @@ body::after {
 .crosshair span:nth-child(2) {
 
     width: 2px;
-    height: 9px;
+    height: 8px;
 
-    left: 14px;
+    left: 13px;
     bottom: 0;
 
 }
@@ -981,53 +928,29 @@ body::after {
 
 .crosshair span:nth-child(3) {
 
-    width: 9px;
+    width: 8px;
     height: 2px;
 
-    top: 14px;
     left: 0;
+    top: 13px;
 
 }
 
 
 .crosshair span:nth-child(4) {
 
-    width: 9px;
+    width: 8px;
     height: 2px;
 
-    top: 14px;
     right: 0;
+    top: 13px;
 
 }
 
 
-/* =====================================================
-   INTERACTION
-===================================================== */
-
-.interaction {
-
-    position: absolute;
-
-    top: calc(50% + 35px);
-
-    left: 50%;
-
-    transform:
-        translateX(-50%);
-
-    color: rgba(255,255,255,.45);
-
-    font-size: 7px;
-
-    letter-spacing: 1.5px;
-
-}
-
-
-/* =====================================================
-   WEAPON
-===================================================== */
+/* =================================================
+   WEAPON HUD
+================================================= */
 
 .weaponHUD {
 
@@ -1042,8 +965,7 @@ body::after {
 
     gap: 25px;
 
-    padding:
-        15px 20px;
+    padding: 15px 20px;
 
     background:
         rgba(2,9,13,.72);
@@ -1054,7 +976,7 @@ body::after {
 }
 
 
-.weaponInfo small {
+.weaponHUD small {
 
     display: block;
 
@@ -1062,14 +984,12 @@ body::after {
 
     font-size: 6px;
 
-    font-weight: 900;
-
     letter-spacing: 1.5px;
 
 }
 
 
-.weaponInfo strong {
+.weaponHUD strong {
 
     display: block;
 
@@ -1082,7 +1002,7 @@ body::after {
 }
 
 
-.ammo strong {
+.ammo b {
 
     color: var(--cyan);
 
@@ -1093,14 +1013,12 @@ body::after {
 
 .ammo span {
 
-    color: #647c85;
-
-    font-size: 10px;
+    color: #607880;
 
 }
 
 
-.controlsHUD {
+.controlHint {
 
     position: absolute;
 
@@ -1118,7 +1036,7 @@ body::after {
 }
 
 
-.controlsHUD span {
+.controlHint span {
 
     margin: 0 7px;
 
@@ -1127,9 +1045,9 @@ body::after {
 }
 
 
-/* =====================================================
+/* =================================================
    PAUSE
-===================================================== */
+================================================= */
 
 #pause {
 
@@ -1223,7 +1141,7 @@ body::after {
     background:
         rgba(255,255,255,.02);
 
-    color: var(--white);
+    color: white;
 
     text-decoration: none;
 
@@ -1245,15 +1163,14 @@ body::after {
 
     border-color: var(--cyan);
 
-    background:
-        var(--cyanSoft);
+    background: var(--cyanDark);
 
 }
 
 
-/* =====================================================
+/* =================================================
    ACHIEVEMENT
-===================================================== */
+================================================= */
 
 #achievement {
 
@@ -1281,9 +1198,6 @@ body::after {
     background:
         rgba(3,13,18,.96);
 
-    box-shadow:
-        0 0 25px rgba(87,232,255,.12);
-
 }
 
 
@@ -1301,8 +1215,6 @@ body::after {
 
     color: var(--cyan);
 
-    font-weight: 900;
-
 }
 
 
@@ -1313,8 +1225,6 @@ body::after {
     color: var(--cyan);
 
     font-size: 6px;
-
-    font-weight: 900;
 
     letter-spacing: 1.5px;
 
@@ -1332,9 +1242,9 @@ body::after {
 }
 
 
-/* =====================================================
+/* =================================================
    MAP
-===================================================== */
+================================================= */
 
 #map {
 
@@ -1402,8 +1312,7 @@ body::after {
 
 .mapHeader h2 {
 
-    margin:
-        5px 0 0;
+    margin: 5px 0 0;
 
     font-size: 18px;
 
@@ -1412,15 +1321,14 @@ body::after {
 
 .mapHeader button {
 
-    padding:
-        9px 15px;
+    padding: 9px 15px;
 
     border:
         1px solid var(--line);
 
     background: transparent;
 
-    color: var(--white);
+    color: white;
 
     cursor: pointer;
 
@@ -1438,13 +1346,13 @@ body::after {
 }
 
 
-/* =====================================================
-   MOBILE
-===================================================== */
+/* =================================================
+   RESPONSIVE
+================================================= */
 
 @media (max-width: 900px) {
 
-    .menuContent {
+    .menuLayout {
 
         grid-template-columns: 1fr;
 
@@ -1452,21 +1360,9 @@ body::after {
 
     }
 
-    .hero {
+    .intro {
 
         padding: 45px 30px;
-
-    }
-
-    .menuTop {
-
-        padding: 0 18px;
-
-    }
-
-    .menuFooter {
-
-        display: none;
 
     }
 
@@ -1475,25 +1371,25 @@ body::after {
 
 @media (max-width: 600px) {
 
-    .online {
+    .systemStatus {
 
         display: none;
 
     }
 
-    .hero h1 {
+    .intro h1 {
 
         font-size: 52px;
 
     }
 
-    .missionStats {
+    .stats {
 
         grid-template-columns: 1fr;
 
     }
 
-    .hudTopLeft {
+    .playerHUD {
 
         left: 12px;
         top: 15px;
@@ -1502,7 +1398,7 @@ body::after {
 
     }
 
-    .hudTopRight {
+    .rightHUD {
 
         right: 12px;
         top: 15px;
@@ -1515,16 +1411,9 @@ body::after {
 
     }
 
-    .controlsHUD {
+    .controlHint {
 
         display: none;
-
-    }
-
-    .weaponHUD {
-
-        right: 12px;
-        bottom: 12px;
 
     }
 
