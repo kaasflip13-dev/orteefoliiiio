@@ -1,5 +1,79 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js";
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+import {
+    getDatabase,
+    ref,
+    set,
+    get
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+import {
+    getAuth,
+    signInAnonymously
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+
+/* =========================================================
+   FIREBASE
+========================================================= */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDI32LBA050EFJujB5N_1QonDxbxhAOATg",
+    authDomain: "echobound-52fdb.firebaseapp.com",
+    databaseURL: "https://echobound-52fdb-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "echobound-52fdb",
+    storageBucket: "echobound-52fdb.firebasestorage.app",
+    messagingSenderId: "1009201119169",
+    appId: "1:1009201119169:web:6adf0afd74b7df66d73940"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+
+const database = getDatabase(firebaseApp);
+
+const auth = getAuth(firebaseApp);
+
+let firebaseUser = null;
+
+let firebaseReady = false;
+
+
+/*
+   Anonymous login.
+   De game wacht niet op Firebase om te starten,
+   maar Save/Load wacht wel tot Firebase klaar is.
+*/
+
+const firebaseLogin = signInAnonymously(auth)
+    .then((result) => {
+
+        firebaseUser = result.user;
+
+        firebaseReady = true;
+
+        console.log(
+            "Firebase verbonden!"
+        );
+
+        console.log(
+            "Player UID:",
+            firebaseUser.uid
+        );
+
+    })
+    .catch((error) => {
+
+        console.error(
+            "Firebase login mislukt:",
+            error
+        );
+
+        firebaseReady = false;
+
+    });
+
 /* =========================================================
    ECHOBOUND — THE LOST SIGNAL
    THIRD PERSON TANK CAMERA
