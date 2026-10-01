@@ -19,6 +19,7 @@ import {
    ECHOBOUND — THE LOST SIGNAL
    THIRD PERSON TANK
    FIREBASE SAVE SYSTEM
+   STABIELE POINTER LOCK VERSIE
 ========================================================= */
 
 
@@ -65,7 +66,8 @@ const firebaseLogin =
             firebaseUser =
                 result.user;
 
-            firebaseReady = true;
+            firebaseReady =
+                true;
 
             console.log(
                 "Firebase verbonden!"
@@ -79,7 +81,8 @@ const firebaseLogin =
         })
         .catch(error => {
 
-            firebaseReady = false;
+            firebaseReady =
+                false;
 
             console.error(
                 "Firebase login mislukt:",
@@ -231,25 +234,40 @@ camera.position.set(
 );
 
 
-const CAMERA_DISTANCE = 15;
-
-const CAMERA_HEIGHT = 7;
-
-const CAMERA_TARGET_HEIGHT = 1.15;
-
-const CAMERA_SMOOTHNESS = 10;
+const CAMERA_DISTANCE =
+    15;
 
 
-let cameraYaw = 0;
+const CAMERA_HEIGHT =
+    7;
 
-let cameraPitch = 0.20;
+
+const CAMERA_TARGET_HEIGHT =
+    1.15;
 
 
-const MIN_CAMERA_PITCH = -0.28;
+const CAMERA_SMOOTHNESS =
+    10;
 
-const MAX_CAMERA_PITCH = 0.72;
 
-const CAMERA_SENSITIVITY = 0.0024;
+let cameraYaw =
+    0;
+
+
+let cameraPitch =
+    0.20;
+
+
+const MIN_CAMERA_PITCH =
+    -0.28;
+
+
+const MAX_CAMERA_PITCH =
+    0.72;
+
+
+const CAMERA_SENSITIVITY =
+    0.0024;
 
 
 /* =========================================================
@@ -404,6 +422,16 @@ let pointerLocked =
     false;
 
 
+/*
+   Belangrijk:
+   We vragen pointer lock nooit meerdere keren
+   tegelijk aan.
+*/
+
+let pointerLockRequestPending =
+    false;
+
+
 const keys = {};
 
 
@@ -465,6 +493,122 @@ const player = {
 
 
 /* =========================================================
+   SAFE POINTER LOCK
+========================================================= */
+
+function requestGamePointerLock() {
+
+    if (
+        !canvas
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !gameRunning
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        paused
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        pointerLocked
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        pointerLockRequestPending
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       Dit voorkomt dat de browser meerdere
+       pointer-lock aanvragen tegelijk krijgt.
+    */
+
+    pointerLockRequestPending =
+        true;
+
+
+    try {
+
+        const result =
+            canvas.requestPointerLock();
+
+
+        /*
+           Sommige browsers geven een Promise terug.
+        */
+
+        if (
+            result &&
+            typeof result.catch === "function"
+        ) {
+
+            result.catch(
+                error => {
+
+                    console.warn(
+                        "Pointer lock tijdelijk niet beschikbaar:",
+                        error
+                    );
+
+                }
+            );
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Pointer lock fout:",
+            error
+        );
+
+    }
+
+
+    /*
+       Na een korte tijd mag opnieuw
+       geprobeerd worden.
+    */
+
+    setTimeout(
+        () => {
+
+            pointerLockRequestPending =
+                false;
+
+        },
+        700
+    );
+
+}
+
+
+/* =========================================================
    INPUT
 ========================================================= */
 
@@ -472,7 +616,8 @@ window.addEventListener(
     "keydown",
     event => {
 
-        keys[event.code] = true;
+        keys[event.code] =
+            true;
 
 
         if (
@@ -488,7 +633,15 @@ window.addEventListener(
             event.code === "Escape"
         ) {
 
-            if (gameRunning) {
+            if (
+                gameRunning
+            ) {
+
+                /*
+                   Alleen togglen als we niet
+                   net door de browser uit pointer
+                   lock zijn gehaald.
+                */
 
                 togglePause();
 
@@ -504,7 +657,8 @@ window.addEventListener(
     "keyup",
     event => {
 
-        keys[event.code] = false;
+        keys[event.code] =
+            false;
 
     }
 );
@@ -514,30 +668,26 @@ window.addEventListener(
    POINTER LOCK
 ========================================================= */
 
+
+/*
+   Klik in het spel:
+   muis vastzetten.
+*/
+
 canvas.addEventListener(
     "click",
-    () => {
-
-        if (
-            gameRunning &&
-            !paused &&
-            !pointerLocked
-        ) {
-
-            canvas.requestPointerLock();
-
-        }
-
-    }
-);
-
-
-canvas.addEventListener(
-    "mousedown",
     event => {
 
         if (
-            !gameRunning ||
+            !gameRunning
+        ) {
+
+            return;
+
+        }
+
+
+        if (
             paused
         ) {
 
@@ -546,9 +696,41 @@ canvas.addEventListener(
         }
 
 
-        if (!pointerLocked) {
+        if (
+            !pointerLocked
+        ) {
 
-            canvas.requestPointerLock();
+            requestGamePointerLock();
+
+        }
+
+    }
+);
+
+
+/*
+   Linkermuisknop:
+   schieten.
+*/
+
+canvas.addEventListener(
+    "mousedown",
+    event => {
+
+        if (
+            !gameRunning
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            paused
+        ) {
+
+            return;
 
         }
 
@@ -557,6 +739,22 @@ canvas.addEventListener(
             event.button === 0
         ) {
 
+            /*
+               Als de muis nog niet vastzit,
+               proberen we hem vast te zetten.
+
+               Dit is maar één aanvraag.
+            */
+
+            if (
+                !pointerLocked
+            ) {
+
+                requestGamePointerLock();
+
+            }
+
+
             shoot();
 
         }
@@ -564,6 +762,10 @@ canvas.addEventListener(
     }
 );
 
+
+/*
+   Rechtermuisknop uitschakelen.
+*/
 
 canvas.addEventListener(
     "contextmenu",
@@ -575,12 +777,49 @@ canvas.addEventListener(
 );
 
 
+/*
+   Pointer lock status.
+*/
+
 document.addEventListener(
     "pointerlockchange",
     () => {
 
         pointerLocked =
             document.pointerLockElement === canvas;
+
+
+        if (
+            pointerLocked
+        ) {
+
+            pointerLockRequestPending =
+                false;
+
+        }
+
+    }
+);
+
+
+/*
+   Als pointer lock wordt geweigerd,
+   laten we de game gewoon verder werken.
+*/
+
+document.addEventListener(
+    "pointerlockerror",
+    () => {
+
+        pointerLocked =
+            false;
+
+        pointerLockRequestPending =
+            false;
+
+        console.warn(
+            "Pointer lock kon niet worden geactiveerd."
+        );
 
     }
 );
@@ -595,8 +834,24 @@ document.addEventListener(
     event => {
 
         if (
-            !pointerLocked ||
-            !gameRunning ||
+            !pointerLocked
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !gameRunning
+        ) {
+
+            return;
+
+        }
+
+
+        if (
             paused
         ) {
 
@@ -606,11 +861,13 @@ document.addEventListener(
 
 
         cameraYaw -=
+
             event.movementX *
             CAMERA_SENSITIVITY;
 
 
         cameraPitch -=
+
             event.movementY *
             CAMERA_SENSITIVITY;
 
@@ -1310,7 +1567,9 @@ function addObstacle(
     radius
 ) {
 
-    scene.add(object);
+    scene.add(
+        object
+    );
 
     obstacles.push({
 
@@ -1364,9 +1623,7 @@ function createRock(
     rock.rotation.set(
 
         Math.random(),
-
         Math.random(),
-
         Math.random()
 
     );
@@ -1834,7 +2091,9 @@ scene.add(signalTower);
    TANK COLLISION
 ========================================================= */
 
-function tankBlocked(position) {
+function tankBlocked(
+    position
+) {
 
     for (
         const obstacle of obstacles
@@ -1889,42 +2148,61 @@ function tankBlocked(position) {
    TANK MOVEMENT
 ========================================================= */
 
-function updateTank(delta) {
+function updateTank(
+    delta
+) {
 
-    let throttle = 0;
-
-    let steering = 0;
-
-
-    if (keys.KeyW) {
-
-        throttle += 1;
-
-    }
+    let throttle =
+        0;
 
 
-    if (keys.KeyS) {
-
-        throttle -= 1;
-
-    }
+    let steering =
+        0;
 
 
-    if (keys.KeyA) {
+    if (
+        keys.KeyW
+    ) {
 
-        steering += 1;
+        throttle +=
+            1;
 
     }
 
 
-    if (keys.KeyD) {
+    if (
+        keys.KeyS
+    ) {
 
-        steering -= 1;
+        throttle -=
+            1;
 
     }
 
 
-    if (steering !== 0) {
+    if (
+        keys.KeyA
+    ) {
+
+        steering +=
+            1;
+
+    }
+
+
+    if (
+        keys.KeyD
+    ) {
+
+        steering -=
+            1;
+
+    }
+
+
+    if (
+        steering !== 0
+    ) {
 
         player.rotation +=
 
@@ -1937,7 +2215,9 @@ function updateTank(delta) {
     }
 
 
-    if (throttle !== 0) {
+    if (
+        throttle !== 0
+    ) {
 
         const speed =
 
@@ -1949,7 +2229,6 @@ function updateTank(delta) {
 
 
         const forward =
-
             new THREE.Vector3(
 
                 -Math.sin(
@@ -2013,7 +2292,9 @@ function updateTank(delta) {
     );
 
 
-    if (throttle !== 0) {
+    if (
+        throttle !== 0
+    ) {
 
         for (
             const wheel of tankWheels
@@ -2022,9 +2303,7 @@ function updateTank(delta) {
             wheel.rotation.z +=
 
                 delta *
-
                 10 *
-
                 throttle;
 
         }
@@ -2038,7 +2317,9 @@ function updateTank(delta) {
    TURRET
 ========================================================= */
 
-function updateTurret(delta) {
+function updateTurret(
+    delta
+) {
 
     let targetRotation =
         cameraYaw -
@@ -2299,7 +2580,9 @@ function shoot() {
     );
 
 
-    scene.add(projectile);
+    scene.add(
+        projectile
+    );
 
 
     bullets.push({
@@ -2364,7 +2647,9 @@ function createMuzzleFlash(
     );
 
 
-    scene.add(flash);
+    scene.add(
+        flash
+    );
 
 
     particles.push({
@@ -2442,7 +2727,9 @@ function reload() {
 }
 
 
-function updateReload(delta) {
+function updateReload(
+    delta
+) {
 
     if (
         !player.isReloading
@@ -2477,7 +2764,9 @@ function updateReload(delta) {
    BULLETS
 ========================================================= */
 
-function updateBullets(delta) {
+function updateBullets(
+    delta
+) {
 
     for (
         let i = bullets.length - 1;
@@ -2541,7 +2830,8 @@ function updateBullets(delta) {
                 );
 
 
-                remove = true;
+                remove =
+                    true;
 
 
                 if (
@@ -2562,7 +2852,9 @@ function updateBullets(delta) {
         }
 
 
-        if (!remove) {
+        if (
+            !remove
+        ) {
 
             for (
                 const obstacle of obstacles
@@ -2586,7 +2878,8 @@ function updateBullets(delta) {
                     );
 
 
-                    remove = true;
+                    remove =
+                        true;
 
 
                     break;
@@ -2598,7 +2891,9 @@ function updateBullets(delta) {
         }
 
 
-        if (remove) {
+        if (
+            remove
+        ) {
 
             scene.remove(
                 bullet.object
@@ -2631,26 +2926,40 @@ function createEnemy(
         new THREE.Group();
 
 
-    let scale = 1;
+    let scale =
+        1;
 
-    let color = 0x713654;
 
-    let health = 80;
+    let color =
+        0x713654;
 
-    let speed = 2;
+
+    let health =
+        80;
+
+
+    let speed =
+        2;
 
 
     if (
         type === "crawler"
     ) {
 
-        scale = 0.75;
+        scale =
+            0.75;
 
-        color = 0x8b6842;
 
-        health = 45;
+        color =
+            0x8b6842;
 
-        speed = 3.1;
+
+        health =
+            45;
+
+
+        speed =
+            3.1;
 
     }
 
@@ -2659,13 +2968,20 @@ function createEnemy(
         type === "guardian"
     ) {
 
-        scale = 1.5;
+        scale =
+            1.5;
 
-        color = 0x4c3d77;
 
-        health = 150;
+        color =
+            0x4c3d77;
 
-        speed = 1.1;
+
+        health =
+            150;
+
+
+        speed =
+            1.1;
 
     }
 
@@ -2775,7 +3091,9 @@ function createEnemy(
     );
 
 
-    scene.add(enemy);
+    scene.add(
+        enemy
+    );
 
 
     enemies.push({
@@ -2792,7 +3110,8 @@ function createEnemy(
         radius:
             0.9 * scale,
 
-        dead: false
+        dead:
+            false
 
     });
 
@@ -2874,7 +3193,9 @@ function spawnEnemies() {
    ENEMY UPDATE
 ========================================================= */
 
-function updateEnemies(delta) {
+function updateEnemies(
+    delta
+) {
 
     for (
         const enemy of enemies
@@ -3027,7 +3348,6 @@ function enemyBlocked(
             Math.sqrt(
 
                 dx * dx +
-
                 dz * dz
 
             );
@@ -3200,7 +3520,8 @@ function createHitParticles(
 
                 ),
 
-            life: 0.4
+            life:
+                0.4
 
         });
 
@@ -3209,7 +3530,9 @@ function createHitParticles(
 }
 
 
-function updateParticles(delta) {
+function updateParticles(
+    delta
+) {
 
     for (
         let i = particles.length - 1;
@@ -3263,7 +3586,9 @@ function updateParticles(delta) {
    THIRD PERSON CAMERA
 ========================================================= */
 
-function updateCamera(delta) {
+function updateCamera(
+    delta
+) {
 
     const target =
         new THREE.Vector3(
@@ -3468,7 +3793,9 @@ function updateCamera(delta) {
 
 function updateHUD() {
 
-    if (healthBar) {
+    if (
+        healthBar
+    ) {
 
         healthBar.style.width =
             `${player.health}%`;
@@ -3476,7 +3803,9 @@ function updateHUD() {
     }
 
 
-    if (energyBar) {
+    if (
+        energyBar
+    ) {
 
         energyBar.style.width =
             `${player.energy}%`;
@@ -3484,7 +3813,9 @@ function updateHUD() {
     }
 
 
-    if (ammoText) {
+    if (
+        ammoText
+    ) {
 
         ammoText.textContent =
 
@@ -3497,7 +3828,9 @@ function updateHUD() {
     }
 
 
-    if (killsText) {
+    if (
+        killsText
+    ) {
 
         killsText.textContent =
 
@@ -3513,7 +3846,9 @@ function updateHUD() {
     }
 
 
-    if (creditsText) {
+    if (
+        creditsText
+    ) {
 
         creditsText.textContent =
 
@@ -3529,7 +3864,9 @@ function updateHUD() {
     }
 
 
-    if (zoneText) {
+    if (
+        zoneText
+    ) {
 
         if (
             player.position.z < -50
@@ -3555,7 +3892,9 @@ function updateHUD() {
     }
 
 
-    if (objectiveText) {
+    if (
+        objectiveText
+    ) {
 
         objectiveText.textContent =
 
@@ -3578,7 +3917,9 @@ function showAchievement(
     name
 ) {
 
-    if (!achievement) {
+    if (
+        !achievement
+    ) {
 
         return;
 
@@ -3591,7 +3932,9 @@ function showAchievement(
         );
 
 
-    if (title) {
+    if (
+        title
+    ) {
 
         title.textContent =
             name;
@@ -3617,7 +3960,7 @@ function showAchievement(
 
 
 /* =========================================================
-   CREATE SAVE DATA
+   SAVE DATA
 ========================================================= */
 
 function getSaveData() {
@@ -3679,8 +4022,7 @@ async function saveGame() {
 
 
     /*
-       Altijd eerst lokaal opslaan.
-       Dit is een backup.
+       Altijd lokale backup.
     */
 
     localStorage.setItem(
@@ -3693,7 +4035,31 @@ async function saveGame() {
 
 
     /*
-       Firebase nog niet klaar?
+       Wacht op Firebase login.
+    */
+
+    if (
+        !firebaseReady ||
+        !firebaseUser
+    ) {
+
+        try {
+
+            await firebaseLogin;
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+       Firebase niet beschikbaar?
     */
 
     if (
@@ -3702,39 +4068,7 @@ async function saveGame() {
     ) {
 
         console.warn(
-
-            "Firebase is nog niet klaar."
-
-        );
-
-
-        /*
-           Wacht een keer op login.
-        */
-
-        try {
-
-            await firebaseLogin;
-
-        } catch (error) {
-
-            console.error(error);
-
-        }
-
-    }
-
-
-    if (
-        !firebaseReady ||
-        !firebaseUser
-    ) {
-
-        console.warn(
-
-            "Geen Firebase-verbinding. " +
-            "Lokale save blijft beschikbaar."
-
+            "Geen Firebase-verbinding."
         );
 
 
@@ -3752,20 +4086,15 @@ async function saveGame() {
                 database,
 
                 "players/" +
-
                 firebaseUser.uid +
-
                 "/save1"
 
             );
 
 
         await set(
-
             saveReference,
-
             data
-
         );
 
 
@@ -3785,7 +4114,9 @@ async function saveGame() {
         );
 
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
 
@@ -3795,11 +4126,6 @@ async function saveGame() {
 
         );
 
-
-        /*
-           De lokale backup bestaat
-           nog steeds.
-        */
 
         alert(
 
@@ -3920,7 +4246,8 @@ function applyLoadedGame(
     }
 
 
-    enemies.length = 0;
+    enemies.length =
+        0;
 
 
     /*
@@ -3938,7 +4265,9 @@ function applyLoadedGame(
         false;
 
 
-    if (menu) {
+    if (
+        menu
+    ) {
 
         menu.style.display =
             "none";
@@ -3946,7 +4275,9 @@ function applyLoadedGame(
     }
 
 
-    if (hud) {
+    if (
+        hud
+    ) {
 
         hud.style.display =
             "block";
@@ -3954,7 +4285,9 @@ function applyLoadedGame(
     }
 
 
-    if (pause) {
+    if (
+        pause
+    ) {
 
         pause.style.display =
             "none";
@@ -3966,11 +4299,9 @@ function applyLoadedGame(
 
 
     /*
-       Pointer lock opnieuw.
+       NIET automatisch pointer lock aanvragen.
+       De speler klikt zelf in de game.
     */
-
-    canvas.requestPointerLock();
-
 
     console.log(
         "EchoBound save geladen."
@@ -3986,8 +4317,7 @@ function applyLoadedGame(
 async function loadGame() {
 
     /*
-       Als Firebase nog bezig is met
-       inloggen, wachten we daarop.
+       Eerst Firebase login afwachten.
     */
 
     if (
@@ -3999,9 +4329,13 @@ async function loadGame() {
 
             await firebaseLogin;
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
         }
 
@@ -4009,7 +4343,7 @@ async function loadGame() {
 
 
     /*
-       Probeer Firebase.
+       Firebase proberen.
     */
 
     if (
@@ -4026,9 +4360,7 @@ async function loadGame() {
                     database,
 
                     "players/" +
-
                     firebaseUser.uid +
-
                     "/save1"
 
                 );
@@ -4047,11 +4379,6 @@ async function loadGame() {
                 const data =
                     snapshot.val();
 
-
-                /*
-                   Lokale backup bijwerken
-                   met de Firebase-save.
-                */
 
                 localStorage.setItem(
 
@@ -4078,7 +4405,9 @@ async function loadGame() {
 
             }
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
 
@@ -4094,8 +4423,8 @@ async function loadGame() {
 
 
     /*
-       Firebase had geen save.
-       Probeer lokale backup.
+       Geen Firebase-save?
+       Lokale backup proberen.
     */
 
     const localSave =
@@ -4131,9 +4460,7 @@ async function loadGame() {
 
 
         console.log(
-
             "Lokale backup geladen."
-
         );
 
 
@@ -4141,9 +4468,13 @@ async function loadGame() {
             data
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
-        console.error(error);
+        console.error(
+            error
+        );
 
 
         alert(
@@ -4303,7 +4634,17 @@ function newGame() {
         false;
 
 
-    if (menu) {
+    pointerLocked =
+        false;
+
+
+    pointerLockRequestPending =
+        false;
+
+
+    if (
+        menu
+    ) {
 
         menu.style.display =
             "none";
@@ -4311,7 +4652,9 @@ function newGame() {
     }
 
 
-    if (hud) {
+    if (
+        hud
+    ) {
 
         hud.style.display =
             "block";
@@ -4319,7 +4662,9 @@ function newGame() {
     }
 
 
-    if (pause) {
+    if (
+        pause
+    ) {
 
         pause.style.display =
             "none";
@@ -4330,7 +4675,14 @@ function newGame() {
     updateHUD();
 
 
-    canvas.requestPointerLock();
+    /*
+       Geen automatische requestPointerLock!
+       De speler klikt zelf in het spel.
+    */
+
+    console.log(
+        "Nieuwe tank-run gestart."
+    );
 
 }
 
@@ -4354,7 +4706,9 @@ function togglePause() {
         !paused;
 
 
-    if (pause) {
+    if (
+        pause
+    ) {
 
         pause.style.display =
 
@@ -4367,13 +4721,21 @@ function togglePause() {
     }
 
 
-    if (paused) {
+    if (
+        paused
+    ) {
 
-        document.exitPointerLock();
+        /*
+           Muis loslaten.
+        */
 
-    } else {
+        if (
+            document.pointerLockElement === canvas
+        ) {
 
-        canvas.requestPointerLock();
+            document.exitPointerLock();
+
+        }
 
     }
 
@@ -4544,7 +4906,9 @@ if (
                 false;
 
 
-            if (pause) {
+            if (
+                pause
+            ) {
 
                 pause.style.display =
                     "none";
@@ -4552,7 +4916,13 @@ if (
             }
 
 
-            canvas.requestPointerLock();
+            /*
+               De klik op RESUME is zelf een
+               gebruikersactie, dus hier mogen
+               we pointer lock aanvragen.
+            */
+
+            requestGamePointerLock();
 
         }
 
@@ -4560,6 +4930,10 @@ if (
 
 }
 
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
 
 const saveButton =
     document.getElementById(
@@ -4585,6 +4959,10 @@ if (
 
 }
 
+
+/* =========================================================
+   QUIT BUTTON
+========================================================= */
 
 const quitButton =
     document.getElementById(
@@ -4613,10 +4991,26 @@ if (
                 false;
 
 
-            document.exitPointerLock();
+            if (
+                document.pointerLockElement === canvas
+            ) {
+
+                document.exitPointerLock();
+
+            }
 
 
-            if (pause) {
+            pointerLocked =
+                false;
+
+
+            pointerLockRequestPending =
+                false;
+
+
+            if (
+                pause
+            ) {
 
                 pause.style.display =
                     "none";
@@ -4624,7 +5018,9 @@ if (
             }
 
 
-            if (hud) {
+            if (
+                hud
+            ) {
 
                 hud.style.display =
                     "none";
@@ -4632,7 +5028,9 @@ if (
             }
 
 
-            if (menu) {
+            if (
+                menu
+            ) {
 
                 menu.style.display =
                     "flex";
@@ -4678,7 +5076,13 @@ function openMap() {
         "flex";
 
 
-    document.exitPointerLock();
+    if (
+        document.pointerLockElement === canvas
+    ) {
+
+        document.exitPointerLock();
+
+    }
 
 
     mapCanvas.width =
@@ -4914,7 +5318,9 @@ if (
                 );
 
 
-            if (map) {
+            if (
+                map
+            ) {
 
                 map.style.display =
                     "none";
@@ -4922,14 +5328,10 @@ if (
             }
 
 
-            if (
-                gameRunning &&
-                !paused
-            ) {
-
-                canvas.requestPointerLock();
-
-            }
+            /*
+               Geen automatische pointer lock.
+               De speler klikt zelf weer in de game.
+            */
 
         }
 
@@ -4944,11 +5346,38 @@ if (
 
 function endRun() {
 
+    if (
+        !gameRunning
+    ) {
+
+        return;
+
+    }
+
+
     gameRunning =
         false;
 
 
-    document.exitPointerLock();
+    paused =
+        false;
+
+
+    if (
+        document.pointerLockElement === canvas
+    ) {
+
+        document.exitPointerLock();
+
+    }
+
+
+    pointerLocked =
+        false;
+
+
+    pointerLockRequestPending =
+        false;
 
 
     /*
@@ -4958,7 +5387,9 @@ function endRun() {
     saveGame();
 
 
-    if (hud) {
+    if (
+        hud
+    ) {
 
         hud.style.display =
             "none";
@@ -4966,7 +5397,9 @@ function endRun() {
     }
 
 
-    if (menu) {
+    if (
+        menu
+    ) {
 
         menu.style.display =
             "flex";
