@@ -11,522 +11,324 @@
 
 <body>
 
-    <!-- 3D GAME -->
     <canvas id="game"></canvas>
 
-
-    <!-- =========================================
-         TOP NAVIGATION
-    ========================================== -->
-
-    <header class="topNav">
-
-        <a href="index.html" class="brand">
-
-            <div class="brandMark">
-                E
-            </div>
-
-            <div class="brandText">
-                <strong>ECHOBOUND</strong>
-                <span>THE LOST SIGNAL</span>
-            </div>
-
-        </a>
-
-
-        <nav class="navigation">
-
-            <a
-                href="index.html"
-                class="navItem active">
-                GAME
-            </a>
-
-            <a
-                href="shop.html"
-                class="navItem">
-                SHOP
-            </a>
-
-            <a
-                href="shop.html#inventory"
-                class="navItem">
-                INVENTORY
-            </a>
-
-            <button
-                id="achievementsButton"
-                class="navItem"
-                type="button">
-                ACHIEVEMENTS
-            </button>
-
-        </nav>
-
-
-        <div class="systemStatus">
-
-            <span></span>
-
-            SYSTEM ONLINE
-
-        </div>
-
-    </header>
-
-
-    <!-- =========================================
-         MAIN MENU
-    ========================================== -->
+    <!-- =========================
+         START MENU
+    ========================== -->
 
     <div id="menu">
 
-        <main class="homeTerminal">
+        <div class="menuTop">
+
+            <div class="brand">
+                <div class="brandIcon">E</div>
+
+                <div>
+                    <strong>ECHOBOUND</strong>
+                    <span>THE LOST SIGNAL</span>
+                </div>
+            </div>
+
+            <div class="online">
+                <i></i>
+                SYSTEM ONLINE
+            </div>
+
+        </div>
 
 
-            <!-- LEFT -->
+        <div class="menuContent">
 
-            <section class="homeHero">
+            <section class="hero">
 
-                <div class="sectionTop">
-
-                    <span>
-                        ECHOBOUND NETWORK
-                    </span>
-
-                    <span>
-                        SEC-07
-                    </span>
-
+                <div class="eyebrow">
+                    EXPEDITION NETWORK // SECTOR 07
                 </div>
 
+                <h1>
+                    THE LOST
+                    <span>SIGNAL</span>
+                </h1>
 
-                <div class="heroMain">
+                <p>
+                    Something is transmitting from beyond the dead zone.
+                    Enter the unknown, recover the signal and survive the echoes.
+                </p>
 
-                    <div class="signal">
+                <div class="missionStats">
 
-                        <i></i>
-
-                        SIGNAL DETECTED
-
+                    <div>
+                        <small>LOCATION</small>
+                        <strong>SECTOR 07</strong>
                     </div>
 
-
-                    <h1>
-
-                        THE LOST
-
-                        <span>
-                            SIGNAL
-                        </span>
-
-                    </h1>
-
-
-                    <p>
-
-                        Explore the unknown.<br>
-                        Recover the lost signal.<br>
-                        Survive what is waiting beyond.
-
-                    </p>
-
-
-                    <div class="missionGrid">
-
-                        <div>
-
-                            <small>
-                                MISSION
-                            </small>
-
-                            <strong>
-                                LOST SIGNAL
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <small>
-                                SECTOR
-                            </small>
-
-                            <strong>
-                                07-A
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <small>
-                                THREAT
-                            </small>
-
-                            <strong>
-                                UNKNOWN
-                            </strong>
-
-                        </div>
-
+                    <div>
+                        <small>THREAT</small>
+                        <strong>UNKNOWN</strong>
                     </div>
 
-                </div>
-
-
-                <div class="sectionBottom">
-
-                    <span>
-                        LOCAL SAVE SYSTEM
-                    </span>
-
-                    <span>
-                        ECHOBOUND // 3D
-                    </span>
+                    <div>
+                        <small>STATUS</small>
+                        <strong>ACTIVE</strong>
+                    </div>
 
                 </div>
 
             </section>
 
 
-            <!-- RIGHT -->
+            <section class="menuPanel">
 
-            <section class="commandPanel">
-
-                <div class="panelTitle">
-
+                <div class="panelHeader">
                     <div>
-
-                        <small>
-                            MISSION CONTROL
-                        </small>
-
-                        <h2>
-                            MAIN MENU
-                        </h2>
-
+                        <small>MISSION CONTROL</small>
+                        <h2>MAIN MENU</h2>
                     </div>
 
-                    <b>
-                        EB-07
-                    </b>
-
+                    <span>EB-07</span>
                 </div>
 
 
                 <div class="menuButtons">
 
-                    <button
-                        id="newGame"
-                        class="menuButton primary"
-                        type="button">
+                    <button id="newGame" class="menuButton primary">
+                        <b>01</b>
 
-                        <span class="number">
-                            01
-                        </span>
+                        <div>
+                            <strong>NEW RUN</strong>
+                            <small>START A NEW EXPEDITION</small>
+                        </div>
 
-                        <span class="buttonInfo">
-
-                            <strong>
-                                NEW RUN
-                            </strong>
-
-                            <small>
-                                START A NEW EXPEDITION
-                            </small>
-
-                        </span>
-
-                        <span class="arrow">
-                            ›
-                        </span>
-
+                        <em>›</em>
                     </button>
 
 
-                    <button
-                        id="loadGame"
-                        class="menuButton"
-                        type="button">
+                    <button id="loadGame" class="menuButton">
+                        <b>02</b>
 
-                        <span class="number">
-                            02
-                        </span>
+                        <div>
+                            <strong>CONTINUE</strong>
+                            <small>RESUME SAVED RUN</small>
+                        </div>
 
-                        <span class="buttonInfo">
-
-                            <strong>
-                                CONTINUE
-                            </strong>
-
-                            <small>
-                                RESUME SAVED RUN
-                            </small>
-
-                        </span>
-
-                        <span class="arrow">
-                            ›
-                        </span>
-
+                        <em>›</em>
                     </button>
 
 
-                    <button
-                        id="achievementsButtonGame"
-                        class="menuButton"
-                        type="button">
+                    <button id="achievementsButton" class="menuButton">
+                        <b>03</b>
 
-                        <span class="number">
-                            03
-                        </span>
+                        <div>
+                            <strong>ACHIEVEMENTS</strong>
+                            <small>VIEW YOUR RECORDS</small>
+                        </div>
 
-                        <span class="buttonInfo">
-
-                            <strong>
-                                ACHIEVEMENTS
-                            </strong>
-
-                            <small>
-                                VIEW YOUR RECORDS
-                            </small>
-
-                        </span>
-
-                        <span class="arrow">
-                            ›
-                        </span>
-
+                        <em>›</em>
                     </button>
 
 
-                    <button
-                        id="controlsButton"
-                        class="menuButton"
-                        type="button">
+                    <button id="controlsButton" class="menuButton">
+                        <b>04</b>
 
-                        <span class="number">
-                            04
-                        </span>
+                        <div>
+                            <strong>CONTROLS</strong>
+                            <small>VIEW GAME CONTROLS</small>
+                        </div>
 
-                        <span class="buttonInfo">
-
-                            <strong>
-                                CONTROLS
-                            </strong>
-
-                            <small>
-                                VIEW GAME CONTROLS
-                            </small>
-
-                        </span>
-
-                        <span class="arrow">
-                            ›
-                        </span>
-
+                        <em>›</em>
                     </button>
 
 
-                    <a
-                        href="shop.html"
-                        class="menuButton shopButton">
+                    <a href="shop.html" class="menuButton">
+                        <b>05</b>
 
-                        <span class="number">
-                            05
-                        </span>
+                        <div>
+                            <strong>SUPPLY TERMINAL</strong>
+                            <small>OPEN ECHOBOUND SHOP</small>
+                        </div>
 
-                        <span class="buttonInfo">
-
-                            <strong>
-                                SUPPLY TERMINAL
-                            </strong>
-
-                            <small>
-                                OPEN THE ECHOBOUND SHOP
-                            </small>
-
-                        </span>
-
-                        <span class="arrow">
-                            ›
-                        </span>
-
+                        <em>›</em>
                     </a>
 
                 </div>
 
 
-                <div class="panelBottom">
+                <div class="panelFooter">
 
-                    <div class="saveStatus">
-
+                    <span>
                         <i></i>
+                        LOCAL SAVE
+                    </span>
 
-                        SAVE DATA: LOCAL
-
-                    </div>
-
-                    <div>
-                        READY
-                    </div>
+                    <span>
+                        BUILD 3D-07
+                    </span>
 
                 </div>
 
             </section>
 
-        </main>
+        </div>
+
+
+        <div class="menuFooter">
+            ECHOBOUND NETWORK
+            <span>•</span>
+            SIGNAL MONITORING ACTIVE
+            <span>•</span>
+            ALL SYSTEMS NOMINAL
+        </div>
 
     </div>
 
 
-    <!-- =========================================
+    <!-- =========================
          HUD
-    ========================================== -->
+    ========================== -->
 
     <div id="hud">
 
+        <div class="hudTopLeft">
 
-        <div class="topLeft">
-
-            <div class="hudTitle">
+            <div class="hudLogo">
                 ECHOBOUND
             </div>
 
+            <div class="hudStat">
+                <label>HEALTH</label>
 
-            <div class="statLabel">
-                HEALTH
-            </div>
-
-            <div class="bar">
-
-                <div
-                    id="healthBar"
-                    class="healthBar">
+                <div class="bar">
+                    <span id="healthBar"></span>
                 </div>
-
             </div>
 
+            <div class="hudStat">
+                <label>ENERGY</label>
 
-            <div class="statLabel">
-                ENERGY
-            </div>
-
-            <div class="bar">
-
-                <div
-                    id="energyBar"
-                    class="energyBar">
+                <div class="bar energy">
+                    <span id="energyBar"></span>
                 </div>
-
             </div>
 
         </div>
 
 
-        <div id="objective">
-            FIND THE SIGNAL
+        <div class="objective">
+
+            <small>CURRENT OBJECTIVE</small>
+
+            <strong id="objective">
+                LOCATE THE SIGNAL
+            </strong>
+
         </div>
 
 
-        <div class="topRight">
+        <div class="hudTopRight">
 
             <div id="zone">
                 UNKNOWN SECTOR
             </div>
 
             <div id="kills">
-                KILLS: 0
+                KILLS 00
             </div>
 
             <div id="credits">
-                CREDITS: 0
+                CREDITS 000
             </div>
 
         </div>
 
 
-        <div class="bottomLeft">
+        <div class="crosshair">
+
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </div>
+
+
+        <div class="interaction">
+            CLICK TO SHOOT
+        </div>
+
+
+        <div class="weaponHUD">
+
+            <div class="weaponInfo">
+
+                <small>PRIMARY WEAPON</small>
+
+                <strong>PULSE RIFLE</strong>
+
+            </div>
+
+            <div class="ammo">
+
+                <strong id="ammo">12</strong>
+
+                <span>/ ∞</span>
+
+            </div>
+
+        </div>
+
+
+        <div class="controlsHUD">
 
             WASD MOVE
-            &nbsp; • &nbsp;
-            MOUSE AIM
-            &nbsp; • &nbsp;
-            CLICK SHOOT
-            &nbsp; • &nbsp;
+            <span>•</span>
+            MOUSE LOOK
+            <span>•</span>
+            CLICK FIRE
+            <span>•</span>
             SHIFT SPRINT
-            &nbsp; • &nbsp;
+            <span>•</span>
             SPACE DASH
-            &nbsp; • &nbsp;
+            <span>•</span>
+            M MAP
+            <span>•</span>
             ESC PAUSE
-
-        </div>
-
-
-        <div class="weapon">
-
-            <div class="weaponName">
-                PULSE
-            </div>
-
-            <div id="ammo">
-                12 / ∞
-            </div>
 
         </div>
 
     </div>
 
 
-    <!-- =========================================
+    <!-- =========================
          PAUSE
-    ========================================== -->
+    ========================== -->
 
     <div id="pause">
 
-        <div class="pauseBox">
+        <div class="pausePanel">
 
-            <div class="pauseSmall">
+            <div class="pauseLogo">
                 ECHOBOUND
             </div>
 
-            <h2>
-                PAUSED
-            </h2>
+            <small>MISSION CONTROL</small>
 
+            <h2>PAUSED</h2>
 
-            <button
-                id="resume"
-                class="menuButton primary"
-                type="button">
+            <button id="resume" class="pauseButton primary">
                 RESUME
             </button>
 
-
-            <button
-                id="save"
-                class="menuButton"
-                type="button">
+            <button id="save" class="pauseButton">
                 SAVE RUN
             </button>
 
-
-            <button
-                id="quit"
-                class="menuButton"
-                type="button">
+            <button id="quit" class="pauseButton">
                 QUIT TO MENU
             </button>
 
-
-            <a
-                href="shop.html"
-                class="menuButton shopButton">
-                SHOP
+            <a href="shop.html" class="pauseButton">
+                SUPPLY TERMINAL
             </a>
 
         </div>
@@ -534,40 +336,47 @@
     </div>
 
 
-    <!-- =========================================
+    <!-- =========================
          ACHIEVEMENT
-    ========================================== -->
+    ========================== -->
 
     <div id="achievement">
 
-        <div class="achievementTop">
-            ACHIEVEMENT UNLOCKED
+        <div class="achievementIcon">
+            ✓
         </div>
 
-        <div id="achievementName">
-            FIRST ECHO
+        <div>
+
+            <small>
+                ACHIEVEMENT UNLOCKED
+            </small>
+
+            <strong id="achievementName">
+                FIRST ECHO
+            </strong>
+
         </div>
 
     </div>
 
 
-    <!-- =========================================
+    <!-- =========================
          MAP
-    ========================================== -->
+    ========================== -->
 
     <div id="map">
 
-        <div class="mapBox">
+        <div class="mapPanel">
 
             <div class="mapHeader">
 
-                <h2>
-                    SECTOR MAP
-                </h2>
+                <div>
+                    <small>EXPLORATION NETWORK</small>
+                    <h2>SECTOR MAP</h2>
+                </div>
 
-                <button
-                    id="closeMap"
-                    type="button">
+                <button id="closeMap">
                     CLOSE
                 </button>
 
@@ -580,7 +389,9 @@
     </div>
 
 
-    <!-- THREE.JS -->
+    <!-- =========================
+         SCRIPT
+    ========================== -->
 
     <script type="module" src="app.js"></script>
 
