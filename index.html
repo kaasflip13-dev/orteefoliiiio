@@ -3,397 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>EchoBound — The Lost Signal</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <canvas id="game"></canvas>
+<canvas id="game"></canvas>
 
-    <!-- =========================
-         START MENU
-    ========================== -->
+<!-- ================= MENU ================= -->
 
-    <div id="menu">
+<div id="menu">
 
-        <div class="menuTop">
+    <header class="topbar">
 
-            <div class="brand">
-                <div class="brandIcon">E</div>
+        <div class="brand">
+            <div class="brandMark">E</div>
+
+            <div>
+                <strong>ECHOBOUND</strong>
+                <span>THE LOST SIGNAL</span>
+            </div>
+        </div>
+
+        <div class="systemStatus">
+            <i></i>
+            SYSTEM ONLINE
+        </div>
+
+    </header>
+
+
+    <main class="menuLayout">
+
+        <section class="intro">
+
+            <div class="eyebrow">
+                EXPEDITION NETWORK // SECTOR 07
+            </div>
+
+            <h1>
+                THE LOST
+                <span>SIGNAL</span>
+            </h1>
+
+            <p>
+                Een onbekend signaal komt uit een verlaten gebied.
+                Ga op onderzoek uit, ontdek wat daar leeft en probeer
+                de bron van het signaal te bereiken.
+            </p>
+
+            <div class="stats">
 
                 <div>
-                    <strong>ECHOBOUND</strong>
-                    <span>THE LOST SIGNAL</span>
+                    <small>LOCATION</small>
+                    <strong>SECTOR 07</strong>
                 </div>
-            </div>
-
-            <div class="online">
-                <i></i>
-                SYSTEM ONLINE
-            </div>
-
-        </div>
-
-
-        <div class="menuContent">
-
-            <section class="hero">
-
-                <div class="eyebrow">
-                    EXPEDITION NETWORK // SECTOR 07
-                </div>
-
-                <h1>
-                    THE LOST
-                    <span>SIGNAL</span>
-                </h1>
-
-                <p>
-                    Something is transmitting from beyond the dead zone.
-                    Enter the unknown, recover the signal and survive the echoes.
-                </p>
-
-                <div class="missionStats">
-
-                    <div>
-                        <small>LOCATION</small>
-                        <strong>SECTOR 07</strong>
-                    </div>
-
-                    <div>
-                        <small>THREAT</small>
-                        <strong>UNKNOWN</strong>
-                    </div>
-
-                    <div>
-                        <small>STATUS</small>
-                        <strong>ACTIVE</strong>
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <section class="menuPanel">
-
-                <div class="panelHeader">
-                    <div>
-                        <small>MISSION CONTROL</small>
-                        <h2>MAIN MENU</h2>
-                    </div>
-
-                    <span>EB-07</span>
-                </div>
-
-
-                <div class="menuButtons">
-
-                    <button id="newGame" class="menuButton primary">
-                        <b>01</b>
-
-                        <div>
-                            <strong>NEW RUN</strong>
-                            <small>START A NEW EXPEDITION</small>
-                        </div>
-
-                        <em>›</em>
-                    </button>
-
-
-                    <button id="loadGame" class="menuButton">
-                        <b>02</b>
-
-                        <div>
-                            <strong>CONTINUE</strong>
-                            <small>RESUME SAVED RUN</small>
-                        </div>
-
-                        <em>›</em>
-                    </button>
-
-
-                    <button id="achievementsButton" class="menuButton">
-                        <b>03</b>
-
-                        <div>
-                            <strong>ACHIEVEMENTS</strong>
-                            <small>VIEW YOUR RECORDS</small>
-                        </div>
-
-                        <em>›</em>
-                    </button>
-
-
-                    <button id="controlsButton" class="menuButton">
-                        <b>04</b>
-
-                        <div>
-                            <strong>CONTROLS</strong>
-                            <small>VIEW GAME CONTROLS</small>
-                        </div>
-
-                        <em>›</em>
-                    </button>
-
-
-                    <a href="shop.html" class="menuButton">
-                        <b>05</b>
-
-                        <div>
-                            <strong>SUPPLY TERMINAL</strong>
-                            <small>OPEN ECHOBOUND SHOP</small>
-                        </div>
-
-                        <em>›</em>
-                    </a>
-
-                </div>
-
-
-                <div class="panelFooter">
-
-                    <span>
-                        <i></i>
-                        LOCAL SAVE
-                    </span>
-
-                    <span>
-                        BUILD 3D-07
-                    </span>
-
-                </div>
-
-            </section>
-
-        </div>
-
-
-        <div class="menuFooter">
-            ECHOBOUND NETWORK
-            <span>•</span>
-            SIGNAL MONITORING ACTIVE
-            <span>•</span>
-            ALL SYSTEMS NOMINAL
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         HUD
-    ========================== -->
-
-    <div id="hud">
-
-        <div class="hudTopLeft">
-
-            <div class="hudLogo">
-                ECHOBOUND
-            </div>
-
-            <div class="hudStat">
-                <label>HEALTH</label>
-
-                <div class="bar">
-                    <span id="healthBar"></span>
-                </div>
-            </div>
-
-            <div class="hudStat">
-                <label>ENERGY</label>
-
-                <div class="bar energy">
-                    <span id="energyBar"></span>
-                </div>
-            </div>
-
-        </div>
-
-
-        <div class="objective">
-
-            <small>CURRENT OBJECTIVE</small>
-
-            <strong id="objective">
-                LOCATE THE SIGNAL
-            </strong>
-
-        </div>
-
-
-        <div class="hudTopRight">
-
-            <div id="zone">
-                UNKNOWN SECTOR
-            </div>
-
-            <div id="kills">
-                KILLS 00
-            </div>
-
-            <div id="credits">
-                CREDITS 000
-            </div>
-
-        </div>
-
-
-        <div class="crosshair">
-
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-
-        </div>
-
-
-        <div class="interaction">
-            CLICK TO SHOOT
-        </div>
-
-
-        <div class="weaponHUD">
-
-            <div class="weaponInfo">
-
-                <small>PRIMARY WEAPON</small>
-
-                <strong>PULSE RIFLE</strong>
-
-            </div>
-
-            <div class="ammo">
-
-                <strong id="ammo">12</strong>
-
-                <span>/ ∞</span>
-
-            </div>
-
-        </div>
-
-
-        <div class="controlsHUD">
-
-            WASD MOVE
-            <span>•</span>
-            MOUSE LOOK
-            <span>•</span>
-            CLICK FIRE
-            <span>•</span>
-            SHIFT SPRINT
-            <span>•</span>
-            SPACE DASH
-            <span>•</span>
-            M MAP
-            <span>•</span>
-            ESC PAUSE
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         PAUSE
-    ========================== -->
-
-    <div id="pause">
-
-        <div class="pausePanel">
-
-            <div class="pauseLogo">
-                ECHOBOUND
-            </div>
-
-            <small>MISSION CONTROL</small>
-
-            <h2>PAUSED</h2>
-
-            <button id="resume" class="pauseButton primary">
-                RESUME
-            </button>
-
-            <button id="save" class="pauseButton">
-                SAVE RUN
-            </button>
-
-            <button id="quit" class="pauseButton">
-                QUIT TO MENU
-            </button>
-
-            <a href="shop.html" class="pauseButton">
-                SUPPLY TERMINAL
-            </a>
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         ACHIEVEMENT
-    ========================== -->
-
-    <div id="achievement">
-
-        <div class="achievementIcon">
-            ✓
-        </div>
-
-        <div>
-
-            <small>
-                ACHIEVEMENT UNLOCKED
-            </small>
-
-            <strong id="achievementName">
-                FIRST ECHO
-            </strong>
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         MAP
-    ========================== -->
-
-    <div id="map">
-
-        <div class="mapPanel">
-
-            <div class="mapHeader">
 
                 <div>
-                    <small>EXPLORATION NETWORK</small>
-                    <h2>SECTOR MAP</h2>
+                    <small>THREAT</small>
+                    <strong>UNKNOWN</strong>
                 </div>
 
-                <button id="closeMap">
-                    CLOSE
+                <div>
+                    <small>MISSION</small>
+                    <strong>ACTIVE</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="commandPanel">
+
+            <div class="panelTitle">
+
+                <div>
+                    <small>MISSION CONTROL</small>
+                    <h2>MAIN MENU</h2>
+                </div>
+
+                <span>EB-07</span>
+
+            </div>
+
+
+            <div class="menuButtons">
+
+                <button id="newGame" class="menuButton primary">
+                    <b>01</b>
+
+                    <div>
+                        <strong>NEW RUN</strong>
+                        <small>START A NEW EXPEDITION</small>
+                    </div>
+
+                    <em>›</em>
                 </button>
 
+
+                <button id="loadGame" class="menuButton">
+                    <b>02</b>
+
+                    <div>
+                        <strong>CONTINUE</strong>
+                        <small>RESUME SAVED RUN</small>
+                    </div>
+
+                    <em>›</em>
+                </button>
+
+
+                <button id="achievementsButton" class="menuButton">
+                    <b>03</b>
+
+                    <div>
+                        <strong>ACHIEVEMENTS</strong>
+                        <small>VIEW YOUR RECORDS</small>
+                    </div>
+
+                    <em>›</em>
+                </button>
+
+
+                <button id="controlsButton" class="menuButton">
+                    <b>04</b>
+
+                    <div>
+                        <strong>CONTROLS</strong>
+                        <small>VIEW GAME CONTROLS</small>
+                    </div>
+
+                    <em>›</em>
+                </button>
+
+
+                <a href="shop.html" class="menuButton">
+                    <b>05</b>
+
+                    <div>
+                        <strong>SUPPLY TERMINAL</strong>
+                        <small>OPEN ECHOBOUND SHOP</small>
+                    </div>
+
+                    <em>›</em>
+                </a>
+
             </div>
 
-            <canvas id="mapCanvas"></canvas>
+
+            <footer class="panelFooter">
+
+                <span>
+                    <i></i>
+                    LOCAL SAVE
+                </span>
+
+                <span>
+                    THIRD-PERSON 3D
+                </span>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+
+    <footer class="menuFooter">
+        ECHOBOUND NETWORK
+        <span>•</span>
+        SIGNAL MONITORING ACTIVE
+        <span>•</span>
+        ALL SYSTEMS NOMINAL
+    </footer>
+
+</div>
+
+
+<!-- ================= HUD ================= -->
+
+<div id="hud">
+
+    <div class="playerHUD">
+
+        <div class="hudLogo">
+            ECHOBOUND
+        </div>
+
+        <div class="hudStat">
+
+            <label>HEALTH</label>
+
+            <div class="bar">
+                <span id="healthBar"></span>
+            </div>
+
+        </div>
+
+
+        <div class="hudStat">
+
+            <label>ENERGY</label>
+
+            <div class="bar energy">
+                <span id="energyBar"></span>
+            </div>
 
         </div>
 
     </div>
 
 
-    <!-- =========================
-         SCRIPT
-    ========================== -->
+    <div class="objective">
 
-    <script type="module" src="app.js"></script>
+        <small>CURRENT OBJECTIVE</small>
+
+        <strong id="objective">
+            LOCATE THE SIGNAL
+        </strong>
+
+    </div>
+
+
+    <div class="rightHUD">
+
+        <div id="zone">
+            OUTER SECTOR
+        </div>
+
+        <div id="kills">
+            KILLS 00
+        </div>
+
+        <div id="credits">
+            CREDITS 000
+        </div>
+
+    </div>
+
+
+    <div class="crosshair">
+
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+
+    </div>
+
+
+    <div class="weaponHUD">
+
+        <div>
+            <small>PRIMARY WEAPON</small>
+            <strong>PULSE RIFLE</strong>
+        </div>
+
+        <div class="ammo">
+            <b id="ammo">12</b>
+            <span>/ ∞</span>
+        </div>
+
+    </div>
+
+
+    <div class="controlHint">
+        WASD MOVE
+        <span>•</span>
+        MOUSE CAMERA
+        <span>•</span>
+        CLICK FIRE
+        <span>•</span>
+        SHIFT SPRINT
+        <span>•</span>
+        SPACE DASH
+        <span>•</span>
+        M MAP
+        <span>•</span>
+        ESC PAUSE
+    </div>
+
+</div>
+
+
+<!-- ================= PAUSE ================= -->
+
+<div id="pause">
+
+    <div class="pausePanel">
+
+        <div class="pauseLogo">
+            ECHOBOUND
+        </div>
+
+        <small>MISSION CONTROL</small>
+
+        <h2>PAUSED</h2>
+
+        <button id="resume" class="pauseButton primary">
+            RESUME
+        </button>
+
+        <button id="save" class="pauseButton">
+            SAVE RUN
+        </button>
+
+        <button id="quit" class="pauseButton">
+            QUIT TO MENU
+        </button>
+
+        <a href="shop.html" class="pauseButton">
+            SUPPLY TERMINAL
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ================= ACHIEVEMENT ================= -->
+
+<div id="achievement">
+
+    <div class="achievementIcon">
+        ✓
+    </div>
+
+    <div>
+        <small>ACHIEVEMENT UNLOCKED</small>
+        <strong id="achievementName">FIRST ECHO</strong>
+    </div>
+
+</div>
+
+
+<!-- ================= MAP ================= -->
+
+<div id="map">
+
+    <div class="mapPanel">
+
+        <div class="mapHeader">
+
+            <div>
+                <small>EXPLORATION NETWORK</small>
+                <h2>SECTOR MAP</h2>
+            </div>
+
+            <button id="closeMap">
+                CLOSE
+            </button>
+
+        </div>
+
+        <canvas id="mapCanvas"></canvas>
+
+    </div>
+
+</div>
+
+
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
