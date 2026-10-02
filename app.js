@@ -19,7 +19,7 @@ import {
    ECHOBOUND — THE LOST SIGNAL
    THIRD PERSON TANK
    FIREBASE SAVE SYSTEM
-   STABIELE POINTER LOCK VERSIE
+   GROTERE EN LANGERE MONSTERS
 ========================================================= */
 
 
@@ -51,7 +51,6 @@ const auth =
 
 
 let firebaseUser = null;
-
 let firebaseReady = false;
 
 
@@ -99,46 +98,35 @@ const firebaseLogin =
 const canvas =
     document.getElementById("game");
 
-
 const menu =
     document.getElementById("menu");
-
 
 const hud =
     document.getElementById("hud");
 
-
 const pause =
     document.getElementById("pause");
-
 
 const achievement =
     document.getElementById("achievement");
 
-
 const healthBar =
     document.getElementById("healthBar");
-
 
 const energyBar =
     document.getElementById("energyBar");
 
-
 const ammoText =
     document.getElementById("ammo");
-
 
 const killsText =
     document.getElementById("kills");
 
-
 const creditsText =
     document.getElementById("credits");
 
-
 const zoneText =
     document.getElementById("zone");
-
 
 const objectiveText =
     document.getElementById("objective");
@@ -179,8 +167,13 @@ renderer.shadowMap.enabled =
     true;
 
 
+/*
+   Three.js 0.186 gebruikt geen
+   PCFSoftShadowMap meer.
+*/
+
 renderer.shadowMap.type =
-    THREE.PCFSoftShadowMap;
+    THREE.PCFShadowMap;
 
 
 renderer.outputColorSpace =
@@ -237,34 +230,26 @@ camera.position.set(
 const CAMERA_DISTANCE =
     15;
 
-
 const CAMERA_HEIGHT =
     7;
-
 
 const CAMERA_TARGET_HEIGHT =
     1.15;
 
-
 const CAMERA_SMOOTHNESS =
     10;
-
 
 let cameraYaw =
     0;
 
-
 let cameraPitch =
     0.20;
-
 
 const MIN_CAMERA_PITCH =
     -0.28;
 
-
 const MAX_CAMERA_PITCH =
     0.72;
-
 
 const CAMERA_SENSITIVITY =
     0.0024;
@@ -278,13 +263,10 @@ const hemi =
     new THREE.HemisphereLight(
 
         0x9befff,
-
         0x101419,
-
         2.4
 
     );
-
 
 scene.add(hemi);
 
@@ -293,7 +275,6 @@ const sun =
     new THREE.DirectionalLight(
 
         0xdffaff,
-
         3.4
 
     );
@@ -313,22 +294,17 @@ sun.castShadow =
 sun.shadow.mapSize.width =
     2048;
 
-
 sun.shadow.mapSize.height =
     2048;
-
 
 sun.shadow.camera.left =
     -150;
 
-
 sun.shadow.camera.right =
     150;
 
-
 sun.shadow.camera.top =
     150;
-
 
 sun.shadow.camera.bottom =
     -150;
@@ -381,11 +357,8 @@ const grid =
     new THREE.GridHelper(
 
         360,
-
         72,
-
         0x1d6570,
-
         0x123038
 
     );
@@ -413,20 +386,11 @@ scene.add(grid);
 let gameRunning =
     false;
 
-
 let paused =
     false;
 
-
 let pointerLocked =
     false;
-
-
-/*
-   Belangrijk:
-   We vragen pointer lock nooit meerdere keren
-   tegelijk aan.
-*/
 
 let pointerLockRequestPending =
     false;
@@ -436,11 +400,8 @@ const keys = {};
 
 
 const obstacles = [];
-
 const enemies = [];
-
 const bullets = [];
-
 const particles = [];
 
 
@@ -493,60 +454,21 @@ const player = {
 
 
 /* =========================================================
-   SAFE POINTER LOCK
+   POINTER LOCK
 ========================================================= */
 
 function requestGamePointerLock() {
 
-    if (
-        !canvas
-    ) {
+    if (!canvas) return;
 
-        return;
+    if (!gameRunning) return;
 
-    }
+    if (paused) return;
 
+    if (pointerLocked) return;
 
-    if (
-        !gameRunning
-    ) {
+    if (pointerLockRequestPending) return;
 
-        return;
-
-    }
-
-
-    if (
-        paused
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        pointerLocked
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        pointerLockRequestPending
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-       Dit voorkomt dat de browser meerdere
-       pointer-lock aanvragen tegelijk krijgt.
-    */
 
     pointerLockRequestPending =
         true;
@@ -558,25 +480,19 @@ function requestGamePointerLock() {
             canvas.requestPointerLock();
 
 
-        /*
-           Sommige browsers geven een Promise terug.
-        */
-
         if (
             result &&
             typeof result.catch === "function"
         ) {
 
-            result.catch(
-                error => {
+            result.catch(error => {
 
-                    console.warn(
-                        "Pointer lock tijdelijk niet beschikbaar:",
-                        error
-                    );
+                console.warn(
+                    "Pointer lock tijdelijk niet beschikbaar:",
+                    error
+                );
 
-                }
-            );
+            });
 
         }
 
@@ -590,20 +506,12 @@ function requestGamePointerLock() {
     }
 
 
-    /*
-       Na een korte tijd mag opnieuw
-       geprobeerd worden.
-    */
+    setTimeout(() => {
 
-    setTimeout(
-        () => {
+        pointerLockRequestPending =
+            false;
 
-            pointerLockRequestPending =
-                false;
-
-        },
-        700
-    );
+    }, 700);
 
 }
 
@@ -633,15 +541,7 @@ window.addEventListener(
             event.code === "Escape"
         ) {
 
-            if (
-                gameRunning
-            ) {
-
-                /*
-                   Alleen togglen als we niet
-                   net door de browser uit pointer
-                   lock zijn gehaald.
-                */
+            if (gameRunning) {
 
                 togglePause();
 
@@ -665,40 +565,18 @@ window.addEventListener(
 
 
 /* =========================================================
-   POINTER LOCK
+   POINTER LOCK EVENTS
 ========================================================= */
-
-
-/*
-   Klik in het spel:
-   muis vastzetten.
-*/
 
 canvas.addEventListener(
     "click",
-    event => {
+    () => {
 
-        if (
-            !gameRunning
-        ) {
+        if (!gameRunning) return;
 
-            return;
+        if (paused) return;
 
-        }
-
-
-        if (
-            paused
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            !pointerLocked
-        ) {
+        if (!pointerLocked) {
 
             requestGamePointerLock();
 
@@ -708,52 +586,24 @@ canvas.addEventListener(
 );
 
 
-/*
-   Linkermuisknop:
-   schieten.
-*/
-
 canvas.addEventListener(
     "mousedown",
     event => {
 
-        if (
-            !gameRunning
-        ) {
+        if (!gameRunning) return;
 
-            return;
-
-        }
-
-
-        if (
-            paused
-        ) {
-
-            return;
-
-        }
+        if (paused) return;
 
 
         if (
             event.button === 0
         ) {
 
-            /*
-               Als de muis nog niet vastzit,
-               proberen we hem vast te zetten.
-
-               Dit is maar één aanvraag.
-            */
-
-            if (
-                !pointerLocked
-            ) {
+            if (!pointerLocked) {
 
                 requestGamePointerLock();
 
             }
-
 
             shoot();
 
@@ -762,10 +612,6 @@ canvas.addEventListener(
     }
 );
 
-
-/*
-   Rechtermuisknop uitschakelen.
-*/
 
 canvas.addEventListener(
     "contextmenu",
@@ -777,10 +623,6 @@ canvas.addEventListener(
 );
 
 
-/*
-   Pointer lock status.
-*/
-
 document.addEventListener(
     "pointerlockchange",
     () => {
@@ -789,9 +631,7 @@ document.addEventListener(
             document.pointerLockElement === canvas;
 
 
-        if (
-            pointerLocked
-        ) {
+        if (pointerLocked) {
 
             pointerLockRequestPending =
                 false;
@@ -801,11 +641,6 @@ document.addEventListener(
     }
 );
 
-
-/*
-   Als pointer lock wordt geweigerd,
-   laten we de game gewoon verder werken.
-*/
 
 document.addEventListener(
     "pointerlockerror",
@@ -833,41 +668,19 @@ document.addEventListener(
     "mousemove",
     event => {
 
-        if (
-            !pointerLocked
-        ) {
+        if (!pointerLocked) return;
 
-            return;
+        if (!gameRunning) return;
 
-        }
-
-
-        if (
-            !gameRunning
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            paused
-        ) {
-
-            return;
-
-        }
+        if (paused) return;
 
 
         cameraYaw -=
-
             event.movementX *
             CAMERA_SENSITIVITY;
 
 
         cameraPitch -=
-
             event.movementY *
             CAMERA_SENSITIVITY;
 
@@ -1160,7 +973,6 @@ function createTrackWheels(z) {
 
         tank.add(wheel);
 
-
         tankWheels.push(
             wheel
         );
@@ -1170,14 +982,8 @@ function createTrackWheels(z) {
 }
 
 
-createTrackWheels(
-    -2.43
-);
-
-
-createTrackWheels(
-    2.43
-);
+createTrackWheels(-2.43);
+createTrackWheels(2.43);
 
 
 /* =========================================================
@@ -1567,9 +1373,7 @@ function addObstacle(
     radius
 ) {
 
-    scene.add(
-        object
-    );
+    scene.add(object);
 
     obstacles.push({
 
@@ -1621,17 +1425,14 @@ function createRock(
 
 
     rock.rotation.set(
-
         Math.random(),
         Math.random(),
         Math.random()
-
     );
 
 
     rock.castShadow =
         true;
-
 
     rock.receiveShadow =
         true;
@@ -1665,11 +1466,8 @@ function createTree(
             new THREE.CylinderGeometry(
 
                 0.28 * scale,
-
                 0.43 * scale,
-
                 3.5 * scale,
-
                 8
 
             ),
@@ -1702,9 +1500,7 @@ function createTree(
             new THREE.ConeGeometry(
 
                 1.8 * scale,
-
                 4.6 * scale,
-
                 9
 
             ),
@@ -1791,7 +1587,6 @@ function createBuilding(
     body.castShadow =
         true;
 
-
     body.receiveShadow =
         true;
 
@@ -1824,13 +1619,9 @@ function createBuilding(
 
 
         strip.position.set(
-
             0,
-
             y,
-
             depth / 2 + 0.04
-
         );
 
 
@@ -1847,14 +1638,11 @@ function createBuilding(
 
 
     addObstacle(
-
         building,
-
         Math.max(
             width,
             depth
         ) * 0.72
-
     );
 
 }
@@ -1893,14 +1681,10 @@ function generateWorld() {
 
 
         createRock(
-
             x,
-
             z,
-
             0.5 +
             Math.random() * 1.1
-
         );
 
     }
@@ -1933,14 +1717,10 @@ function generateWorld() {
 
 
         createTree(
-
             x,
-
             z,
-
             0.6 +
             Math.random() * 0.8
-
         );
 
     }
@@ -2060,13 +1840,9 @@ signalTower.add(signalOrb);
 
 const signalLight =
     new THREE.PointLight(
-
         0x58e9ff,
-
         14,
-
         40
-
     );
 
 
@@ -2155,76 +1931,42 @@ function updateTank(
     let throttle =
         0;
 
-
     let steering =
         0;
 
 
-    if (
-        keys.KeyW
-    ) {
+    if (keys.KeyW) {
+        throttle += 1;
+    }
 
-        throttle +=
-            1;
+    if (keys.KeyS) {
+        throttle -= 1;
+    }
 
+    if (keys.KeyA) {
+        steering += 1;
+    }
+
+    if (keys.KeyD) {
+        steering -= 1;
     }
 
 
-    if (
-        keys.KeyS
-    ) {
-
-        throttle -=
-            1;
-
-    }
-
-
-    if (
-        keys.KeyA
-    ) {
-
-        steering +=
-            1;
-
-    }
-
-
-    if (
-        keys.KeyD
-    ) {
-
-        steering -=
-            1;
-
-    }
-
-
-    if (
-        steering !== 0
-    ) {
+    if (steering !== 0) {
 
         player.rotation +=
-
             steering *
-
             player.turnSpeed *
-
             delta;
 
     }
 
 
-    if (
-        throttle !== 0
-    ) {
+    if (throttle !== 0) {
 
         const speed =
-
             throttle > 0
-
                 ? player.speed
-
                 : player.reverseSpeed;
 
 
@@ -2249,19 +1991,14 @@ function updateTank(
 
 
         next.addScaledVector(
-
             forward,
-
             speed *
             throttle *
             delta
-
         );
 
 
-        if (
-            !tankBlocked(next)
-        ) {
+        if (!tankBlocked(next)) {
 
             player.position.copy(
                 next
@@ -2282,26 +2019,19 @@ function updateTank(
 
 
     tankShadow.position.set(
-
         player.position.x,
-
         0.04,
-
         player.position.z
-
     );
 
 
-    if (
-        throttle !== 0
-    ) {
+    if (throttle !== 0) {
 
         for (
             const wheel of tankWheels
         ) {
 
             wheel.rotation.z +=
-
                 delta *
                 10 *
                 throttle;
@@ -2328,15 +2058,8 @@ function updateTurret(
 
     targetRotation =
         Math.atan2(
-
-            Math.sin(
-                targetRotation
-            ),
-
-            Math.cos(
-                targetRotation
-            )
-
+            Math.sin(targetRotation),
+            Math.cos(targetRotation)
         );
 
 
@@ -2347,22 +2070,13 @@ function updateTurret(
 
     difference =
         Math.atan2(
-
-            Math.sin(
-                difference
-            ),
-
-            Math.cos(
-                difference
-            )
-
+            Math.sin(difference),
+            Math.cos(difference)
         );
 
 
     player.turretRotation +=
-
         difference *
-
         Math.min(
             1,
             delta * 12
@@ -2374,25 +2088,18 @@ function updateTurret(
 
 
     const desiredPitch =
-
         THREE.MathUtils.clamp(
-
             cameraPitch * 0.55,
-
             -0.12,
-
             0.28
-
         );
 
 
     player.cannonPitch +=
-
         (
             desiredPitch -
             player.cannonPitch
         ) *
-
         Math.min(
             1,
             delta * 10
@@ -2403,18 +2110,13 @@ function updateTurret(
         player.cannonPitch;
 
 
-    if (
-        player.recoil > 0
-    ) {
+    if (player.recoil > 0) {
 
-        player.recoil -=
-            delta;
+        player.recoil -= delta;
 
 
         cannon.position.z =
-
             -1.15 +
-
             Math.sin(
                 player.recoil * 35
             ) *
@@ -2470,28 +2172,15 @@ function getCannonDirection() {
     forward.normalize();
 
 
-    const aimPoint =
-        muzzlePosition.clone();
+    /*
+       We gebruiken de echte richting van
+       het kanon.
 
+       Hierdoor kunnen grote monsters ook
+       boven de tank geraakt worden.
+    */
 
-    aimPoint.addScaledVector(
-        forward,
-        120
-    );
-
-
-    aimPoint.y =
-        1.2;
-
-
-    return new THREE.Vector3()
-
-        .subVectors(
-            aimPoint,
-            muzzlePosition
-        )
-
-        .normalize();
+    return forward;
 
 }
 
@@ -2502,29 +2191,16 @@ function getCannonDirection() {
 
 function shoot() {
 
-    if (
-        !gameRunning ||
-        paused ||
-        player.isReloading
-    ) {
+    if (!gameRunning) return;
 
-        return;
+    if (paused) return;
 
-    }
+    if (player.isReloading) return;
+
+    if (player.fireCooldown > 0) return;
 
 
-    if (
-        player.fireCooldown > 0
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        player.ammo <= 0
-    ) {
+    if (player.ammo <= 0) {
 
         reload();
 
@@ -2647,9 +2323,7 @@ function createMuzzleFlash(
     );
 
 
-    scene.add(
-        flash
-    );
+    scene.add(flash);
 
 
     particles.push({
@@ -2660,20 +2334,17 @@ function createMuzzleFlash(
         velocity:
             new THREE.Vector3(),
 
-        life: 0.09
+        life:
+            0.09
 
     });
 
 
     const flashLight =
         new THREE.PointLight(
-
             0x8cf7ff,
-
             12,
-
             15
-
         );
 
 
@@ -2687,16 +2358,13 @@ function createMuzzleFlash(
     );
 
 
-    setTimeout(
-        () => {
+    setTimeout(() => {
 
-            scene.remove(
-                flashLight
-            );
+        scene.remove(
+            flashLight
+        );
 
-        },
-        80
-    );
+    }, 80);
 
 }
 
@@ -2731,12 +2399,8 @@ function updateReload(
     delta
 ) {
 
-    if (
-        !player.isReloading
-    ) {
-
+    if (!player.isReloading) {
         return;
-
     }
 
 
@@ -2779,11 +2443,8 @@ function updateBullets(
 
 
         bullet.object.position.addScaledVector(
-
             bullet.velocity,
-
             delta
-
         );
 
 
@@ -2795,31 +2456,124 @@ function updateBullets(
             bullet.life <= 0;
 
 
+        /*
+           MONSTER HIT DETECTION
+
+           De kogel kijkt niet meer alleen
+           naar de voeten van het monster.
+
+           We gebruiken meerdere punten:
+           borst, hoofd en middenlichaam.
+        */
+
         for (
             const enemy of enemies
         ) {
 
-            if (
-                enemy.dead
+            if (enemy.dead) {
+                continue;
+            }
+
+
+            const hitPoints = [
+
+                new THREE.Vector3(
+                    0,
+                    enemy.hitHeight * 0.45,
+                    0
+                ),
+
+                new THREE.Vector3(
+                    0,
+                    enemy.hitHeight * 0.72,
+                    0
+                ),
+
+                new THREE.Vector3(
+                    0,
+                    enemy.hitHeight * 0.90,
+                    0
+                )
+
+            ];
+
+
+            let hit = false;
+
+
+            for (
+                const localPoint of hitPoints
             ) {
 
-                continue;
+                const worldPoint =
+                    enemy.object.localToWorld(
+                        localPoint.clone()
+                    );
+
+
+                const distance =
+                    bullet.object.position.distanceTo(
+                        worldPoint
+                    );
+
+
+                if (
+                    distance <
+                    enemy.hitRadius + 0.65
+                ) {
+
+                    hit = true;
+
+                    break;
+
+                }
 
             }
 
 
-            const distance =
-                bullet.object.position.distanceTo(
+            /*
+               Extra brede lichaams-hitbox.
+            */
 
-                    enemy.object.position
+            if (!hit) {
 
-                );
+                const horizontal =
+                    new THREE.Vector2(
+
+                        bullet.object.position.x -
+                        enemy.object.position.x,
+
+                        bullet.object.position.z -
+                        enemy.object.position.z
+
+                    ).length();
 
 
-            if (
-                distance <
-                enemy.radius + 0.65
-            ) {
+                const vertical =
+                    Math.abs(
+
+                        bullet.object.position.y -
+                        enemy.object.position.y
+
+                    );
+
+
+                if (
+                    horizontal <
+                    enemy.radius + 0.75 &&
+
+                    vertical <
+                    enemy.hitHeight + 1
+                ) {
+
+                    hit = true;
+
+                }
+
+            }
+
+
+            if (hit) {
 
                 enemy.health -=
                     bullet.damage;
@@ -2852,9 +2606,11 @@ function updateBullets(
         }
 
 
-        if (
-            !remove
-        ) {
+        /*
+           OBSTACLE HIT
+        */
+
+        if (!remove) {
 
             for (
                 const obstacle of obstacles
@@ -2862,9 +2618,7 @@ function updateBullets(
 
                 const distance =
                     bullet.object.position.distanceTo(
-
                         obstacle.object.position
-
                     );
 
 
@@ -2891,9 +2645,7 @@ function updateBullets(
         }
 
 
-        if (
-            remove
-        ) {
+        if (remove) {
 
             scene.remove(
                 bullet.object
@@ -2913,7 +2665,98 @@ function updateBullets(
 
 
 /* =========================================================
-   ENEMIES — GROTERE EN LANGERE MONSTERS
+   ENEMY SPAWNING
+========================================================= */
+
+function spawnEnemies() {
+
+    const types = [
+
+        "stalker",
+        "crawler",
+        "guardian"
+
+    ];
+
+
+    /*
+       Meer monsters verspreid over
+       de wereld.
+    */
+
+    const count =
+        18;
+
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        let angle =
+            Math.random() *
+            Math.PI *
+            2;
+
+
+        let distance =
+            40 +
+            Math.random() *
+            100;
+
+
+        let x =
+            player.position.x +
+            Math.cos(angle) *
+            distance;
+
+
+        let z =
+            player.position.z +
+            Math.sin(angle) *
+            distance;
+
+
+        x =
+            THREE.MathUtils.clamp(
+                x,
+                -150,
+                150
+            );
+
+
+        z =
+            THREE.MathUtils.clamp(
+                z,
+                -150,
+                150
+            );
+
+
+        const type =
+            types[
+                Math.floor(
+                    Math.random() *
+                    types.length
+                )
+            ];
+
+
+        createEnemy(
+            x,
+            z,
+            type
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ENEMIES
+   EXTRA GROOT + LANG
 ========================================================= */
 
 function createEnemy(
@@ -2930,7 +2773,7 @@ function createEnemy(
        MONSTER INSTELLINGEN
     ===================================================== */
 
-    let scale = 1.35;
+    let scale = 1.5;
 
     let color = 0x713654;
 
@@ -2938,50 +2781,97 @@ function createEnemy(
 
     let speed = 2;
 
-    let monsterHeight = 4.8;
+    let monsterHeight = 7;
+
+    let hitRadius = 2.2;
 
 
-    if (type === "stalker") {
+    /*
+       STALKER
+       Lang, smal en hoog.
+    */
 
-        scale = 1.45;
+    if (
+        type === "stalker"
+    ) {
 
-        color = 0x713654;
+        scale =
+            1.65;
 
-        health = 80;
+        color =
+            0x713654;
 
-        speed = 2.0;
+        health =
+            100;
 
-        monsterHeight = 5.6;
+        speed =
+            2.15;
+
+        monsterHeight =
+            7.4;
+
+        hitRadius =
+            2.45;
 
     }
 
 
-    if (type === "crawler") {
+    /*
+       CRAWLER
+       Laag maar extreem lang.
+    */
 
-        scale = 1.15;
+    if (
+        type === "crawler"
+    ) {
 
-        color = 0x8b6842;
+        scale =
+            1.35;
 
-        health = 45;
+        color =
+            0x8b6842;
 
-        speed = 3.1;
+        health =
+            55;
 
-        monsterHeight = 2.7;
+        speed =
+            3.25;
+
+        monsterHeight =
+            3.2;
+
+        hitRadius =
+            2.8;
 
     }
 
 
-    if (type === "guardian") {
+    /*
+       GUARDIAN
+       Gigantisch en zwaar.
+    */
 
-        scale = 2.15;
+    if (
+        type === "guardian"
+    ) {
 
-        color = 0x4c3d77;
+        scale =
+            2.45;
 
-        health = 150;
+        color =
+            0x4c3d77;
 
-        speed = 1.1;
+        health =
+            190;
 
-        monsterHeight = 7.4;
+        speed =
+            1.05;
+
+        monsterHeight =
+            10.2;
+
+        hitRadius =
+            3.6;
 
     }
 
@@ -2993,7 +2883,7 @@ function createEnemy(
     const bodyMaterial =
         new THREE.MeshStandardMaterial({
 
-            color: color,
+            color,
 
             roughness: 0.48,
 
@@ -3059,7 +2949,7 @@ function createEnemy(
 
 
     /* =====================================================
-       LICHAAM
+       LICHAAM — EXTRA LANG
     ===================================================== */
 
     const body =
@@ -3076,19 +2966,23 @@ function createEnemy(
         );
 
 
+    /*
+       Standaard langwerpig lichaam.
+    */
+
     body.scale.set(
 
-        0.82,
+        0.88,
 
-        1.55,
+        1.85,
 
-        0.62
+        0.70
 
     );
 
 
     body.position.y =
-        2.05 * scale;
+        2.45 * scale;
 
 
     body.castShadow =
@@ -3103,6 +2997,45 @@ function createEnemy(
 
 
     /* =====================================================
+       EXTRA RUG / LANG LICHAAM
+    ===================================================== */
+
+    const longBack =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                1.15 * scale,
+                18,
+                14
+            ),
+
+            bodyMaterial
+
+        );
+
+
+    longBack.scale.set(
+        0.85,
+        1.65,
+        0.9
+    );
+
+
+    longBack.position.set(
+        0,
+        2.15 * scale,
+        0.45 * scale
+    );
+
+
+    longBack.castShadow =
+        true;
+
+
+    enemy.add(longBack);
+
+
+    /* =====================================================
        BORSTPLAAT
     ===================================================== */
 
@@ -3110,7 +3043,7 @@ function createEnemy(
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-                1.05 * scale,
+                1.08 * scale,
                 16,
                 12
             ),
@@ -3121,24 +3054,16 @@ function createEnemy(
 
 
     chest.scale.set(
-
-        0.8,
-
-        1.05,
-
-        0.35
-
+        0.84,
+        1.15,
+        0.38
     );
 
 
     chest.position.set(
-
         0,
-
-        2.15 * scale,
-
-        -0.72 * scale
-
+        2.65 * scale,
+        -0.80 * scale
     );
 
 
@@ -3157,7 +3082,7 @@ function createEnemy(
         new THREE.Mesh(
 
             new THREE.OctahedronGeometry(
-                0.25 * scale,
+                0.30 * scale,
                 1
             ),
 
@@ -3167,13 +3092,9 @@ function createEnemy(
 
 
     chestCore.position.set(
-
         0,
-
-        2.15 * scale,
-
-        -1.08 * scale
-
+        2.65 * scale,
+        -1.16 * scale
     );
 
 
@@ -3192,15 +3113,10 @@ function createEnemy(
         new THREE.Mesh(
 
             new THREE.CylinderGeometry(
-
-                0.38 * scale,
-
-                0.52 * scale,
-
-                0.75 * scale,
-
+                0.40 * scale,
+                0.55 * scale,
+                0.82 * scale,
                 12
-
             ),
 
             darkMaterial
@@ -3209,7 +3125,7 @@ function createEnemy(
 
 
     neck.position.y =
-        3.15 * scale;
+        3.75 * scale;
 
 
     neck.castShadow =
@@ -3227,13 +3143,9 @@ function createEnemy(
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-
-                0.82 * scale,
-
+                0.86 * scale,
                 18,
-
                 14
-
             ),
 
             bodyMaterial
@@ -3242,18 +3154,14 @@ function createEnemy(
 
 
     head.scale.set(
-
-        0.88,
-
-        1.05,
-
-        0.85
-
+        0.90,
+        1.08,
+        0.88
     );
 
 
     head.position.y =
-        3.75 * scale;
+        4.35 * scale;
 
 
     head.castShadow =
@@ -3271,13 +3179,9 @@ function createEnemy(
         new THREE.Mesh(
 
             new THREE.BoxGeometry(
-
-                0.85 * scale,
-
-                0.55 * scale,
-
-                0.18 * scale
-
+                0.90 * scale,
+                0.58 * scale,
+                0.20 * scale
             ),
 
             darkMaterial
@@ -3286,13 +3190,9 @@ function createEnemy(
 
 
     face.position.set(
-
         0,
-
-        3.68 * scale,
-
-        -0.72 * scale
-
+        4.28 * scale,
+        -0.76 * scale
     );
 
 
@@ -3304,20 +3204,16 @@ function createEnemy(
     ===================================================== */
 
     for (
-        const eyeX of [-0.32, 0.32]
+        const eyeX of [-0.34, 0.34]
     ) {
 
         const eye =
             new THREE.Mesh(
 
                 new THREE.SphereGeometry(
-
-                    0.16 * scale,
-
+                    0.17 * scale,
                     12,
-
                     12
-
                 ),
 
                 eyeMaterial
@@ -3326,13 +3222,9 @@ function createEnemy(
 
 
         eye.position.set(
-
             eyeX * scale,
-
-            3.82 * scale,
-
-            -0.86 * scale
-
+            4.42 * scale,
+            -0.90 * scale
         );
 
 
@@ -3343,17 +3235,11 @@ function createEnemy(
         enemy.add(eye);
 
 
-        /* ooglicht */
-
         const eyeLight =
             new THREE.PointLight(
-
                 0xff356f,
-
-                1.8,
-
+                2.2,
                 5 * scale
-
             );
 
 
@@ -3374,20 +3260,16 @@ function createEnemy(
     ===================================================== */
 
     for (
-        const hornX of [-0.55, 0.55]
+        const hornX of [-0.58, 0.58]
     ) {
 
         const horn =
             new THREE.Mesh(
 
                 new THREE.ConeGeometry(
-
-                    0.23 * scale,
-
-                    1.35 * scale,
-
+                    0.25 * scale,
+                    1.55 * scale,
                     8
-
                 ),
 
                 boneMaterial
@@ -3396,22 +3278,15 @@ function createEnemy(
 
 
         horn.position.set(
-
             hornX * scale,
-
-            4.55 * scale,
-
+            5.15 * scale,
             -0.05 * scale
-
         );
 
 
         horn.rotation.z =
-
             hornX < 0
-
                 ? -0.35
-
                 : 0.35;
 
 
@@ -3429,234 +3304,97 @@ function createEnemy(
 
 
     /* =====================================================
-       LINKER ARM
-    ===================================================== */
-
-    const leftArm =
-        new THREE.Group();
-
-
-    leftArm.position.set(
-
-        -1.15 * scale,
-
-        2.55 * scale,
-
-        0
-
-    );
-
-
-    enemy.add(
-        leftArm
-    );
-
-
-    const leftUpperArm =
-        new THREE.Mesh(
-
-            new THREE.CapsuleGeometry(
-
-                0.32 * scale,
-
-                1.25 * scale,
-
-                6,
-
-                10
-
-            ),
-
-            bodyMaterial
-
-        );
-
-
-    leftUpperArm.rotation.z =
-        -0.28;
-
-
-    leftUpperArm.position.y =
-        -0.55 * scale;
-
-
-    leftUpperArm.castShadow =
-        true;
-
-
-    leftArm.add(
-        leftUpperArm
-    );
-
-
-    const leftForearm =
-        new THREE.Mesh(
-
-            new THREE.CapsuleGeometry(
-
-                0.27 * scale,
-
-                1.05 * scale,
-
-                6,
-
-                10
-
-            ),
-
-            darkMaterial
-
-        );
-
-
-    leftForearm.rotation.z =
-        -0.12;
-
-
-    leftForearm.position.set(
-
-        -0.12 * scale,
-
-        -1.55 * scale,
-
-        -0.08 * scale
-
-    );
-
-
-    leftForearm.castShadow =
-        true;
-
-
-    leftArm.add(
-        leftForearm
-    );
-
-
-    /* =====================================================
-       RECHTER ARM
-    ===================================================== */
-
-    const rightArm =
-        new THREE.Group();
-
-
-    rightArm.position.set(
-
-        1.15 * scale,
-
-        2.55 * scale,
-
-        0
-
-    );
-
-
-    enemy.add(
-        rightArm
-    );
-
-
-    const rightUpperArm =
-        new THREE.Mesh(
-
-            new THREE.CapsuleGeometry(
-
-                0.32 * scale,
-
-                1.25 * scale,
-
-                6,
-
-                10
-
-            ),
-
-            bodyMaterial
-
-        );
-
-
-    rightUpperArm.rotation.z =
-        0.28;
-
-
-    rightUpperArm.position.y =
-        -0.55 * scale;
-
-
-    rightUpperArm.castShadow =
-        true;
-
-
-    rightArm.add(
-        rightUpperArm
-    );
-
-
-    const rightForearm =
-        new THREE.Mesh(
-
-            new THREE.CapsuleGeometry(
-
-                0.27 * scale,
-
-                1.05 * scale,
-
-                6,
-
-                10
-
-            ),
-
-            darkMaterial
-
-        );
-
-
-    rightForearm.rotation.z =
-        0.12;
-
-
-    rightForearm.position.set(
-
-        0.12 * scale,
-
-        -1.55 * scale,
-
-        -0.08 * scale
-
-    );
-
-
-    rightForearm.castShadow =
-        true;
-
-
-    rightArm.add(
-        rightForearm
-    );
-
-
-    /* =====================================================
-       HANDEN / KLAUWEN
+       ARMEN
     ===================================================== */
 
     for (
         const side of [-1, 1]
     ) {
 
+        const arm =
+            new THREE.Group();
+
+
+        arm.position.set(
+            side * 1.25 * scale,
+            3.0 * scale,
+            0
+        );
+
+
+        enemy.add(arm);
+
+
+        const upperArm =
+            new THREE.Mesh(
+
+                new THREE.CapsuleGeometry(
+                    0.34 * scale,
+                    1.45 * scale,
+                    6,
+                    10
+                ),
+
+                bodyMaterial
+
+            );
+
+
+        upperArm.rotation.z =
+            side * 0.28;
+
+
+        upperArm.position.y =
+            -0.65 * scale;
+
+
+        upperArm.castShadow =
+            true;
+
+
+        arm.add(upperArm);
+
+
+        const forearm =
+            new THREE.Mesh(
+
+                new THREE.CapsuleGeometry(
+                    0.29 * scale,
+                    1.25 * scale,
+                    6,
+                    10
+                ),
+
+                darkMaterial
+
+            );
+
+
+        forearm.rotation.z =
+            side * 0.12;
+
+
+        forearm.position.set(
+            side * 0.12 * scale,
+            -1.75 * scale,
+            -0.10 * scale
+        );
+
+
+        forearm.castShadow =
+            true;
+
+
+        arm.add(forearm);
+
+
         const hand =
             new THREE.Mesh(
 
                 new THREE.SphereGeometry(
-
-                    0.38 * scale,
-
+                    0.42 * scale,
                     12,
-
                     10
-
                 ),
 
                 darkMaterial
@@ -3665,13 +3403,9 @@ function createEnemy(
 
 
         hand.position.set(
-
-            side * 1.22 * scale,
-
-            0.78 * scale,
-
-            -0.15 * scale
-
+            side * 0.16 * scale,
+            -2.65 * scale,
+            -0.16 * scale
         );
 
 
@@ -3679,9 +3413,7 @@ function createEnemy(
             true;
 
 
-        enemy.add(
-            hand
-        );
+        arm.add(hand);
 
 
         for (
@@ -3694,13 +3426,9 @@ function createEnemy(
                 new THREE.Mesh(
 
                     new THREE.ConeGeometry(
-
-                        0.07 * scale,
-
-                        0.48 * scale,
-
+                        0.075 * scale,
+                        0.55 * scale,
                         7
-
                     ),
 
                     boneMaterial
@@ -3709,19 +3437,15 @@ function createEnemy(
 
 
             clawMesh.position.set(
-
                 side * (
-                    1.08 +
-                    claw * 0.13
+                    0.02 +
+                    claw * 0.16
                 ) * scale,
-
-                0.48 * scale,
-
+                -3.0 * scale,
                 -(
-                    0.38 +
-                    claw * 0.07
+                    0.28 +
+                    claw * 0.09
                 ) * scale
-
             );
 
 
@@ -3743,7 +3467,7 @@ function createEnemy(
 
 
     /* =====================================================
-       BENEN
+       EXTRA LANGE BENEN
     ===================================================== */
 
     for (
@@ -3755,34 +3479,23 @@ function createEnemy(
 
 
         leg.position.set(
-
-            side * 0.58 * scale,
-
-            1.05 * scale,
-
+            side * 0.62 * scale,
+            1.35 * scale,
             0
-
         );
 
 
-        enemy.add(
-            leg
-        );
+        enemy.add(leg);
 
 
         const upperLeg =
             new THREE.Mesh(
 
                 new THREE.CapsuleGeometry(
-
-                    0.38 * scale,
-
-                    1.2 * scale,
-
+                    0.40 * scale,
+                    1.45 * scale,
                     6,
-
                     10
-
                 ),
 
                 bodyMaterial
@@ -3791,7 +3504,7 @@ function createEnemy(
 
 
         upperLeg.position.y =
-            -0.45 * scale;
+            -0.55 * scale;
 
 
         upperLeg.rotation.z =
@@ -3802,24 +3515,17 @@ function createEnemy(
             true;
 
 
-        leg.add(
-            upperLeg
-        );
+        leg.add(upperLeg);
 
 
         const lowerLeg =
             new THREE.Mesh(
 
                 new THREE.CapsuleGeometry(
-
-                    0.30 * scale,
-
-                    1.15 * scale,
-
+                    0.32 * scale,
+                    1.40 * scale,
                     6,
-
                     10
-
                 ),
 
                 darkMaterial
@@ -3828,13 +3534,9 @@ function createEnemy(
 
 
         lowerLeg.position.set(
-
             side * 0.08 * scale,
-
-            -1.55 * scale,
-
+            -1.85 * scale,
             -0.10 * scale
-
         );
 
 
@@ -3846,58 +3548,47 @@ function createEnemy(
             true;
 
 
-        leg.add(
-            lowerLeg
-        );
+        leg.add(lowerLeg);
 
 
         const foot =
-            new THREE.Mesh(
-
-                new THREE.BoxGeometry(
-
-                    0.72 * scale,
-
-                    0.4 * scale,
-
-                    1.2 * scale
-
-                ),
-
-                darkMaterial
-
+            new THREE.BoxGeometry(
+                0.78 * scale,
+                0.44 * scale,
+                1.35 * scale
             );
 
 
-        foot.position.set(
+        const footMesh =
+            new THREE.Mesh(
+                foot,
+                darkMaterial
+            );
 
+
+        footMesh.position.set(
             side * 0.08 * scale,
-
-            -2.65 * scale,
-
-            -0.35 * scale
-
+            -3.15 * scale,
+            -0.42 * scale
         );
 
 
-        foot.castShadow =
+        footMesh.castShadow =
             true;
 
 
-        leg.add(
-            foot
-        );
+        leg.add(footMesh);
 
     }
 
 
     /* =====================================================
-       RUG / STEKELS
+       RUGSTEKELS
     ===================================================== */
 
     for (
         let i = 0;
-        i < 5;
+        i < 7;
         i++
     ) {
 
@@ -3905,13 +3596,9 @@ function createEnemy(
             new THREE.Mesh(
 
                 new THREE.ConeGeometry(
-
-                    0.25 * scale,
-
-                    0.9 * scale,
-
+                    0.28 * scale,
+                    1.05 * scale,
                     7
-
                 ),
 
                 boneMaterial
@@ -3920,14 +3607,10 @@ function createEnemy(
 
 
         spike.position.set(
-
             0,
-
-            2.0 * scale +
-            i * 0.55 * scale,
-
-            0.72 * scale
-
+            1.65 * scale +
+            i * 0.58 * scale,
+            0.85 * scale
         );
 
 
@@ -3939,15 +3622,13 @@ function createEnemy(
             true;
 
 
-        enemy.add(
-            spike
-        );
+        enemy.add(spike);
 
     }
 
 
     /* =====================================================
-       EXTRA SCHOUDEERPLATEN
+       SCHOUDEERPLATEN
     ===================================================== */
 
     for (
@@ -3958,13 +3639,9 @@ function createEnemy(
             new THREE.Mesh(
 
                 new THREE.SphereGeometry(
-
-                    0.55 * scale,
-
+                    0.62 * scale,
                     12,
-
                     10
-
                 ),
 
                 bodyMaterial
@@ -3973,24 +3650,16 @@ function createEnemy(
 
 
         shoulder.scale.set(
-
-            1.25,
-
-            0.65,
-
-            0.8
-
+            1.35,
+            0.72,
+            0.88
         );
 
 
         shoulder.position.set(
-
-            side * 1.15 * scale,
-
-            2.75 * scale,
-
+            side * 1.25 * scale,
+            3.20 * scale,
             0
-
         );
 
 
@@ -3998,47 +3667,72 @@ function createEnemy(
             true;
 
 
-        enemy.add(
-            shoulder
-        );
+        enemy.add(shoulder);
 
     }
 
 
     /* =====================================================
-       CRAWLER EXTRA'S
+       CRAWLER
+       EXTREEM LANG EN LAAG
     ===================================================== */
 
     if (
         type === "crawler"
     ) {
 
+        enemy.scale.set(
+            1.55,
+            0.58,
+            1.85
+        );
+
+
         /*
-           Crawler wordt lager,
-           langer en meer insectachtig.
+           Lange staart.
         */
 
-        enemy.scale.y =
-            0.62;
+        const tail =
+            new THREE.Mesh(
+
+                new THREE.CapsuleGeometry(
+                    0.35 * scale,
+                    2.7 * scale,
+                    6,
+                    10
+                ),
+
+                bodyMaterial
+
+            );
 
 
-        enemy.scale.z =
-            1.35;
+        tail.rotation.x =
+            Math.PI / 2;
 
 
-        enemy.scale.x =
-            1.25;
+        tail.position.z =
+            2.4 * scale;
 
 
-        /* extra poten */
+        tail.castShadow =
+            true;
+
+
+        enemy.add(tail);
+
+
+        /*
+           Extra insectpoten.
+        */
 
         for (
-            let side of [-1, 1]
+            const side of [-1, 1]
         ) {
 
             for (
                 let i = 0;
-                i < 3;
+                i < 4;
                 i++
             ) {
 
@@ -4046,15 +3740,10 @@ function createEnemy(
                     new THREE.Mesh(
 
                         new THREE.CapsuleGeometry(
-
-                            0.12 * scale,
-
-                            0.95 * scale,
-
+                            0.14 * scale,
+                            1.20 * scale,
                             5,
-
                             8
-
                         ),
 
                         darkMaterial
@@ -4066,16 +3755,16 @@ function createEnemy(
 
                     side *
                     (
-                        0.85 +
-                        i * 0.35
+                        0.9 +
+                        i * 0.42
                     ) *
                     scale,
 
-                    0.8 * scale,
+                    0.85 * scale,
 
                     (
-                        0.65 -
-                        i * 0.55
+                        0.9 -
+                        i * 0.65
                     ) *
                     scale
 
@@ -4083,7 +3772,7 @@ function createEnemy(
 
 
                 leg.rotation.z =
-                    side * 0.9;
+                    side * 0.95;
 
 
                 leg.rotation.x =
@@ -4094,42 +3783,73 @@ function createEnemy(
                     true;
 
 
-                enemy.add(
-                    leg
-                );
+                enemy.add(leg);
 
             }
 
         }
 
+
+        /*
+           Crawler extra kop.
+        */
+
+        const crawlerHead =
+            new THREE.Mesh(
+
+                new THREE.SphereGeometry(
+                    0.85 * scale,
+                    16,
+                    12
+                ),
+
+                bodyMaterial
+
+            );
+
+
+        crawlerHead.scale.set(
+            1.15,
+            0.75,
+            1.25
+        );
+
+
+        crawlerHead.position.set(
+            0,
+            1.85 * scale,
+            -2.25 * scale
+        );
+
+
+        crawlerHead.castShadow =
+            true;
+
+
+        enemy.add(crawlerHead);
+
     }
 
 
     /* =====================================================
-       GUARDIAN EXTRA'S
+       GUARDIAN
+       GIGANTISCH
     ===================================================== */
 
     if (
         type === "guardian"
     ) {
 
-        /*
-           Guardian wordt een grote,
-           lange zware vijand.
-        */
-
         enemy.scale.set(
-
-            1.15,
-
-            1.35,
-
-            1.15
-
+            1.18,
+            1.45,
+            1.18
         );
 
 
-        /* grote schouderstukken */
+        /*
+           Brede zware schouders.
+        */
 
         for (
             const side of [-1, 1]
@@ -4139,11 +3859,8 @@ function createEnemy(
                 new THREE.Mesh(
 
                     new THREE.IcosahedronGeometry(
-
-                        0.85 * scale,
-
+                        0.95 * scale,
                         1
-
                     ),
 
                     darkMaterial
@@ -4152,27 +3869,16 @@ function createEnemy(
 
 
             armor.scale.set(
-
-                1.35,
-
-                0.75,
-
-                1.05
-
+                1.55,
+                0.82,
+                1.20
             );
 
 
             armor.position.set(
-
-                side *
-                1.35 *
-                scale,
-
-                3.0 *
-                scale,
-
+                side * 1.48 * scale,
+                3.55 * scale,
                 0
-
             );
 
 
@@ -4180,24 +3886,21 @@ function createEnemy(
                 true;
 
 
-            enemy.add(
-                armor
-            );
+            enemy.add(armor);
 
         }
 
 
-        /* extra borstenergie */
+        /*
+           Groot extra borstcore.
+        */
 
         const core =
             new THREE.Mesh(
 
                 new THREE.OctahedronGeometry(
-
-                    0.45 * scale,
-
+                    0.58 * scale,
                     1
-
                 ),
 
                 energyMaterial
@@ -4206,22 +3909,18 @@ function createEnemy(
 
 
         core.position.set(
-
             0,
-
-            2.35 * scale,
-
-            -1.15 * scale
-
+            3.0 * scale,
+            -1.35 * scale
         );
 
 
-        enemy.add(
-            core
-        );
+        enemy.add(core);
 
 
-        /* Guardian hoorns */
+        /*
+           Extra lange hoorns.
+        */
 
         for (
             const side of [-1, 1]
@@ -4231,13 +3930,9 @@ function createEnemy(
                 new THREE.Mesh(
 
                     new THREE.ConeGeometry(
-
-                        0.35 * scale,
-
-                        2.1 * scale,
-
+                        0.42 * scale,
+                        2.8 * scale,
                         8
-
                     ),
 
                     boneMaterial
@@ -4246,16 +3941,9 @@ function createEnemy(
 
 
             largeHorn.position.set(
-
-                side *
-                0.72 *
-                scale,
-
-                5.1 *
-                scale,
-
+                side * 0.78 * scale,
+                5.65 * scale,
                 0
-
             );
 
 
@@ -4273,6 +3961,53 @@ function createEnemy(
 
         }
 
+
+        /*
+           Guardian extra rug.
+        */
+
+        for (
+            let i = 0;
+            i < 4;
+            i++
+        ) {
+
+            const largeSpike =
+                new THREE.Mesh(
+
+                    new THREE.ConeGeometry(
+                        0.38 * scale,
+                        1.55 * scale,
+                        7
+                    ),
+
+                    boneMaterial
+
+                );
+
+
+            largeSpike.position.set(
+                0,
+                2.0 * scale +
+                i * 0.9 * scale,
+                1.0 * scale
+            );
+
+
+            largeSpike.rotation.x =
+                Math.PI / 2;
+
+
+            largeSpike.castShadow =
+                true;
+
+
+            enemy.add(
+                largeSpike
+            );
+
+        }
+
     }
 
 
@@ -4286,24 +4021,20 @@ function createEnemy(
             0xff356f,
 
             type === "guardian"
-                ? 3.5
-                : 1.8,
+                ? 4.5
+                : 2.2,
 
             type === "guardian"
-                ? 10
-                : 6
+                ? 13
+                : 8
 
         );
 
 
     monsterLight.position.set(
-
         0,
-
-        3.2 * scale,
-
+        monsterHeight * 0.55,
         -0.5 * scale
-
     );
 
 
@@ -4317,23 +4048,10 @@ function createEnemy(
     ===================================================== */
 
     enemy.position.set(
-
         x,
-
         0,
-
         z
-
     );
-
-
-    /*
-       Hierdoor staat het monster
-       netjes met zijn voeten op de grond.
-    */
-
-    enemy.position.y =
-        0;
 
 
     scene.add(
@@ -4363,16 +4081,21 @@ function createEnemy(
 
             type === "guardian"
 
-                ? 2.8
+                ? 3.5
 
                 : type === "crawler"
 
-                    ? 1.6
+                    ? 2.8
 
-                    : 2.0,
+                    : 2.4,
 
         height:
             monsterHeight,
+
+        hitHeight:
+            monsterHeight,
+
+        hitRadius,
 
         dead:
             false
@@ -4380,6 +4103,8 @@ function createEnemy(
     });
 
 }
+
+
 /* =========================================================
    ENEMY UPDATE
 ========================================================= */
@@ -4392,24 +4117,16 @@ function updateEnemies(
         const enemy of enemies
     ) {
 
-        if (
-            enemy.dead
-        ) {
-
+        if (enemy.dead) {
             continue;
-
         }
 
 
         const direction =
             new THREE.Vector3()
-
                 .subVectors(
-
                     player.position,
-
                     enemy.object.position
-
                 );
 
 
@@ -4417,33 +4134,23 @@ function updateEnemies(
             direction.length();
 
 
-        if (
-            distance > 120
-        ) {
-
+        if (distance > 120) {
             continue;
-
         }
 
 
         direction.normalize();
 
 
-        if (
-            distance > 4.5
-        ) {
+        if (distance > 4.5) {
 
             const next =
                 enemy.object.position.clone();
 
 
             next.addScaledVector(
-
                 direction,
-
-                enemy.speed *
-                delta
-
+                enemy.speed * delta
             );
 
 
@@ -4462,13 +4169,9 @@ function updateEnemies(
 
 
             enemy.object.lookAt(
-
                 player.position.x,
-
                 enemy.object.position.y,
-
                 player.position.z
-
             );
 
         } else {
@@ -4477,11 +4180,10 @@ function updateEnemies(
 
                 (
                     enemy.type === "guardian"
-
                         ? 15
-
-                        : 7
-
+                        : enemy.type === "crawler"
+                            ? 8
+                            : 7
                 ) * delta;
 
         }
@@ -4491,13 +4193,9 @@ function updateEnemies(
 
     player.health =
         THREE.MathUtils.clamp(
-
             player.health,
-
             0,
-
             100
-
         );
 
 
@@ -4537,10 +4235,8 @@ function enemyBlocked(
 
         const distance =
             Math.sqrt(
-
                 dx * dx +
                 dz * dz
-
             );
 
 
@@ -4570,12 +4266,8 @@ function killEnemy(
     enemy
 ) {
 
-    if (
-        enemy.dead
-    ) {
-
+    if (enemy.dead) {
         return;
-
     }
 
 
@@ -4584,7 +4276,13 @@ function killEnemy(
 
 
     createHitParticles(
-        enemy.object.position
+        enemy.object.position.clone().add(
+            new THREE.Vector3(
+                0,
+                enemy.hitHeight * 0.5,
+                0
+            )
+        )
     );
 
 
@@ -4736,11 +4434,8 @@ function updateParticles(
 
 
         particle.object.position.addScaledVector(
-
             particle.velocity,
-
             delta
-
         );
 
 
@@ -4795,10 +4490,7 @@ function updateCamera(
 
 
     const horizontalDistance =
-
-        Math.cos(
-            cameraPitch
-        ) *
+        Math.cos(cameraPitch) *
         CAMERA_DISTANCE;
 
 
@@ -4807,41 +4499,26 @@ function updateCamera(
 
 
     desired.x =
-
         target.x +
-
-        Math.sin(
-            cameraYaw
-        ) *
+        Math.sin(cameraYaw) *
         horizontalDistance;
 
 
     desired.z =
-
         target.z +
-
-        Math.cos(
-            cameraYaw
-        ) *
+        Math.cos(cameraYaw) *
         horizontalDistance;
 
 
     desired.y =
-
         target.y +
-
         CAMERA_HEIGHT +
-
-        Math.sin(
-            cameraPitch
-        ) *
+        Math.sin(cameraPitch) *
         CAMERA_DISTANCE;
 
 
     const cameraDirection =
-
         new THREE.Vector3()
-
             .subVectors(
                 desired,
                 target
@@ -4857,34 +4534,24 @@ function updateCamera(
 
     const raycaster =
         new THREE.Raycaster(
-
             target,
-
             cameraDirection,
-
             0.2,
-
             fullDistance
-
         );
 
 
     const objects =
         obstacles.map(
-
             item =>
                 item.object
-
         );
 
 
     const hits =
         raycaster.intersectObjects(
-
             objects,
-
             true
-
         );
 
 
@@ -4892,54 +4559,36 @@ function updateCamera(
         desired.clone();
 
 
-    if (
-        hits.length > 0
-    ) {
+    if (hits.length > 0) {
 
         const hit =
             hits[0];
 
 
         finalPosition =
-
             target.clone()
-
                 .addScaledVector(
-
                     cameraDirection,
-
                     Math.max(
-
                         4,
-
-                        hit.distance -
-                        0.7
-
+                        hit.distance - 0.7
                     )
-
                 );
 
     }
 
 
     const smooth =
-
         1 -
-
         Math.exp(
-
             -CAMERA_SMOOTHNESS *
             delta
-
         );
 
 
     camera.position.lerp(
-
         finalPosition,
-
         smooth
-
     );
 
 
@@ -4952,18 +4601,12 @@ function updateCamera(
 
 
     lookTarget.x +=
-
-        -Math.sin(
-            cameraYaw
-        ) *
+        -Math.sin(cameraYaw) *
         lookDistance;
 
 
     lookTarget.z +=
-
-        -Math.cos(
-            cameraYaw
-        ) *
+        -Math.cos(cameraYaw) *
         lookDistance;
 
 
@@ -4984,9 +4627,7 @@ function updateCamera(
 
 function updateHUD() {
 
-    if (
-        healthBar
-    ) {
+    if (healthBar) {
 
         healthBar.style.width =
             `${player.health}%`;
@@ -4994,9 +4635,7 @@ function updateHUD() {
     }
 
 
-    if (
-        energyBar
-    ) {
+    if (energyBar) {
 
         energyBar.style.width =
             `${player.energy}%`;
@@ -5004,29 +4643,20 @@ function updateHUD() {
     }
 
 
-    if (
-        ammoText
-    ) {
+    if (ammoText) {
 
         ammoText.textContent =
-
             player.isReloading
-
                 ? "RELOADING"
-
                 : player.ammo;
 
     }
 
 
-    if (
-        killsText
-    ) {
+    if (killsText) {
 
         killsText.textContent =
-
             "KILLS " +
-
             String(
                 player.kills
             ).padStart(
@@ -5037,14 +4667,10 @@ function updateHUD() {
     }
 
 
-    if (
-        creditsText
-    ) {
+    if (creditsText) {
 
         creditsText.textContent =
-
             "CREDITS " +
-
             String(
                 player.credits
             ).padStart(
@@ -5055,9 +4681,7 @@ function updateHUD() {
     }
 
 
-    if (
-        zoneText
-    ) {
+    if (zoneText) {
 
         if (
             player.position.z < -50
@@ -5083,16 +4707,11 @@ function updateHUD() {
     }
 
 
-    if (
-        objectiveText
-    ) {
+    if (objectiveText) {
 
         objectiveText.textContent =
-
             player.position.z < -50
-
                 ? "REACH THE SIGNAL"
-
                 : "LOCATE THE LOST SIGNAL";
 
     }
@@ -5108,12 +4727,8 @@ function showAchievement(
     name
 ) {
 
-    if (
-        !achievement
-    ) {
-
+    if (!achievement) {
         return;
-
     }
 
 
@@ -5123,9 +4738,7 @@ function showAchievement(
         );
 
 
-    if (
-        title
-    ) {
+    if (title) {
 
         title.textContent =
             name;
@@ -5137,15 +4750,12 @@ function showAchievement(
         "flex";
 
 
-    setTimeout(
-        () => {
+    setTimeout(() => {
 
-            achievement.style.display =
-                "none";
+        achievement.style.display =
+            "none";
 
-        },
-        3000
-    );
+    }, 3000);
 
 }
 
@@ -5203,7 +4813,7 @@ function getSaveData() {
 
 
 /* =========================================================
-   SAVE GAME — FIREBASE
+   SAVE GAME
 ========================================================= */
 
 async function saveGame() {
@@ -5212,22 +4822,11 @@ async function saveGame() {
         getSaveData();
 
 
-    /*
-       Altijd lokale backup.
-    */
-
     localStorage.setItem(
-
         "echobound_tank_save",
-
         JSON.stringify(data)
-
     );
 
-
-    /*
-       Wacht op Firebase login.
-    */
 
     if (
         !firebaseReady ||
@@ -5249,10 +4848,6 @@ async function saveGame() {
     }
 
 
-    /*
-       Firebase niet beschikbaar?
-    */
-
     if (
         !firebaseReady ||
         !firebaseUser
@@ -5262,7 +4857,6 @@ async function saveGame() {
             "Geen Firebase-verbinding."
         );
 
-
         return;
 
     }
@@ -5271,15 +4865,11 @@ async function saveGame() {
     try {
 
         const saveReference =
-
             ref(
-
                 database,
-
                 "players/" +
                 firebaseUser.uid +
                 "/save1"
-
             );
 
 
@@ -5295,34 +4885,22 @@ async function saveGame() {
 
 
         console.log(
-
             "Firebase locatie:",
-
             "players/" +
             firebaseUser.uid +
             "/save1"
-
         );
 
-
-    } catch (
-        error
-    ) {
+    } catch (error) {
 
         console.error(
-
             "Firebase save mislukt:",
-
             error
-
         );
 
-
         alert(
-
             "Firebase opslaan is mislukt.\n\n" +
             "Je lokale backup is wel opgeslagen."
-
         );
 
     }
@@ -5339,13 +4917,9 @@ function applyLoadedGame(
 ) {
 
     player.position.set(
-
         data.x ?? 0,
-
         0,
-
         data.z ?? 20
-
     );
 
 
@@ -5422,10 +4996,6 @@ function applyLoadedGame(
         player.cannonPitch;
 
 
-    /*
-       Oude vijanden verwijderen.
-    */
-
     for (
         const enemy of enemies
     ) {
@@ -5441,9 +5011,20 @@ function applyLoadedGame(
         0;
 
 
-    /*
-       Nieuwe vijanden.
-    */
+    for (
+        const bullet of bullets
+    ) {
+
+        scene.remove(
+            bullet.object
+        );
+
+    }
+
+
+    bullets.length =
+        0;
+
 
     spawnEnemies();
 
@@ -5456,9 +5037,7 @@ function applyLoadedGame(
         false;
 
 
-    if (
-        menu
-    ) {
+    if (menu) {
 
         menu.style.display =
             "none";
@@ -5466,9 +5045,7 @@ function applyLoadedGame(
     }
 
 
-    if (
-        hud
-    ) {
+    if (hud) {
 
         hud.style.display =
             "block";
@@ -5476,9 +5053,7 @@ function applyLoadedGame(
     }
 
 
-    if (
-        pause
-    ) {
+    if (pause) {
 
         pause.style.display =
             "none";
@@ -5489,11 +5064,6 @@ function applyLoadedGame(
     updateHUD();
 
 
-    /*
-       NIET automatisch pointer lock aanvragen.
-       De speler klikt zelf in de game.
-    */
-
     console.log(
         "EchoBound save geladen."
     );
@@ -5502,14 +5072,10 @@ function applyLoadedGame(
 
 
 /* =========================================================
-   LOAD GAME — FIREBASE
+   LOAD GAME
 ========================================================= */
 
 async function loadGame() {
-
-    /*
-       Eerst Firebase login afwachten.
-    */
 
     if (
         !firebaseReady ||
@@ -5520,9 +5086,7 @@ async function loadGame() {
 
             await firebaseLogin;
 
-        } catch (
-            error
-        ) {
+        } catch (error) {
 
             console.error(
                 error
@@ -5533,10 +5097,6 @@ async function loadGame() {
     }
 
 
-    /*
-       Firebase proberen.
-    */
-
     if (
         firebaseReady &&
         firebaseUser
@@ -5545,15 +5105,11 @@ async function loadGame() {
         try {
 
             const saveReference =
-
                 ref(
-
                     database,
-
                     "players/" +
                     firebaseUser.uid +
                     "/save1"
-
                 );
 
 
@@ -5572,18 +5128,13 @@ async function loadGame() {
 
 
                 localStorage.setItem(
-
                     "echobound_tank_save",
-
                     JSON.stringify(data)
-
                 );
 
 
                 console.log(
-
                     "SAVE GELADEN UIT FIREBASE!"
-
                 );
 
 
@@ -5596,16 +5147,11 @@ async function loadGame() {
 
             }
 
-        } catch (
-            error
-        ) {
+        } catch (error) {
 
             console.error(
-
                 "Firebase load mislukt:",
-
                 error
-
             );
 
         }
@@ -5613,29 +5159,17 @@ async function loadGame() {
     }
 
 
-    /*
-       Geen Firebase-save?
-       Lokale backup proberen.
-    */
-
     const localSave =
         localStorage.getItem(
-
             "echobound_tank_save"
-
         );
 
 
-    if (
-        !localSave
-    ) {
+    if (!localSave) {
 
         alert(
-
             "Er is nog geen opgeslagen tank-run."
-
         );
-
 
         return;
 
@@ -5650,18 +5184,11 @@ async function loadGame() {
             );
 
 
-        console.log(
-            "Lokale backup geladen."
-        );
-
-
         applyLoadedGame(
             data
         );
 
-    } catch (
-        error
-    ) {
+    } catch (error) {
 
         console.error(
             error
@@ -5669,9 +5196,7 @@ async function loadGame() {
 
 
         alert(
-
             "De tank-save kon niet worden geladen."
-
         );
 
     }
@@ -5748,10 +5273,6 @@ function newGame() {
         0.20;
 
 
-    /*
-       Oude vijanden verwijderen.
-    */
-
     for (
         const enemy of enemies
     ) {
@@ -5767,10 +5288,6 @@ function newGame() {
         0;
 
 
-    /*
-       Oude kogels verwijderen.
-    */
-
     for (
         const bullet of bullets
     ) {
@@ -5785,10 +5302,6 @@ function newGame() {
     bullets.length =
         0;
 
-
-    /*
-       Oude particles verwijderen.
-    */
 
     for (
         const particle of particles
@@ -5833,9 +5346,7 @@ function newGame() {
         false;
 
 
-    if (
-        menu
-    ) {
+    if (menu) {
 
         menu.style.display =
             "none";
@@ -5843,9 +5354,7 @@ function newGame() {
     }
 
 
-    if (
-        hud
-    ) {
+    if (hud) {
 
         hud.style.display =
             "block";
@@ -5853,9 +5362,7 @@ function newGame() {
     }
 
 
-    if (
-        pause
-    ) {
+    if (pause) {
 
         pause.style.display =
             "none";
@@ -5865,11 +5372,6 @@ function newGame() {
 
     updateHUD();
 
-
-    /*
-       Geen automatische requestPointerLock!
-       De speler klikt zelf in het spel.
-    */
 
     console.log(
         "Nieuwe tank-run gestart."
@@ -5884,12 +5386,8 @@ function newGame() {
 
 function togglePause() {
 
-    if (
-        !gameRunning
-    ) {
-
+    if (!gameRunning) {
         return;
-
     }
 
 
@@ -5897,28 +5395,17 @@ function togglePause() {
         !paused;
 
 
-    if (
-        pause
-    ) {
+    if (pause) {
 
         pause.style.display =
-
             paused
-
                 ? "flex"
-
                 : "none";
 
     }
 
 
-    if (
-        paused
-    ) {
-
-        /*
-           Muis loslaten.
-        */
+    if (paused) {
 
         if (
             document.pointerLockElement === canvas
@@ -5943,16 +5430,11 @@ const newGameButton =
     );
 
 
-if (
-    newGameButton
-) {
+if (newGameButton) {
 
     newGameButton.addEventListener(
-
         "click",
-
         newGame
-
     );
 
 }
@@ -5964,16 +5446,11 @@ const loadGameButton =
     );
 
 
-if (
-    loadGameButton
-) {
+if (loadGameButton) {
 
     loadGameButton.addEventListener(
-
         "click",
-
         loadGame
-
     );
 
 }
@@ -5989,14 +5466,10 @@ const controlsButton =
     );
 
 
-if (
-    controlsButton
-) {
+if (controlsButton) {
 
     controlsButton.addEventListener(
-
         "click",
-
         () => {
 
             alert(
@@ -6022,7 +5495,6 @@ if (
             );
 
         }
-
     );
 
 }
@@ -6038,14 +5510,10 @@ const achievementsButton =
     );
 
 
-if (
-    achievementsButton
-) {
+if (achievementsButton) {
 
     achievementsButton.addEventListener(
-
         "click",
-
         () => {
 
             alert(
@@ -6067,14 +5535,13 @@ if (
             );
 
         }
-
     );
 
 }
 
 
 /* =========================================================
-   PAUSE BUTTONS
+   RESUME
 ========================================================= */
 
 const resumeButton =
@@ -6083,23 +5550,17 @@ const resumeButton =
     );
 
 
-if (
-    resumeButton
-) {
+if (resumeButton) {
 
     resumeButton.addEventListener(
-
         "click",
-
         () => {
 
             paused =
                 false;
 
 
-            if (
-                pause
-            ) {
+            if (pause) {
 
                 pause.style.display =
                     "none";
@@ -6107,16 +5568,9 @@ if (
             }
 
 
-            /*
-               De klik op RESUME is zelf een
-               gebruikersactie, dus hier mogen
-               we pointer lock aanvragen.
-            */
-
             requestGamePointerLock();
 
         }
-
     );
 
 }
@@ -6132,20 +5586,15 @@ const saveButton =
     );
 
 
-if (
-    saveButton
-) {
+if (saveButton) {
 
     saveButton.addEventListener(
-
         "click",
-
         async () => {
 
             await saveGame();
 
         }
-
     );
 
 }
@@ -6161,14 +5610,10 @@ const quitButton =
     );
 
 
-if (
-    quitButton
-) {
+if (quitButton) {
 
     quitButton.addEventListener(
-
         "click",
-
         async () => {
 
             await saveGame();
@@ -6199,9 +5644,7 @@ if (
                 false;
 
 
-            if (
-                pause
-            ) {
+            if (pause) {
 
                 pause.style.display =
                     "none";
@@ -6209,9 +5652,7 @@ if (
             }
 
 
-            if (
-                hud
-            ) {
+            if (hud) {
 
                 hud.style.display =
                     "none";
@@ -6219,9 +5660,7 @@ if (
             }
 
 
-            if (
-                menu
-            ) {
+            if (menu) {
 
                 menu.style.display =
                     "flex";
@@ -6229,7 +5668,6 @@ if (
             }
 
         }
-
     );
 
 }
@@ -6295,15 +5733,10 @@ function openMap() {
 
 
     ctx.fillRect(
-
         0,
-
         0,
-
         900,
-
         520
-
     );
 
 
@@ -6388,15 +5821,10 @@ function openMap() {
 
 
     ctx.fillRect(
-
         -10,
-
         -7,
-
         20,
-
         14
-
     );
 
 
@@ -6437,12 +5865,8 @@ function openMap() {
         const enemy of enemies
     ) {
 
-        if (
-            enemy.dead
-        ) {
-
+        if (enemy.dead) {
             continue;
-
         }
 
 
@@ -6462,23 +5886,37 @@ function openMap() {
 
 
         ctx.arc(
-
             x,
-
             y,
-
             5,
-
             0,
-
             Math.PI * 2
-
         );
 
 
         ctx.fill();
 
     }
+
+}
+
+
+/* =========================================================
+   MAP BUTTON
+========================================================= */
+
+const mapButton =
+    document.getElementById(
+        "mapButton"
+    );
+
+
+if (mapButton) {
+
+    mapButton.addEventListener(
+        "click",
+        openMap
+    );
 
 }
 
@@ -6493,14 +5931,10 @@ const closeMapButton =
     );
 
 
-if (
-    closeMapButton
-) {
+if (closeMapButton) {
 
     closeMapButton.addEventListener(
-
         "click",
-
         () => {
 
             const map =
@@ -6509,23 +5943,14 @@ if (
                 );
 
 
-            if (
-                map
-            ) {
+            if (map) {
 
                 map.style.display =
                     "none";
 
             }
 
-
-            /*
-               Geen automatische pointer lock.
-               De speler klikt zelf weer in de game.
-            */
-
         }
-
     );
 
 }
@@ -6537,12 +5962,8 @@ if (
 
 function endRun() {
 
-    if (
-        !gameRunning
-    ) {
-
+    if (!gameRunning) {
         return;
-
     }
 
 
@@ -6571,16 +5992,10 @@ function endRun() {
         false;
 
 
-    /*
-       Save ook na game over.
-    */
-
     saveGame();
 
 
-    if (
-        hud
-    ) {
+    if (hud) {
 
         hud.style.display =
             "none";
@@ -6588,9 +6003,7 @@ function endRun() {
     }
 
 
-    if (
-        menu
-    ) {
+    if (menu) {
 
         menu.style.display =
             "flex";
@@ -6603,11 +6016,9 @@ function endRun() {
         "TANK DESTROYED\n\n" +
 
         "KILLS: " +
-
         player.kills +
 
         "\nCREDITS: " +
-
         player.credits
 
     );
@@ -6632,11 +6043,8 @@ function animate() {
 
     const delta =
         Math.min(
-
             clock.getDelta(),
-
             0.05
-
         );
 
 
@@ -6645,14 +6053,10 @@ function animate() {
 
 
     signalLight.intensity =
-
         10 +
-
         Math.sin(
-
             performance.now() *
             0.004
-
         ) * 3;
 
 
@@ -6665,48 +6069,35 @@ function animate() {
             delta;
 
 
-        updateTank(
-            delta
-        );
+        if (
+            player.fireCooldown < 0
+        ) {
+
+            player.fireCooldown =
+                0;
+
+        }
 
 
-        updateTurret(
-            delta
-        );
+        updateTank(delta);
 
+        updateTurret(delta);
 
-        updateReload(
-            delta
-        );
+        updateReload(delta);
 
+        updateEnemies(delta);
 
-        updateEnemies(
-            delta
-        );
+        updateBullets(delta);
 
+        updateParticles(delta);
 
-        updateBullets(
-            delta
-        );
-
-
-        updateParticles(
-            delta
-        );
-
-
-        updateCamera(
-            delta
-        );
-
+        updateCamera(delta);
 
         updateHUD();
 
     } else {
 
-        updateCamera(
-            delta
-        );
+        updateCamera(delta);
 
     }
 
@@ -6727,13 +6118,10 @@ animate();
 ========================================================= */
 
 window.addEventListener(
-
     "resize",
-
     () => {
 
         camera.aspect =
-
             window.innerWidth /
             window.innerHeight;
 
@@ -6742,26 +6130,17 @@ window.addEventListener(
 
 
         renderer.setSize(
-
             window.innerWidth,
-
             window.innerHeight
-
         );
 
 
         renderer.setPixelRatio(
-
             Math.min(
-
                 window.devicePixelRatio,
-
                 2
-
             )
-
         );
 
     }
-
 );
