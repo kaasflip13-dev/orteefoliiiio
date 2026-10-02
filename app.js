@@ -4391,3 +4391,63 @@ updateHUD();
 console.log(
     "EchoBound gestart."
 );
+/* =========================================================
+   START RUN — EXTRA VEILIGE KOPPELING
+========================================================= */
+
+function findStartRunButton() {
+
+    const buttons =
+        document.querySelectorAll("button");
+
+    for (const button of buttons) {
+
+        const text =
+            button.textContent
+                .trim()
+                .toLowerCase();
+
+        if (
+            text === "start run" ||
+            text === "start game" ||
+            text === "new run" ||
+            text === "start"
+        ) {
+
+            return button;
+
+        }
+
+    }
+
+    return null;
+}
+
+
+const startRunButton =
+    findStartRunButton();
+
+
+if (startRunButton) {
+
+    // Oude klik-events niet blokkeren
+    startRunButton.addEventListener(
+        "click",
+        () => {
+
+            console.log(
+                "START RUN ingedrukt"
+            );
+
+            newGame();
+
+        }
+    );
+
+} else {
+
+    console.warn(
+        "START RUN knop niet gevonden."
+    );
+
+}
