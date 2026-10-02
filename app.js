@@ -2913,7 +2913,7 @@ function updateBullets(
 
 
 /* =========================================================
-   ENEMIES
+   ENEMIES — GROTERE EN LANGERE MONSTERS
 ========================================================= */
 
 function createEnemy(
@@ -2926,175 +2926,1424 @@ function createEnemy(
         new THREE.Group();
 
 
-    let scale =
-        1;
+    /* =====================================================
+       MONSTER INSTELLINGEN
+    ===================================================== */
+
+    let scale = 1.35;
+
+    let color = 0x713654;
+
+    let health = 80;
+
+    let speed = 2;
+
+    let monsterHeight = 4.8;
 
 
-    let color =
-        0x713654;
+    if (type === "stalker") {
 
+        scale = 1.45;
 
-    let health =
-        80;
+        color = 0x713654;
 
+        health = 80;
 
-    let speed =
-        2;
+        speed = 2.0;
 
-
-    if (
-        type === "crawler"
-    ) {
-
-        scale =
-            0.75;
-
-
-        color =
-            0x8b6842;
-
-
-        health =
-            45;
-
-
-        speed =
-            3.1;
+        monsterHeight = 5.6;
 
     }
 
 
-    if (
-        type === "guardian"
-    ) {
+    if (type === "crawler") {
 
-        scale =
-            1.5;
+        scale = 1.15;
 
+        color = 0x8b6842;
 
-        color =
-            0x4c3d77;
+        health = 45;
 
+        speed = 3.1;
 
-        health =
-            150;
-
-
-        speed =
-            1.1;
+        monsterHeight = 2.7;
 
     }
 
+
+    if (type === "guardian") {
+
+        scale = 2.15;
+
+        color = 0x4c3d77;
+
+        health = 150;
+
+        speed = 1.1;
+
+        monsterHeight = 7.4;
+
+    }
+
+
+    /* =====================================================
+       MATERIALEN
+    ===================================================== */
+
+    const bodyMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: color,
+
+            roughness: 0.48,
+
+            metalness: 0.35
+
+        });
+
+
+    const darkMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: 0x171b20,
+
+            roughness: 0.55,
+
+            metalness: 0.4
+
+        });
+
+
+    const boneMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: 0x667276,
+
+            roughness: 0.65,
+
+            metalness: 0.25
+
+        });
+
+
+    const eyeMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: 0xff356f,
+
+            emissive: 0xff174f,
+
+            emissiveIntensity: 6,
+
+            roughness: 0.2,
+
+            metalness: 0.1
+
+        });
+
+
+    const energyMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: 0x58e9ff,
+
+            emissive: 0x22dfff,
+
+            emissiveIntensity: 5,
+
+            roughness: 0.25,
+
+            metalness: 0.35
+
+        });
+
+
+    /* =====================================================
+       LICHAAM
+    ===================================================== */
 
     const body =
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-                scale,
-                16,
-                12
+                1.35 * scale,
+                20,
+                16
             ),
 
-            new THREE.MeshStandardMaterial({
-
-                color,
-
-                roughness: 0.55,
-
-                metalness: 0.35
-
-            })
+            bodyMaterial
 
         );
 
 
-    body.scale.y =
-        1.25;
+    body.scale.set(
+
+        0.82,
+
+        1.55,
+
+        0.62
+
+    );
+
+
+    body.position.y =
+        2.05 * scale;
 
 
     body.castShadow =
         true;
 
 
+    body.receiveShadow =
+        true;
+
+
     enemy.add(body);
 
+
+    /* =====================================================
+       BORSTPLAAT
+    ===================================================== */
+
+    const chest =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                1.05 * scale,
+                16,
+                12
+            ),
+
+            darkMaterial
+
+        );
+
+
+    chest.scale.set(
+
+        0.8,
+
+        1.05,
+
+        0.35
+
+    );
+
+
+    chest.position.set(
+
+        0,
+
+        2.15 * scale,
+
+        -0.72 * scale
+
+    );
+
+
+    chest.castShadow =
+        true;
+
+
+    enemy.add(chest);
+
+
+    /* =====================================================
+       GLOEIEND BORSTSYMBOOL
+    ===================================================== */
+
+    const chestCore =
+        new THREE.Mesh(
+
+            new THREE.OctahedronGeometry(
+                0.25 * scale,
+                1
+            ),
+
+            energyMaterial
+
+        );
+
+
+    chestCore.position.set(
+
+        0,
+
+        2.15 * scale,
+
+        -1.08 * scale
+
+    );
+
+
+    chestCore.rotation.z =
+        Math.PI / 4;
+
+
+    enemy.add(chestCore);
+
+
+    /* =====================================================
+       NEK
+    ===================================================== */
+
+    const neck =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+
+                0.38 * scale,
+
+                0.52 * scale,
+
+                0.75 * scale,
+
+                12
+
+            ),
+
+            darkMaterial
+
+        );
+
+
+    neck.position.y =
+        3.15 * scale;
+
+
+    neck.castShadow =
+        true;
+
+
+    enemy.add(neck);
+
+
+    /* =====================================================
+       HOOFD
+    ===================================================== */
 
     const head =
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-                0.6 * scale,
-                14,
-                10
+
+                0.82 * scale,
+
+                18,
+
+                14
+
             ),
 
-            new THREE.MeshStandardMaterial({
-
-                color: 0x1e2a2d,
-
-                metalness: 0.5,
-
-                roughness: 0.4
-
-            })
+            bodyMaterial
 
         );
 
 
+    head.scale.set(
+
+        0.88,
+
+        1.05,
+
+        0.85
+
+    );
+
+
     head.position.y =
-        0.8 * scale;
+        3.75 * scale;
+
+
+    head.castShadow =
+        true;
 
 
     enemy.add(head);
 
 
-    const eye =
+    /* =====================================================
+       GEZICHT
+    ===================================================== */
+
+    const face =
         new THREE.Mesh(
 
-            new THREE.SphereGeometry(
-                0.13 * scale,
-                10,
-                10
+            new THREE.BoxGeometry(
+
+                0.85 * scale,
+
+                0.55 * scale,
+
+                0.18 * scale
+
             ),
 
-            new THREE.MeshBasicMaterial({
-
-                color: 0xff4f91
-
-            })
+            darkMaterial
 
         );
 
 
-    eye.position.set(
+    face.position.set(
 
         0,
 
-        0.82 * scale,
+        3.68 * scale,
+
+        -0.72 * scale
+
+    );
+
+
+    enemy.add(face);
+
+
+    /* =====================================================
+       OGEN
+    ===================================================== */
+
+    for (
+        const eyeX of [-0.32, 0.32]
+    ) {
+
+        const eye =
+            new THREE.Mesh(
+
+                new THREE.SphereGeometry(
+
+                    0.16 * scale,
+
+                    12,
+
+                    12
+
+                ),
+
+                eyeMaterial
+
+            );
+
+
+        eye.position.set(
+
+            eyeX * scale,
+
+            3.82 * scale,
+
+            -0.86 * scale
+
+        );
+
+
+        eye.scale.z =
+            0.55;
+
+
+        enemy.add(eye);
+
+
+        /* ooglicht */
+
+        const eyeLight =
+            new THREE.PointLight(
+
+                0xff356f,
+
+                1.8,
+
+                5 * scale
+
+            );
+
+
+        eyeLight.position.copy(
+            eye.position
+        );
+
+
+        enemy.add(
+            eyeLight
+        );
+
+    }
+
+
+    /* =====================================================
+       HOORNS
+    ===================================================== */
+
+    for (
+        const hornX of [-0.55, 0.55]
+    ) {
+
+        const horn =
+            new THREE.Mesh(
+
+                new THREE.ConeGeometry(
+
+                    0.23 * scale,
+
+                    1.35 * scale,
+
+                    8
+
+                ),
+
+                boneMaterial
+
+            );
+
+
+        horn.position.set(
+
+            hornX * scale,
+
+            4.55 * scale,
+
+            -0.05 * scale
+
+        );
+
+
+        horn.rotation.z =
+
+            hornX < 0
+
+                ? -0.35
+
+                : 0.35;
+
+
+        horn.rotation.x =
+            -0.12;
+
+
+        horn.castShadow =
+            true;
+
+
+        enemy.add(horn);
+
+    }
+
+
+    /* =====================================================
+       LINKER ARM
+    ===================================================== */
+
+    const leftArm =
+        new THREE.Group();
+
+
+    leftArm.position.set(
+
+        -1.15 * scale,
+
+        2.55 * scale,
+
+        0
+
+    );
+
+
+    enemy.add(
+        leftArm
+    );
+
+
+    const leftUpperArm =
+        new THREE.Mesh(
+
+            new THREE.CapsuleGeometry(
+
+                0.32 * scale,
+
+                1.25 * scale,
+
+                6,
+
+                10
+
+            ),
+
+            bodyMaterial
+
+        );
+
+
+    leftUpperArm.rotation.z =
+        -0.28;
+
+
+    leftUpperArm.position.y =
+        -0.55 * scale;
+
+
+    leftUpperArm.castShadow =
+        true;
+
+
+    leftArm.add(
+        leftUpperArm
+    );
+
+
+    const leftForearm =
+        new THREE.Mesh(
+
+            new THREE.CapsuleGeometry(
+
+                0.27 * scale,
+
+                1.05 * scale,
+
+                6,
+
+                10
+
+            ),
+
+            darkMaterial
+
+        );
+
+
+    leftForearm.rotation.z =
+        -0.12;
+
+
+    leftForearm.position.set(
+
+        -0.12 * scale,
+
+        -1.55 * scale,
+
+        -0.08 * scale
+
+    );
+
+
+    leftForearm.castShadow =
+        true;
+
+
+    leftArm.add(
+        leftForearm
+    );
+
+
+    /* =====================================================
+       RECHTER ARM
+    ===================================================== */
+
+    const rightArm =
+        new THREE.Group();
+
+
+    rightArm.position.set(
+
+        1.15 * scale,
+
+        2.55 * scale,
+
+        0
+
+    );
+
+
+    enemy.add(
+        rightArm
+    );
+
+
+    const rightUpperArm =
+        new THREE.Mesh(
+
+            new THREE.CapsuleGeometry(
+
+                0.32 * scale,
+
+                1.25 * scale,
+
+                6,
+
+                10
+
+            ),
+
+            bodyMaterial
+
+        );
+
+
+    rightUpperArm.rotation.z =
+        0.28;
+
+
+    rightUpperArm.position.y =
+        -0.55 * scale;
+
+
+    rightUpperArm.castShadow =
+        true;
+
+
+    rightArm.add(
+        rightUpperArm
+    );
+
+
+    const rightForearm =
+        new THREE.Mesh(
+
+            new THREE.CapsuleGeometry(
+
+                0.27 * scale,
+
+                1.05 * scale,
+
+                6,
+
+                10
+
+            ),
+
+            darkMaterial
+
+        );
+
+
+    rightForearm.rotation.z =
+        0.12;
+
+
+    rightForearm.position.set(
+
+        0.12 * scale,
+
+        -1.55 * scale,
+
+        -0.08 * scale
+
+    );
+
+
+    rightForearm.castShadow =
+        true;
+
+
+    rightArm.add(
+        rightForearm
+    );
+
+
+    /* =====================================================
+       HANDEN / KLAUWEN
+    ===================================================== */
+
+    for (
+        const side of [-1, 1]
+    ) {
+
+        const hand =
+            new THREE.Mesh(
+
+                new THREE.SphereGeometry(
+
+                    0.38 * scale,
+
+                    12,
+
+                    10
+
+                ),
+
+                darkMaterial
+
+            );
+
+
+        hand.position.set(
+
+            side * 1.22 * scale,
+
+            0.78 * scale,
+
+            -0.15 * scale
+
+        );
+
+
+        hand.castShadow =
+            true;
+
+
+        enemy.add(
+            hand
+        );
+
+
+        for (
+            let claw = 0;
+            claw < 3;
+            claw++
+        ) {
+
+            const clawMesh =
+                new THREE.Mesh(
+
+                    new THREE.ConeGeometry(
+
+                        0.07 * scale,
+
+                        0.48 * scale,
+
+                        7
+
+                    ),
+
+                    boneMaterial
+
+                );
+
+
+            clawMesh.position.set(
+
+                side * (
+                    1.08 +
+                    claw * 0.13
+                ) * scale,
+
+                0.48 * scale,
+
+                -(
+                    0.38 +
+                    claw * 0.07
+                ) * scale
+
+            );
+
+
+            clawMesh.rotation.x =
+                -Math.PI / 2;
+
+
+            clawMesh.rotation.z =
+                side * 0.15;
+
+
+            enemy.add(
+                clawMesh
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       BENEN
+    ===================================================== */
+
+    for (
+        const side of [-1, 1]
+    ) {
+
+        const leg =
+            new THREE.Group();
+
+
+        leg.position.set(
+
+            side * 0.58 * scale,
+
+            1.05 * scale,
+
+            0
+
+        );
+
+
+        enemy.add(
+            leg
+        );
+
+
+        const upperLeg =
+            new THREE.Mesh(
+
+                new THREE.CapsuleGeometry(
+
+                    0.38 * scale,
+
+                    1.2 * scale,
+
+                    6,
+
+                    10
+
+                ),
+
+                bodyMaterial
+
+            );
+
+
+        upperLeg.position.y =
+            -0.45 * scale;
+
+
+        upperLeg.rotation.z =
+            side * 0.10;
+
+
+        upperLeg.castShadow =
+            true;
+
+
+        leg.add(
+            upperLeg
+        );
+
+
+        const lowerLeg =
+            new THREE.Mesh(
+
+                new THREE.CapsuleGeometry(
+
+                    0.30 * scale,
+
+                    1.15 * scale,
+
+                    6,
+
+                    10
+
+                ),
+
+                darkMaterial
+
+            );
+
+
+        lowerLeg.position.set(
+
+            side * 0.08 * scale,
+
+            -1.55 * scale,
+
+            -0.10 * scale
+
+        );
+
+
+        lowerLeg.rotation.z =
+            side * 0.08;
+
+
+        lowerLeg.castShadow =
+            true;
+
+
+        leg.add(
+            lowerLeg
+        );
+
+
+        const foot =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+
+                    0.72 * scale,
+
+                    0.4 * scale,
+
+                    1.2 * scale
+
+                ),
+
+                darkMaterial
+
+            );
+
+
+        foot.position.set(
+
+            side * 0.08 * scale,
+
+            -2.65 * scale,
+
+            -0.35 * scale
+
+        );
+
+
+        foot.castShadow =
+            true;
+
+
+        leg.add(
+            foot
+        );
+
+    }
+
+
+    /* =====================================================
+       RUG / STEKELS
+    ===================================================== */
+
+    for (
+        let i = 0;
+        i < 5;
+        i++
+    ) {
+
+        const spike =
+            new THREE.Mesh(
+
+                new THREE.ConeGeometry(
+
+                    0.25 * scale,
+
+                    0.9 * scale,
+
+                    7
+
+                ),
+
+                boneMaterial
+
+            );
+
+
+        spike.position.set(
+
+            0,
+
+            2.0 * scale +
+            i * 0.55 * scale,
+
+            0.72 * scale
+
+        );
+
+
+        spike.rotation.x =
+            Math.PI / 2;
+
+
+        spike.castShadow =
+            true;
+
+
+        enemy.add(
+            spike
+        );
+
+    }
+
+
+    /* =====================================================
+       EXTRA SCHOUDEERPLATEN
+    ===================================================== */
+
+    for (
+        const side of [-1, 1]
+    ) {
+
+        const shoulder =
+            new THREE.Mesh(
+
+                new THREE.SphereGeometry(
+
+                    0.55 * scale,
+
+                    12,
+
+                    10
+
+                ),
+
+                bodyMaterial
+
+            );
+
+
+        shoulder.scale.set(
+
+            1.25,
+
+            0.65,
+
+            0.8
+
+        );
+
+
+        shoulder.position.set(
+
+            side * 1.15 * scale,
+
+            2.75 * scale,
+
+            0
+
+        );
+
+
+        shoulder.castShadow =
+            true;
+
+
+        enemy.add(
+            shoulder
+        );
+
+    }
+
+
+    /* =====================================================
+       CRAWLER EXTRA'S
+    ===================================================== */
+
+    if (
+        type === "crawler"
+    ) {
+
+        /*
+           Crawler wordt lager,
+           langer en meer insectachtig.
+        */
+
+        enemy.scale.y =
+            0.62;
+
+
+        enemy.scale.z =
+            1.35;
+
+
+        enemy.scale.x =
+            1.25;
+
+
+        /* extra poten */
+
+        for (
+            let side of [-1, 1]
+        ) {
+
+            for (
+                let i = 0;
+                i < 3;
+                i++
+            ) {
+
+                const leg =
+                    new THREE.Mesh(
+
+                        new THREE.CapsuleGeometry(
+
+                            0.12 * scale,
+
+                            0.95 * scale,
+
+                            5,
+
+                            8
+
+                        ),
+
+                        darkMaterial
+
+                    );
+
+
+                leg.position.set(
+
+                    side *
+                    (
+                        0.85 +
+                        i * 0.35
+                    ) *
+                    scale,
+
+                    0.8 * scale,
+
+                    (
+                        0.65 -
+                        i * 0.55
+                    ) *
+                    scale
+
+                );
+
+
+                leg.rotation.z =
+                    side * 0.9;
+
+
+                leg.rotation.x =
+                    0.55;
+
+
+                leg.castShadow =
+                    true;
+
+
+                enemy.add(
+                    leg
+                );
+
+            }
+
+        }
+
+    }
+
+
+    /* =====================================================
+       GUARDIAN EXTRA'S
+    ===================================================== */
+
+    if (
+        type === "guardian"
+    ) {
+
+        /*
+           Guardian wordt een grote,
+           lange zware vijand.
+        */
+
+        enemy.scale.set(
+
+            1.15,
+
+            1.35,
+
+            1.15
+
+        );
+
+
+        /* grote schouderstukken */
+
+        for (
+            const side of [-1, 1]
+        ) {
+
+            const armor =
+                new THREE.Mesh(
+
+                    new THREE.IcosahedronGeometry(
+
+                        0.85 * scale,
+
+                        1
+
+                    ),
+
+                    darkMaterial
+
+                );
+
+
+            armor.scale.set(
+
+                1.35,
+
+                0.75,
+
+                1.05
+
+            );
+
+
+            armor.position.set(
+
+                side *
+                1.35 *
+                scale,
+
+                3.0 *
+                scale,
+
+                0
+
+            );
+
+
+            armor.castShadow =
+                true;
+
+
+            enemy.add(
+                armor
+            );
+
+        }
+
+
+        /* extra borstenergie */
+
+        const core =
+            new THREE.Mesh(
+
+                new THREE.OctahedronGeometry(
+
+                    0.45 * scale,
+
+                    1
+
+                ),
+
+                energyMaterial
+
+            );
+
+
+        core.position.set(
+
+            0,
+
+            2.35 * scale,
+
+            -1.15 * scale
+
+        );
+
+
+        enemy.add(
+            core
+        );
+
+
+        /* Guardian hoorns */
+
+        for (
+            const side of [-1, 1]
+        ) {
+
+            const largeHorn =
+                new THREE.Mesh(
+
+                    new THREE.ConeGeometry(
+
+                        0.35 * scale,
+
+                        2.1 * scale,
+
+                        8
+
+                    ),
+
+                    boneMaterial
+
+                );
+
+
+            largeHorn.position.set(
+
+                side *
+                0.72 *
+                scale,
+
+                5.1 *
+                scale,
+
+                0
+
+            );
+
+
+            largeHorn.rotation.z =
+                side * 0.35;
+
+
+            largeHorn.castShadow =
+                true;
+
+
+            enemy.add(
+                largeHorn
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       MONSTER GLOW
+    ===================================================== */
+
+    const monsterLight =
+        new THREE.PointLight(
+
+            0xff356f,
+
+            type === "guardian"
+                ? 3.5
+                : 1.8,
+
+            type === "guardian"
+                ? 10
+                : 6
+
+        );
+
+
+    monsterLight.position.set(
+
+        0,
+
+        3.2 * scale,
 
         -0.5 * scale
 
     );
 
 
-    enemy.add(eye);
+    enemy.add(
+        monsterLight
+    );
 
+
+    /* =====================================================
+       POSITIE
+    ===================================================== */
 
     enemy.position.set(
 
         x,
 
-        scale,
+        0,
 
         z
 
     );
 
 
+    /*
+       Hierdoor staat het monster
+       netjes met zijn voeten op de grond.
+    */
+
+    enemy.position.y =
+        0;
+
+
     scene.add(
         enemy
     );
 
+
+    /* =====================================================
+       ENEMY DATA
+    ===================================================== */
 
     enemies.push({
 
@@ -3105,10 +4354,25 @@ function createEnemy(
 
         health,
 
+        maxHealth:
+            health,
+
         speed,
 
         radius:
-            0.9 * scale,
+
+            type === "guardian"
+
+                ? 2.8
+
+                : type === "crawler"
+
+                    ? 1.6
+
+                    : 2.0,
+
+        height:
+            monsterHeight,
 
         dead:
             false
@@ -3116,79 +4380,6 @@ function createEnemy(
     });
 
 }
-
-
-/* =========================================================
-   SPAWN ENEMIES
-========================================================= */
-
-function spawnEnemies() {
-
-    for (
-        let i = 0;
-        i < 24;
-        i++
-    ) {
-
-        const angle =
-            Math.random() *
-            Math.PI *
-            2;
-
-
-        const distance =
-            40 +
-            Math.random() *
-            100;
-
-
-        const x =
-            Math.sin(angle) *
-            distance;
-
-
-        const z =
-            20 +
-            Math.cos(angle) *
-            distance;
-
-
-        let type =
-            "stalker";
-
-
-        const chance =
-            Math.random();
-
-
-        if (
-            chance > 0.88
-        ) {
-
-            type =
-                "guardian";
-
-        } else if (
-            chance > 0.58
-        ) {
-
-            type =
-                "crawler";
-
-        }
-
-
-        createEnemy(
-            x,
-            z,
-            type
-        );
-
-    }
-
-}
-
-
 /* =========================================================
    ENEMY UPDATE
 ========================================================= */
