@@ -1,71 +1,108 @@
 // ============================================================
 // ECHOBOUND — THE LOST SIGNAL
 // COMPLETE APP.JS
-// 3D TANK SURVIVAL + FEESTELIJKE SHOP EVENT
 // ============================================================
 
 (async function () {
+
     "use strict";
 
-    // ------------------------------------------------------------
+    // ============================================================
     // THREE.JS
-    // ------------------------------------------------------------
+    // ============================================================
+
     const THREE = await import(
         "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js"
     );
 
-    // ------------------------------------------------------------
-    // BASIS
-    // ------------------------------------------------------------
-    const canvas = document.getElementById("game");
+    // ============================================================
+    // HTML ELEMENTS
+    // ============================================================
 
-    if (!canvas) {
-        console.error("Canvas #game niet gevonden.");
-        return;
-    }
+    const canvas =
+        document.getElementById("game");
+
+    const ui =
+        document.getElementById("ui");
+
+    const mainMenu =
+        document.getElementById("menu");
+
+    const hud =
+        document.getElementById("hud");
+
+    // ============================================================
+    // GAME SETTINGS
+    // ============================================================
 
     const WORLD_SIZE = 360;
-    const HALF_WORLD = WORLD_SIZE / 2;
+
+    const HALF_WORLD =
+        WORLD_SIZE / 2;
 
     const PLAYER_MAX_HEALTH = 100;
+
     const PLAYER_MAX_ENERGY = 100;
 
     const TANK_SPEED = 15;
+
     const TANK_REVERSE_SPEED = 8;
+
     const TANK_TURN_SPEED = 1.8;
 
     const CAMERA_DISTANCE = 16;
+
     const CAMERA_HEIGHT = 8;
+
     const CAMERA_LOOK_HEIGHT = 2.2;
 
     const BULLET_SPEED = 85;
+
     const BULLET_DAMAGE = 25;
+
     const FIRE_COOLDOWN = 0.24;
 
     const ENEMY_COUNT = 10;
 
-    const SAVE_KEY = "echobound_save_v5";
+    const SAVE_KEY =
+        "echobound_save_v6";
 
-    // ------------------------------------------------------------
-    // GAME DATA
-    // ------------------------------------------------------------
-    let gameState = "menu";
+    // ============================================================
+    // GAME STATE
+    // ============================================================
 
-    let playerHealth = PLAYER_MAX_HEALTH;
-    let playerEnergy = PLAYER_MAX_ENERGY;
+    let gameState =
+        "menu";
 
-    let credits = 100;
-    let kills = 0;
+    let playerHealth =
+        PLAYER_MAX_HEALTH;
 
-    let ammo = 12;
-    let maxAmmo = 12;
+    let playerEnergy =
+        PLAYER_MAX_ENERGY;
 
-    let ammoUpgrade = 0;
+    let credits =
+        100;
 
-    let reloadTimer = 0;
-    let fireTimer = 0;
+    let kills =
+        0;
 
-    let totalPlayTime = 0;
+    let ammo =
+        12;
+
+    let maxAmmo =
+        12;
+
+    let ammoUpgrade =
+        0;
+
+    let reloadTimer =
+        0;
+
+    let fireTimer =
+        0;
+
+    let totalPlayTime =
+        0;
 
     let keys = {};
 
@@ -75,1275 +112,92 @@
         down: false
     };
 
+    // ============================================================
+    // THREE OBJECTS
+    // ============================================================
+
     let player;
+
     let turret;
+
     let muzzle;
 
     let camera;
+
     let renderer;
+
     let scene;
+
     let clock;
 
+    // ============================================================
+    // ARRAYS
+    // ============================================================
+
     const bullets = [];
+
     const enemies = [];
+
     const buildings = [];
+
     const resources = [];
+
     const particles = [];
 
-    // ------------------------------------------------------------
+    // ============================================================
     // ACHIEVEMENTS
-    // ------------------------------------------------------------
+    // ============================================================
+
     const achievements = {
+
         firstShot: false,
+
         firstKill: false,
+
         fiveKills: false,
+
         explorer: false,
+
         survivor: false
+
     };
 
     // ============================================================
-    // STYLING
+    // BASIC UI HELPERS
     // ============================================================
 
-    const style = document.createElement("style");
+    function closeAllPanels() {
 
-    style.textContent = `
-        * {
-            box-sizing: border-box;
+        if (!ui) {
+            return;
         }
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background:
-                radial-gradient(
-                    circle at center,
-                    #102337 0%,
-                    #05080d 55%,
-                    #020305 100%
-                );
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-            color: white;
-        }
-
-        #game {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .echo-ui {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .echo-button {
-            pointer-events: auto;
-            border: 1px solid rgba(100, 220, 255, .65);
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(15, 35, 52, .96),
-                    rgba(5, 14, 24, .96)
-                );
-            color: white;
-            padding: 14px 22px;
-            border-radius: 12px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            cursor: pointer;
-            box-shadow:
-                0 0 15px rgba(0, 200, 255, .12),
-                inset 0 0 15px rgba(0, 200, 255, .04);
-            transition:
-                transform .16s ease,
-                box-shadow .16s ease,
-                border-color .16s ease,
-                background .16s ease;
-        }
-
-        .echo-button:hover {
-            transform: translateY(-2px) scale(1.02);
-            border-color: #6eeaff;
-            box-shadow:
-                0 0 25px rgba(0, 210, 255, .35),
-                inset 0 0 20px rgba(0, 210, 255, .08);
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(20, 55, 78, .98),
-                    rgba(6, 20, 32, .98)
-                );
-        }
-
-        .echo-button:active {
-            transform: scale(.97);
-        }
-
-        .main-menu {
-            pointer-events: auto;
-            position: absolute;
-            inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(15, 48, 70, .72),
-                    rgba(2, 5, 10, .96) 72%
-                );
-        }
-
-        .menu-box {
-            width: min(560px, 92vw);
-            padding: 42px;
-            border-radius: 24px;
-            text-align: center;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(10, 25, 39, .97),
-                    rgba(3, 10, 17, .98)
-                );
-            border: 1px solid rgba(100, 220, 255, .45);
-            box-shadow:
-                0 0 70px rgba(0, 200, 255, .12),
-                inset 0 0 50px rgba(0, 150, 255, .035);
-        }
-
-        .logo {
-            font-size: clamp(42px, 8vw, 76px);
-            font-weight: 1000;
-            letter-spacing: 7px;
-            margin-bottom: 5px;
-            background:
-                linear-gradient(
-                    90deg,
-                    #ffffff,
-                    #73eaff,
-                    #ffffff
-                );
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow:
-                0 0 30px rgba(80, 220, 255, .25);
-        }
-
-        .subtitle {
-            color: #72dfff;
-            letter-spacing: 5px;
-            font-size: 12px;
-            margin-bottom: 30px;
-        }
-
-        .menu-buttons {
-            display: grid;
-            gap: 12px;
-        }
-
-        .shop-main-button {
-            border-color: rgba(255, 211, 74, .85);
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(94, 65, 10, .98),
-                    rgba(30, 22, 5, .98)
-                );
-            box-shadow:
-                0 0 25px rgba(255, 210, 60, .15),
-                inset 0 0 20px rgba(255, 210, 60, .05);
-        }
-
-        .shop-main-button:hover {
-            border-color: #ffe889;
-            box-shadow:
-                0 0 35px rgba(255, 210, 60, .4);
-        }
-
-        /* ======================================================
-           HUD
-           ====================================================== */
-
-        .hud {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-
-        .hud-panel {
-            position: absolute;
-            left: 18px;
-            top: 18px;
-            min-width: 230px;
-            padding: 15px;
-            border-radius: 15px;
-            background: rgba(3, 10, 16, .78);
-            border: 1px solid rgba(100, 220, 255, .3);
-            backdrop-filter: blur(8px);
-        }
-
-        .hud-title {
-            font-size: 12px;
-            letter-spacing: 3px;
-            color: #75eaff;
-            margin-bottom: 10px;
-        }
-
-        .bar {
-            height: 8px;
-            border-radius: 10px;
-            overflow: hidden;
-            background: rgba(255,255,255,.09);
-            margin: 5px 0 9px;
-        }
-
-        .bar-fill {
-            height: 100%;
-            width: 100%;
-            transition: width .15s linear;
-        }
-
-        #healthFill {
-            background:
-                linear-gradient(
-                    90deg,
-                    #ff4f62,
-                    #ffb14e
-                );
-        }
-
-        #energyFill {
-            background:
-                linear-gradient(
-                    90deg,
-                    #45d8ff,
-                    #7a7cff
-                );
-        }
-
-        .hud-info {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            font-size: 13px;
-            margin-top: 7px;
-        }
-
-        .hud-actions {
-            position: absolute;
-            right: 18px;
-            top: 18px;
-            display: flex;
-            gap: 8px;
-            pointer-events: auto;
-        }
-
-        .hud-small {
-            padding: 10px 13px;
-            font-size: 11px;
-        }
-
-        /* ======================================================
-           ALGEMENE PANELEN
-           ====================================================== */
-
-        .panel-layer {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, .68);
-            pointer-events: auto;
-            backdrop-filter: blur(7px);
-            padding: 20px;
-        }
-
-        .panel {
-            width: min(850px, 92vw);
-            max-height: 88vh;
-            overflow-y: auto;
-            overflow-x: hidden;
-            border-radius: 24px;
-            padding: 30px;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(10, 25, 39, .98),
-                    rgba(3, 8, 14, .99)
-                );
-            border: 1px solid rgba(100, 220, 255, .4);
-            box-shadow:
-                0 0 70px rgba(0, 190, 255, .16);
-        }
-
-        .panel h1 {
-            margin: 0 0 8px;
-            font-size: 32px;
-            letter-spacing: 3px;
-        }
-
-        .panel-subtitle {
-            color: #78dff7;
-            margin-bottom: 24px;
-        }
-
-        /* ======================================================
-           SHOP
-           ====================================================== */
-
-        .shop-panel {
-            position: relative;
-            width: min(1050px, 95vw);
-            max-height: 92vh;
-
-            /* BELANGRIJKE FIX:
-               shop mag nu verticaal scrollen */
-            overflow-y: auto;
-            overflow-x: hidden;
-
-            padding: 32px;
-
-            background:
-                radial-gradient(
-                    circle at 50% -15%,
-                    rgba(255, 229, 107, .28),
-                    transparent 30%
-                ),
-                radial-gradient(
-                    circle at 0% 100%,
-                    rgba(74, 220, 255, .12),
-                    transparent 30%
-                ),
-                radial-gradient(
-                    circle at 100% 100%,
-                    rgba(255, 82, 173, .10),
-                    transparent 30%
-                ),
-                linear-gradient(
-                    145deg,
-                    rgba(20, 25, 35, .99),
-                    rgba(4, 8, 14, .995)
-                );
-
-            border: 1px solid rgba(255, 220, 92, .72);
-
-            box-shadow:
-                0 0 30px rgba(255, 211, 55, .12),
-                0 0 100px rgba(255, 185, 45, .18),
-                inset 0 0 70px rgba(255, 195, 45, .035);
-        }
-
-        .shop-panel::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        .shop-panel::-webkit-scrollbar-track {
-            background: rgba(255,255,255,.04);
-            border-radius: 10px;
-        }
-
-        .shop-panel::-webkit-scrollbar-thumb {
-            background:
-                linear-gradient(
-                    #ffe36b,
-                    #72eaff
-                );
-            border-radius: 10px;
-            border: 2px solid rgba(0,0,0,.2);
-        }
-
-        .shop-panel {
-            scrollbar-width: thin;
-            scrollbar-color:
-                #ffe36b
-                rgba(255,255,255,.04);
-        }
-
-        .shop-panel::before {
-            content: "";
-            position: absolute;
-            left: -20%;
-            top: -70%;
-            width: 140%;
-            height: 160%;
-            pointer-events: none;
-            background:
-                conic-gradient(
-                    from 0deg,
-                    transparent 0deg,
-                    rgba(255, 228, 92, .045) 8deg,
-                    transparent 16deg,
-                    rgba(99, 222, 255, .035) 25deg,
-                    transparent 35deg,
-                    rgba(255, 90, 174, .03) 45deg,
-                    transparent 60deg
-                );
-            animation:
-                shopRays 14s linear infinite;
-        }
-
-        .shop-header {
-            position: relative;
-            z-index: 3;
-            text-align: center;
-            padding: 0 0 12px;
-        }
-
-        .shop-event-badge {
-            display: inline-block;
-            padding: 7px 16px;
-            margin-bottom: 8px;
-            border-radius: 999px;
-            color: #fff4ad;
-            font-size: 10px;
-            font-weight: 1000;
-            letter-spacing: 3px;
-            border: 1px solid rgba(255, 220, 89, .5);
-            background:
-                linear-gradient(
-                    90deg,
-                    rgba(255, 190, 40, .08),
-                    rgba(255, 255, 255, .08),
-                    rgba(255, 190, 40, .08)
-                );
-            box-shadow:
-                0 0 20px rgba(255, 210, 70, .12);
-            animation:
-                badgePulse 2.2s ease-in-out infinite;
-        }
-
-        .shop-sparkles {
-            font-size: 24px;
-            letter-spacing: 15px;
-            color: #ffe87a;
-            text-shadow:
-                0 0 8px rgba(255, 235, 120, .8),
-                0 0 25px rgba(255, 205, 60, .5);
-            animation:
-                sparkle 1.8s infinite ease-in-out;
-        }
-
-        .shop-title {
-            margin: 3px 0 0 !important;
-            font-size: clamp(40px, 7vw, 70px) !important;
-            font-weight: 1000;
-            letter-spacing: 8px !important;
-            background:
-                linear-gradient(
-                    90deg,
-                    #ffffff,
-                    #ffe06b,
-                    #fff4a5,
-                    #ffffff,
-                    #79eaff,
-                    #ffe06b
-                );
-            background-size: 300% 100%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation:
-                goldFlow 3s linear infinite;
-            filter:
-                drop-shadow(
-                    0 0 12px
-                    rgba(255, 214, 76, .18)
-                );
-        }
-
-        .shop-unlocked {
-            color: #ffe27a;
-            font-weight: 900;
-            letter-spacing: 4px;
-            font-size: 12px;
-            margin-top: 2px;
-        }
-
-        .shop-event-text {
-            position: relative;
-            z-index: 3;
-            text-align: center;
-            margin: 8px auto 17px;
-            color: #9befff;
-            font-size: 11px;
-            letter-spacing: 2px;
-            font-weight: 800;
-        }
-
-        .credits-card {
-            position: relative;
-            z-index: 4;
-            margin: 8px auto 22px;
-            width: min(390px, 90%);
-            padding: 15px 22px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 13px;
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(93, 67, 10, .9),
-                    rgba(25, 22, 10, .94)
-                );
-            border: 1px solid rgba(255, 220, 92, .65);
-            box-shadow:
-                0 0 25px rgba(255, 205, 60, .1),
-                inset 0 0 20px rgba(255, 218, 75, .06);
-            animation:
-                creditGlow 2.5s ease-in-out infinite;
-        }
-
-        .coin {
-            width: 38px;
-            height: 38px;
-            flex: 0 0 38px;
-            border-radius: 50%;
-            display: grid;
-            place-items: center;
-            font-weight: 1000;
-            font-size: 17px;
-            color: #5d4300;
-            background:
-                radial-gradient(
-                    circle at 32% 27%,
-                    #fffbd0,
-                    #fff09a 20%,
-                    #ffd33d 48%,
-                    #bd8513 100%
-                );
-            border: 2px solid rgba(255, 244, 158, .7);
-            box-shadow:
-                0 0 10px rgba(255, 230, 92, .65),
-                0 0 25px rgba(255, 211, 60, .3);
-            animation:
-                coinFloat 2s ease-in-out infinite;
-        }
-
-        .credits-number {
-            font-size: 27px;
-            font-weight: 1000;
-            color: #ffe681;
-            text-shadow:
-                0 0 12px rgba(255, 218, 83, .35);
-        }
-
-        .credits-label {
-            color: #c9c9c9;
-            font-size: 10px;
-            letter-spacing: 2px;
-            margin-top: 2px;
-        }
-
-        .shop-grid {
-            position: relative;
-            z-index: 4;
-            display: grid;
-            grid-template-columns:
-                repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .shop-card {
-            position: relative;
-            overflow: hidden;
-            padding: 23px 18px 18px;
-            min-height: 275px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            border-radius: 20px;
-            background:
-                linear-gradient(
-                    150deg,
-                    rgba(18, 31, 43, .98),
-                    rgba(6, 13, 20, .99)
-                );
-            border: 1px solid rgba(110, 220, 255, .24);
-            box-shadow:
-                0 8px 30px rgba(0, 0, 0, .22);
-            transition:
-                transform .2s ease,
-                border-color .2s ease,
-                box-shadow .2s ease;
-        }
-
-        .shop-card::before {
-            content: "";
-            position: absolute;
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            left: 50%;
-            top: -105px;
-            transform: translateX(-50%);
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(90, 220, 255, .14),
-                    transparent 70%
-                );
-            filter: blur(5px);
-        }
-
-        .shop-card::after {
-            content: "";
-            position: absolute;
-            left: -80%;
-            top: 0;
-            width: 55%;
-            height: 100%;
-            transform: skewX(-20deg);
-            background:
-                linear-gradient(
-                    90deg,
-                    transparent,
-                    rgba(255,255,255,.08),
-                    transparent
-                );
-            transition:
-                left .7s ease;
-        }
-
-        .shop-card:hover {
-            transform:
-                translateY(-7px)
-                scale(1.015);
-            border-color:
-                rgba(255, 220, 100, .62);
-            box-shadow:
-                0 18px 40px
-                rgba(0, 170, 255, .12),
-                0 0 28px
-                rgba(255, 207, 65, .08);
-        }
-
-        .shop-card:hover::after {
-            left: 140%;
-        }
-
-        .shop-card:nth-child(1):hover {
-            border-color:
-                rgba(113, 218, 255, .75);
-        }
-
-        .shop-card:nth-child(2):hover {
-            border-color:
-                rgba(255, 105, 130, .75);
-        }
-
-        .shop-card:nth-child(3):hover {
-            border-color:
-                rgba(187, 129, 255, .75);
-        }
-
-        .shop-icon {
-            position: relative;
-            z-index: 2;
-            width: 78px;
-            height: 78px;
-            display: grid;
-            place-items: center;
-            border-radius: 22px;
-            font-size: 37px;
-            margin-bottom: 13px;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(65, 120, 145, .28),
-                    rgba(10, 25, 35, .8)
-                );
-            border:
-                1px solid
-                rgba(110, 225, 255, .35);
-            box-shadow:
-                0 0 25px
-                rgba(80, 220, 255, .08),
-                inset 0 0 20px
-                rgba(100, 220, 255, .05);
-            transition:
-                transform .2s ease,
-                box-shadow .2s ease;
-        }
-
-        .shop-card:nth-child(2) .shop-icon {
-            border-color:
-                rgba(255, 110, 135, .38);
-        }
-
-        .shop-card:nth-child(3) .shop-icon {
-            border-color:
-                rgba(190, 130, 255, .4);
-        }
-
-        .shop-card:hover .shop-icon {
-            transform:
-                translateY(-3px)
-                scale(1.08);
-            box-shadow:
-                0 0 30px
-                rgba(90, 220, 255, .18);
-        }
-
-        .shop-card h2 {
-            position: relative;
-            z-index: 2;
-            margin: 0 0 7px;
-            font-size: 19px;
-            letter-spacing: 1px;
-        }
-
-        .shop-card p {
-            position: relative;
-            z-index: 2;
-            margin: 0 0 15px;
-            color: #aebac3;
-            font-size: 12px;
-            line-height: 1.5;
-            flex: 1;
-        }
-
-        .shop-price {
-            position: relative;
-            z-index: 2;
-            color: #ffe27a;
-            font-weight: 1000;
-            margin-bottom: 10px;
-            font-size: 13px;
-            letter-spacing: 1px;
-        }
-
-        .buy-button {
-            position: relative;
-            z-index: 3;
-            width: 100%;
-            border-color:
-                rgba(255, 216, 90, .55);
-            color: #fff6c8;
-        }
-
-        .buy-button:hover {
-            border-color: #ffe778;
-            box-shadow:
-                0 0 24px
-                rgba(255, 214, 70, .2);
-        }
-
-        .shop-message {
-            position: relative;
-            z-index: 4;
-            text-align: center;
-            min-height: 25px;
-            margin-top: 17px;
-            color: #83eaff;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        .shop-back {
-            position: relative;
-            z-index: 4;
-            display: block;
-            margin: 8px auto 0;
-            min-width: 180px;
-        }
-
-        /* ======================================================
-           CONFETTI
-           ====================================================== */
-
-        .shop-confetti {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .shop-confetti-piece {
-            position: absolute;
-            top: -20px;
-            width: 6px;
-            height: 13px;
-            border-radius: 2px;
-            opacity: .75;
-            animation:
-                confettiFall var(--fall-time)
-                linear infinite,
-                confettiSpin var(--spin-time)
-                linear infinite;
-            animation-delay:
-                var(--delay);
-        }
-
-        .shop-confetti-piece:nth-child(3n) {
-            width: 5px;
-            height: 9px;
-        }
-
-        .shop-confetti-piece:nth-child(4n) {
-            border-radius: 50%;
-        }
-
-        .shop-top-line {
-            position: relative;
-            z-index: 4;
-            height: 2px;
-            width: 100%;
-            margin: 2px auto 14px;
-            background:
-                linear-gradient(
-                    90deg,
-                    transparent,
-                    #ffe16b,
-                    #7ceaff,
-                    #ffe16b,
-                    transparent
-                );
-            box-shadow:
-                0 0 15px
-                rgba(255, 220, 75, .45);
-        }
-
-        /* ======================================================
-           NOTIFICATION
-           ====================================================== */
-
-        .notification {
-            position: absolute;
-            left: 50%;
-            bottom: 40px;
-            transform: translateX(-50%);
-            padding: 12px 20px;
-            border-radius: 12px;
-            background:
-                rgba(3, 10, 16, .92);
-            border:
-                1px solid
-                rgba(100, 220, 255, .35);
-            color: white;
-            opacity: 0;
-            transition:
-                opacity .2s;
-        }
-
-        .notification.show {
-            opacity: 1;
-        }
-
-        /* ======================================================
-           ANIMATIES
-           ====================================================== */
-
-        @keyframes sparkle {
-            0%, 100% {
-                opacity: .5;
-                transform: scale(.95);
-            }
-
-            50% {
-                opacity: 1;
-                transform: scale(1.08);
-            }
-        }
-
-        @keyframes goldFlow {
-            0% {
-                background-position:
-                    0% 50%;
-            }
-
-            100% {
-                background-position:
-                    300% 50%;
-            }
-        }
-
-        @keyframes shopRays {
-            from {
-                transform:
-                    rotate(0deg);
-            }
-
-            to {
-                transform:
-                    rotate(360deg);
-            }
-        }
-
-        @keyframes badgePulse {
-            0%, 100% {
-                transform:
-                    scale(1);
-                box-shadow:
-                    0 0 15px
-                    rgba(255, 210, 70, .08);
-            }
-
-            50% {
-                transform:
-                    scale(1.025);
-                box-shadow:
-                    0 0 28px
-                    rgba(255, 210, 70, .22);
-            }
-        }
-
-        @keyframes creditGlow {
-            0%, 100% {
-                box-shadow:
-                    0 0 20px
-                    rgba(255, 205, 60, .08),
-                    inset 0 0 20px
-                    rgba(255, 218, 75, .04);
-            }
-
-            50% {
-                box-shadow:
-                    0 0 35px
-                    rgba(255, 205, 60, .18),
-                    inset 0 0 25px
-                    rgba(255, 218, 75, .07);
-            }
-        }
-
-        @keyframes coinFloat {
-            0%, 100% {
-                transform:
-                    translateY(0)
-                    rotate(-4deg);
-            }
-
-            50% {
-                transform:
-                    translateY(-4px)
-                    rotate(4deg);
-            }
-        }
-
-        @keyframes confettiFall {
-            0% {
-                top: -25px;
-                opacity: 0;
-            }
-
-            10% {
-                opacity: .8;
-            }
-
-            90% {
-                opacity: .75;
-            }
-
-            100% {
-                top: 110%;
-                opacity: 0;
-            }
-        }
-
-        @keyframes confettiSpin {
-            0% {
-                transform:
-                    rotate(0deg)
-                    translateX(0);
-            }
-
-            50% {
-                transform:
-                    rotate(180deg)
-                    translateX(18px);
-            }
-
-            100% {
-                transform:
-                    rotate(360deg)
-                    translateX(0);
-            }
-        }
-
-        /* ======================================================
-           MOBIEL
-           ====================================================== */
-
-        @media (max-width: 750px) {
-
-            .shop-panel {
-                padding: 22px 16px;
-            }
-
-            .shop-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .shop-card {
-                min-height: 210px;
-            }
-
-            .menu-box {
-                padding: 28px 20px;
-            }
-
-            .panel {
-                padding: 22px;
-            }
-
-            .shop-title {
-                letter-spacing: 5px !important;
-            }
-
-            .hud-panel {
-                min-width: 190px;
-                left: 10px;
-                top: 10px;
-            }
-
-            .hud-actions {
-                right: 10px;
-                top: 10px;
-            }
-        }
-    `;
-
-    document.head.appendChild(style);
-
-    // ============================================================
-    // UI ROOT
-    // ============================================================
-
-    const ui =
-        document.createElement("div");
-
-    ui.className =
-        "echo-ui";
-
-    document.body.appendChild(ui);
-
-    // ============================================================
-    // MENU
-    // ============================================================
-
-    const mainMenu =
-        document.createElement("div");
-
-    mainMenu.className =
-        "main-menu";
-
-    mainMenu.innerHTML = `
-        <div class="menu-box">
-
-            <div class="logo">
-                ECHOBOUND
-            </div>
-
-            <div class="subtitle">
-                THE LOST SIGNAL
-            </div>
-
-            <div class="menu-buttons">
-
-                <button
-                    class="echo-button"
-                    id="newRunBtn"
-                >
-                    NEW RUN
-                </button>
-
-                <button
-                    class="echo-button shop-main-button"
-                    id="shopBtn"
-                >
-                    🛒 SHOP
-                </button>
-
-                <button
-                    class="echo-button"
-                    id="loadBtn"
-                >
-                    LOAD GAME
-                </button>
-
-                <button
-                    class="echo-button"
-                    id="achievementsBtn"
-                >
-                    🏆 ACHIEVEMENTS
-                </button>
-
-                <button
-                    class="echo-button"
-                    id="controlsBtn"
-                >
-                    CONTROLS
-                </button>
-
-            </div>
-        </div>
-    `;
-
-    ui.appendChild(mainMenu);
-
-    // ============================================================
-    // HUD
-    // ============================================================
-
-    const hud =
-        document.createElement("div");
-
-    hud.className =
-        "hud";
-
-    hud.style.display =
-        "none";
-
-    hud.innerHTML = `
-        <div class="hud-panel">
-
-            <div class="hud-title">
-                ECHOBOUND // SYSTEM
-            </div>
-
-            <div>
-                HULL
-            </div>
-
-            <div class="bar">
-                <div
-                    class="bar-fill"
-                    id="healthFill"
-                ></div>
-            </div>
-
-            <div>
-                ENERGY
-            </div>
-
-            <div class="bar">
-                <div
-                    class="bar-fill"
-                    id="energyFill"
-                ></div>
-            </div>
-
-            <div class="hud-info">
-                <span>
-                    AMMO
-                </span>
-
-                <strong id="ammoText">
-                    12 / 12
-                </strong>
-            </div>
-
-            <div class="hud-info">
-                <span>
-                    KILLS
-                </span>
-
-                <strong id="killsText">
-                    0
-                </strong>
-            </div>
-
-            <div class="hud-info">
-                <span>
-                    CREDITS
-                </span>
-
-                <strong id="creditsText">
-                    100
-                </strong>
-            </div>
-
-        </div>
-
-        <div class="hud-actions">
-
-            <button
-                class="echo-button hud-small"
-                id="mapBtn"
-            >
-                MAP
-            </button>
-
-            <button
-                class="echo-button hud-small"
-                id="pauseBtn"
-            >
-                PAUSE
-            </button>
-
-        </div>
-    `;
-
-    ui.appendChild(hud);
-
-    // ============================================================
-    // NOTIFICATION
-    // ============================================================
-
-    const notification =
-        document.createElement("div");
-
-    notification.className =
-        "notification";
-
-    ui.appendChild(notification);
-
-    let notificationTimer = null;
-
-    function notify(message) {
-
-        notification.textContent =
-            message;
-
-        notification.classList.add(
-            "show"
+        ui.querySelectorAll(
+            ".panel-layer"
+        ).forEach(
+            panel => panel.remove()
         );
-
-        clearTimeout(
-            notificationTimer
-        );
-
-        notificationTimer =
-            setTimeout(() => {
-
-                notification.classList.remove(
-                    "show"
-                );
-
-            }, 2200);
     }
-
-    // ============================================================
-    // PANEL
-    // ============================================================
 
     function createPanel(
         html,
         className = ""
     ) {
 
+        closeAllPanels();
+
         const layer =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         layer.className =
             "panel-layer";
 
         const panel =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         panel.className =
             `panel ${className}`;
@@ -1362,41 +216,80 @@
         return {
 
             layer,
+
             panel,
 
             close() {
 
-                if (
-                    layer &&
-                    layer.parentNode
-                ) {
+                layer.remove();
 
-                    layer.remove();
-                }
             }
 
         };
     }
 
-    // ============================================================
-    // ALLE LOSSE PANELEN SLUITEN
-    // ============================================================
+    function notify(
+        message
+    ) {
 
-    function closeAllPanels() {
+        const old =
+            document.querySelector(
+                ".echo-notification"
+            );
 
-        ui
-            .querySelectorAll(
-                ".panel-layer"
-            )
-            .forEach(panel => {
+        if (old) {
+            old.remove();
+        }
 
-                panel.remove();
+        const notification =
+            document.createElement(
+                "div"
+            );
 
-            });
+        notification.className =
+            "echo-notification";
+
+        notification.textContent =
+            message;
+
+        document.body.appendChild(
+            notification
+        );
+
+        setTimeout(
+            () => {
+
+                notification.classList.add(
+                    "show"
+                );
+
+            },
+            10
+        );
+
+        setTimeout(
+            () => {
+
+                notification.classList.remove(
+                    "show"
+                );
+
+                setTimeout(
+                    () => {
+
+                        notification.remove();
+
+                    },
+                    300
+                );
+
+            },
+            1800
+        );
     }
 
     // ============================================================
-    // FEESTELIJKE SHOP
+    // SHOP
     // ============================================================
 
     function openShop() {
@@ -1404,145 +297,47 @@
         /*
          * BELANGRIJKE FIX:
          *
-         * We gebruiken hier NIET pauseGame().
-         * pauseGame() maakt namelijk een extra
-         * pause-paneel aan.
+         * Vanuit de game wordt de game gepauzeerd,
+         * maar er wordt GEEN extra pause-panel gemaakt.
+         *
+         * Daardoor kan het pause-menu niet achter
+         * de shop blijven staan.
          */
 
         if (
-            gameState === "playing"
+            gameState ===
+            "playing"
         ) {
 
             gameState =
                 "paused";
         }
 
-        // --------------------------------------------------------
-        // CONFETTI
-        // --------------------------------------------------------
-
-        let confettiHTML = "";
-
-        const confettiSymbols = [
-            "◆",
-            "●",
-            "■",
-            "✦"
-        ];
-
-        const confettiColors = [
-            "#ffe36b",
-            "#71eaff",
-            "#ff72b8",
-            "#a77aff",
-            "#ffffff"
-        ];
-
-        for (
-            let i = 0;
-            i < 42;
-            i++
-        ) {
-
-            const left =
-                Math.random() * 100;
-
-            const delay =
-                -(Math.random() * 8);
-
-            const fallTime =
-                5 +
-                Math.random() * 6;
-
-            const spinTime =
-                1.5 +
-                Math.random() * 3;
-
-            const symbol =
-                confettiSymbols[
-                    i %
-                    confettiSymbols.length
-                ];
-
-            const hue =
-                confettiColors[
-                    i %
-                    confettiColors.length
-                ];
-
-            confettiHTML += `
-                <span
-                    class="shop-confetti-piece"
-                    style="
-                        left:${left}%;
-                        color:${hue};
-                        background:${hue};
-                        --delay:${delay}s;
-                        --fall-time:${fallTime}s;
-                        --spin-time:${spinTime}s;
-                    "
-                >${symbol}</span>
-            `;
-        }
-
-        // --------------------------------------------------------
-        // SHOP PANEL
-        // --------------------------------------------------------
-
         const shop =
-            createPanel(`
+            createPanel(
+                `
 
-                <div class="shop-confetti">
-                    ${confettiHTML}
+                <div class="shop-sparkles">
+                    ✦ ✧ ✦ ✧ ✦ ✧ ✦
                 </div>
 
-                <div class="shop-header">
+                <div class="shop-title">
+                    🛒 ECHOBOUND SHOP
+                </div>
 
-                    <div class="shop-event-badge">
-                        ✦ ECHOBOUND CELEBRATION EVENT ✦
-                    </div>
-
-                    <div class="shop-sparkles">
-                        ✦ ✧ ✦ ✧ ✦
-                    </div>
-
-                    <h1 class="shop-title">
-                        SHOP
-                    </h1>
-
-                    <div class="shop-unlocked">
-                        ★ SUPPLY DEPOT UNLOCKED ★
-                    </div>
-
+                <div class="shop-unlocked">
+                    FIELD SUPPLY TERMINAL
                 </div>
 
                 <div class="shop-event-text">
-                    🎉 YOUR SIGNAL IS STRONG — CELEBRATE WITH A SUPPLY DROP 🎉
+                    ⚡ KEEP YOUR TANK ALIVE ⚡
                 </div>
 
-                <div class="shop-top-line"></div>
-
                 <div class="credits-card">
-
-                    <div class="coin">
-                        ¢
-                    </div>
-
-                    <div>
-
-                        <div
-                            class="credits-number"
-                            id="shopCredits"
-                        >
-                            ${credits}
-                        </div>
-
-                        <div class="credits-label">
-                            ECHO CREDITS
-                        </div>
-
-                    </div>
-
+                    <span>AVAILABLE CREDITS</span>
+                    <strong id="shopCredits">
+                        ${credits}
+                    </strong>
                 </div>
 
                 <div class="shop-grid">
@@ -1550,7 +345,7 @@
                     <div class="shop-card">
 
                         <div class="shop-icon">
-                            🔫
+                            🔋
                         </div>
 
                         <h2>
@@ -1558,12 +353,12 @@
                         </h2>
 
                         <p>
-                            Vul je munitie volledig aan.
-                            Klaar voor het volgende gevecht.
+                            Completely refill your
+                            current ammunition.
                         </p>
 
                         <div class="shop-price">
-                            ◆ 10 CREDITS
+                            10 CREDITS
                         </div>
 
                         <button
@@ -1578,7 +373,7 @@
                     <div class="shop-card">
 
                         <div class="shop-icon">
-                            ❤️
+                            🛠️
                         </div>
 
                         <h2>
@@ -1586,12 +381,12 @@
                         </h2>
 
                         <p>
-                            Herstel je tank volledig.
-                            Laat je machine weer schitteren.
+                            Restore your tank
+                            to maximum hull strength.
                         </p>
 
                         <div class="shop-price">
-                            ◆ 20 CREDITS
+                            20 CREDITS
                         </div>
 
                         <button
@@ -1614,19 +409,19 @@
                         </h2>
 
                         <p>
-                            Vergroot je maximale
-                            munitiecapaciteit met 4 kogels.
+                            Increase maximum ammo
+                            capacity by 4 rounds.
                         </p>
 
                         <div class="shop-price">
-                            ◆ 50 CREDITS
+                            50 CREDITS
                         </div>
 
                         <button
                             class="echo-button buy-button"
                             id="buyUpgrade"
                         >
-                            BUY UPGRADE
+                            UPGRADE
                         </button>
 
                     </div>
@@ -1637,7 +432,7 @@
                     class="shop-message"
                     id="shopMessage"
                 >
-                    🎉 WELKOM BIJ DE ECHOBOUND CELEBRATION DEPOT 🎉
+                    WELCOME TO THE SUPPLY TERMINAL
                 </div>
 
                 <button
@@ -1647,44 +442,101 @@
                     ← BACK
                 </button>
 
-            `, "shop-panel");
-
-        // --------------------------------------------------------
-        // SHOP ELEMENTEN
-        // --------------------------------------------------------
-
-        const creditsElement =
-            shop.panel.querySelector(
-                "#shopCredits"
+                `
             );
 
-        const messageElement =
-            shop.panel.querySelector(
-                "#shopMessage"
+        // ========================================================
+        // SHOP CONFETTI
+        // ========================================================
+
+        for (
+            let i = 0;
+            i < 42;
+            i++
+        ) {
+
+            const piece =
+                document.createElement(
+                    "span"
+                );
+
+            piece.className =
+                "shop-confetti";
+
+            piece.style.left =
+                `${Math.random() * 100}%`;
+
+            piece.style.animationDelay =
+                `${Math.random() * 3}s`;
+
+            piece.style.animationDuration =
+                `${2 + Math.random() * 3}s`;
+
+            shop.panel.appendChild(
+                piece
             );
-
-        function updateShopCredits() {
-
-            creditsElement.textContent =
-                credits;
-
-            updateHUD();
         }
+
+        // ========================================================
+        // SHOP MESSAGE
+        // ========================================================
 
         function shopMessage(
             message
         ) {
 
-            messageElement.textContent =
+            const element =
+                shop.panel.querySelector(
+                    "#shopMessage"
+                );
+
+            if (!element) {
+                return;
+            }
+
+            element.textContent =
                 message;
+
+            element.classList.remove(
+                "shop-message-pop"
+            );
+
+            void element.offsetWidth;
+
+            element.classList.add(
+                "shop-message-pop"
+            );
         }
 
-        // --------------------------------------------------------
-        // AMMO
-        // --------------------------------------------------------
+        // ========================================================
+        // SHOP CREDITS
+        // ========================================================
+
+        function updateShopCredits() {
+
+            const element =
+                shop.panel.querySelector(
+                    "#shopCredits"
+                );
+
+            if (element) {
+
+                element.textContent =
+                    credits;
+
+            }
+
+            updateHUD();
+        }
+
+        // ========================================================
+        // BUY AMMO
+        // ========================================================
 
         shop.panel
-            .querySelector("#buyAmmo")
+            .querySelector(
+                "#buyAmmo"
+            )
             .addEventListener(
                 "click",
                 () => {
@@ -1700,7 +552,8 @@
                         return;
                     }
 
-                    credits -= 10;
+                    credits -=
+                        10;
 
                     ammo =
                         maxAmmo;
@@ -1708,24 +561,39 @@
                     updateShopCredits();
 
                     shopMessage(
-                        "🎉 🔫 AMMO RESTOCKED!"
+                        "🔋 AMMO REFILLED!"
                     );
 
                     notify(
-                        "AMMO RESTOCKED"
+                        "AMMO REFILLED"
                     );
+
                 }
             );
 
-        // --------------------------------------------------------
-        // REPAIR
-        // --------------------------------------------------------
+        // ========================================================
+        // TANK REPAIR
+        // ========================================================
 
         shop.panel
-            .querySelector("#buyRepair")
+            .querySelector(
+                "#buyRepair"
+            )
             .addEventListener(
                 "click",
                 () => {
+
+                    if (
+                        playerHealth >=
+                        PLAYER_MAX_HEALTH
+                    ) {
+
+                        shopMessage(
+                            "✓ TANK ALREADY AT FULL HEALTH"
+                        );
+
+                        return;
+                    }
 
                     if (
                         credits < 20
@@ -1738,19 +606,8 @@
                         return;
                     }
 
-                    if (
-                        playerHealth >=
-                        PLAYER_MAX_HEALTH
-                    ) {
-
-                        shopMessage(
-                            "✨ TANK IS ALREADY FULLY REPAIRED"
-                        );
-
-                        return;
-                    }
-
-                    credits -= 20;
+                    credits -=
+                        20;
 
                     playerHealth =
                         PLAYER_MAX_HEALTH;
@@ -1758,21 +615,24 @@
                     updateShopCredits();
 
                     shopMessage(
-                        "🎉 ❤️ TANK FULLY REPAIRED!"
+                        "🛠️ 🎉 TANK FULLY REPAIRED!"
                     );
 
                     notify(
                         "TANK REPAIRED"
                     );
+
                 }
             );
 
-        // --------------------------------------------------------
-        // UPGRADE
-        // --------------------------------------------------------
+        // ========================================================
+        // AMMO UPGRADE
+        // ========================================================
 
         shop.panel
-            .querySelector("#buyUpgrade")
+            .querySelector(
+                "#buyUpgrade"
+            )
             .addEventListener(
                 "click",
                 () => {
@@ -1788,11 +648,14 @@
                         return;
                     }
 
-                    credits -= 50;
+                    credits -=
+                        50;
 
-                    ammoUpgrade += 4;
+                    ammoUpgrade +=
+                        4;
 
-                    maxAmmo += 4;
+                    maxAmmo +=
+                        4;
 
                     ammo =
                         maxAmmo;
@@ -1806,15 +669,18 @@
                     notify(
                         "AMMO UPGRADED"
                     );
+
                 }
             );
 
-        // --------------------------------------------------------
-        // BACK
-        // --------------------------------------------------------
+        // ========================================================
+        // SHOP BACK
+        // ========================================================
 
         shop.panel
-            .querySelector("#shopBack")
+            .querySelector(
+                "#shopBack"
+            )
             .addEventListener(
                 "click",
                 () => {
@@ -1827,13 +693,9 @@
                      */
 
                     if (
-                        gameState === "paused"
+                        gameState ===
+                        "paused"
                     ) {
-
-                        /*
-                         * Alleen een pause-menu tonen
-                         * wanneer de HUD actief is.
-                         */
 
                         if (
                             hud.style.display !==
@@ -1841,6 +703,7 @@
                         ) {
 
                             showPausePanel();
+
                         }
 
                         return;
@@ -1848,11 +711,12 @@
 
                     /*
                      * Vanuit het hoofdmenu:
-                     * het hoofdmenu weer zichtbaar maken.
+                     * hoofdmenu zichtbaar.
                      */
 
                     if (
-                        gameState === "menu"
+                        gameState ===
+                        "menu"
                     ) {
 
                         mainMenu.style.display =
@@ -1860,6 +724,7 @@
 
                         hud.style.display =
                             "none";
+
                     }
 
                 }
@@ -1878,7 +743,8 @@
             ).filter(Boolean).length;
 
         const panel =
-            createPanel(`
+            createPanel(
+                `
 
                 <h1>
                     🏆 ACHIEVEMENTS
@@ -1886,7 +752,9 @@
 
                 <div class="panel-subtitle">
                     ${unlocked} /
-                    ${Object.keys(achievements).length}
+                    ${Object.keys(
+                        achievements
+                    ).length}
                     achievements unlocked
                 </div>
 
@@ -1924,7 +792,8 @@
                     ← BACK
                 </button>
 
-            `);
+                `
+            );
 
         panel.panel
             .querySelector(
@@ -1943,7 +812,8 @@
     function openControls() {
 
         const panel =
-            createPanel(`
+            createPanel(
+                `
 
                 <h1>
                     CONTROLS
@@ -1954,35 +824,43 @@
                 </div>
 
                 <p>
-                    <b>W / ↑</b> — Drive forward
+                    <b>W / ↑</b>
+                    — Drive forward
                 </p>
 
                 <p>
-                    <b>S / ↓</b> — Drive backward
+                    <b>S / ↓</b>
+                    — Drive backward
                 </p>
 
                 <p>
-                    <b>A / ←</b> — Turn left
+                    <b>A / ←</b>
+                    — Turn left
                 </p>
 
                 <p>
-                    <b>D / →</b> — Turn right
+                    <b>D / →</b>
+                    — Turn right
                 </p>
 
                 <p>
-                    <b>MOUSE</b> — Aim cannon
+                    <b>MOUSE</b>
+                    — Aim cannon
                 </p>
 
                 <p>
-                    <b>LEFT CLICK</b> — Fire
+                    <b>LEFT CLICK</b>
+                    — Fire
                 </p>
 
                 <p>
-                    <b>R</b> — Reload
+                    <b>R</b>
+                    — Reload
                 </p>
 
                 <p>
-                    <b>ESC</b> — Pause
+                    <b>ESC</b>
+                    — Pause
                 </p>
 
                 <br>
@@ -1994,7 +872,8 @@
                     ← BACK
                 </button>
 
-            `);
+                `
+            );
 
         panel.panel
             .querySelector(
@@ -2025,14 +904,22 @@
             330
         );
 
+    // ============================================================
+    // CAMERA
+    // ============================================================
+
     camera =
         new THREE.PerspectiveCamera(
             60,
             window.innerWidth /
-                window.innerHeight,
-            .1,
+            window.innerHeight,
+            0.1,
             600
         );
+
+    // ============================================================
+    // RENDERER
+    // ============================================================
 
     renderer =
         new THREE.WebGLRenderer({
@@ -2128,10 +1015,10 @@
         );
 
     grid.position.y =
-        .02;
+        0.02;
 
     grid.material.opacity =
-        .18;
+        0.18;
 
     grid.material.transparent =
         true;
@@ -2149,6 +1036,10 @@
         const tank =
             new THREE.Group();
 
+        // --------------------------------------------------------
+        // LOWER BODY
+        // --------------------------------------------------------
+
         const lower =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
@@ -2158,8 +1049,8 @@
                 ),
                 new THREE.MeshStandardMaterial({
                     color: 0x283b44,
-                    metalness: .7,
-                    roughness: .3
+                    metalness: 0.7,
+                    roughness: 0.3
                 })
             );
 
@@ -2173,6 +1064,10 @@
             lower
         );
 
+        // --------------------------------------------------------
+        // MAIN BODY
+        // --------------------------------------------------------
+
         const body =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
@@ -2182,8 +1077,8 @@
                 ),
                 new THREE.MeshStandardMaterial({
                     color: 0x38525b,
-                    metalness: .75,
-                    roughness: .27
+                    metalness: 0.75,
+                    roughness: 0.27
                 })
             );
 
@@ -2197,10 +1092,14 @@
             body
         );
 
+        // --------------------------------------------------------
+        // TRACKS
+        // --------------------------------------------------------
+
         const trackMaterial =
             new THREE.MeshStandardMaterial({
                 color: 0x11191d,
-                roughness: .75
+                roughness: 0.75
             });
 
         const leftTrack =
@@ -2249,18 +1148,22 @@
             rightTrack
         );
 
+        // --------------------------------------------------------
+        // TURRET BASE
+        // --------------------------------------------------------
+
         const turretBase =
             new THREE.Mesh(
                 new THREE.CylinderGeometry(
                     1.55,
                     1.7,
-                    .55,
+                    0.55,
                     16
                 ),
                 new THREE.MeshStandardMaterial({
                     color: 0x263f48,
-                    metalness: .8,
-                    roughness: .25
+                    metalness: 0.8,
+                    roughness: 0.25
                 })
             );
 
@@ -2274,6 +1177,10 @@
             turretBase
         );
 
+        // --------------------------------------------------------
+        // TURRET
+        // --------------------------------------------------------
+
         turret =
             new THREE.Group();
 
@@ -2284,17 +1191,21 @@
             turret
         );
 
+        // --------------------------------------------------------
+        // TURRET BODY
+        // --------------------------------------------------------
+
         const turretBody =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
                     2.6,
-                    .75,
+                    0.75,
                     2.5
                 ),
                 new THREE.MeshStandardMaterial({
                     color: 0x45616a,
-                    metalness: .8,
-                    roughness: .25
+                    metalness: 0.8,
+                    roughness: 0.25
                 })
             );
 
@@ -2305,23 +1216,27 @@
             turretBody
         );
 
+        // --------------------------------------------------------
+        // CANNON
+        // --------------------------------------------------------
+
         const cannon =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
-                    .48,
-                    .48,
+                    0.48,
+                    0.48,
                     5.5
                 ),
                 new THREE.MeshStandardMaterial({
                     color: 0x182329,
-                    metalness: .9,
-                    roughness: .2
+                    metalness: 0.9,
+                    roughness: 0.2
                 })
             );
 
         cannon.position.set(
             0,
-            .05,
+            0.05,
             -3.35
         );
 
@@ -2332,12 +1247,16 @@
             cannon
         );
 
+        // --------------------------------------------------------
+        // MUZZLE
+        // --------------------------------------------------------
+
         muzzle =
             new THREE.Object3D();
 
         muzzle.position.set(
             0,
-            .05,
+            0.05,
             -6.1
         );
 
@@ -2345,10 +1264,14 @@
             muzzle
         );
 
+        // --------------------------------------------------------
+        // CANNON GLOW
+        // --------------------------------------------------------
+
         const glow =
             new THREE.Mesh(
                 new THREE.SphereGeometry(
-                    .16,
+                    0.16,
                     12,
                     12
                 ),
@@ -2359,7 +1282,7 @@
 
         glow.position.set(
             0,
-            .05,
+            0.05,
             -6.05
         );
 
@@ -2403,8 +1326,8 @@
                 ),
                 new THREE.MeshStandardMaterial({
                     color: 0x24353b,
-                    metalness: .35,
-                    roughness: .7
+                    metalness: 0.35,
+                    roughness: 0.7
                 })
             );
 
@@ -2425,11 +1348,17 @@
         );
 
         buildings.push({
+
             mesh: building,
+
             x,
+
             z,
+
             w,
+
             d
+
         });
     }
 
@@ -2497,8 +1426,8 @@
         const trunk =
             new THREE.Mesh(
                 new THREE.CylinderGeometry(
-                    .55,
-                    .7,
+                    0.55,
+                    0.7,
                     3,
                     8
                 ),
@@ -2572,6 +1501,7 @@
             Math.abs(x) < 20 &&
             Math.abs(z) < 20
         ) {
+
             continue;
         }
 
@@ -2593,7 +1523,7 @@
         const crystal =
             new THREE.Mesh(
                 new THREE.OctahedronGeometry(
-                    .8,
+                    0.8,
                     0
                 ),
                 new THREE.MeshStandardMaterial({
@@ -2605,7 +1535,7 @@
 
         crystal.position.set(
             x,
-            .8,
+            0.8,
             z
         );
 
@@ -2617,8 +1547,11 @@
         );
 
         resources.push({
+
             mesh: crystal,
+
             collected: false
+
         });
     }
 
@@ -2641,7 +1574,7 @@
     }
 
     // ============================================================
-    // COLLISION
+    // BUILDING COLLISION
     // ============================================================
 
     function collidesWithBuilding(
@@ -2683,6 +1616,7 @@
             ) {
 
                 return true;
+
             }
         }
 
@@ -2698,6 +1632,10 @@
         const enemy =
             new THREE.Group();
 
+        // --------------------------------------------------------
+        // BODY
+        // --------------------------------------------------------
+
         const body =
             new THREE.Mesh(
                 new THREE.SphereGeometry(
@@ -2708,7 +1646,7 @@
                 new THREE.MeshStandardMaterial({
                     color: 0x8b4cff,
                     emissive: 0x24104a,
-                    emissiveIntensity: .7
+                    emissiveIntensity: 0.7
                 })
             );
 
@@ -2722,10 +1660,14 @@
             body
         );
 
+        // --------------------------------------------------------
+        // EYE
+        // --------------------------------------------------------
+
         const eye =
             new THREE.Mesh(
                 new THREE.SphereGeometry(
-                    .32,
+                    0.32,
                     10,
                     10
                 ),
@@ -2745,6 +1687,7 @@
         );
 
         let x;
+
         let z;
 
         do {
@@ -2771,10 +1714,13 @@
                 distance;
 
         } while (
+
             Math.abs(x) >
                 HALF_WORLD - 10 ||
+
             Math.abs(z) >
                 HALF_WORLD - 10
+
         );
 
         enemy.position.set(
@@ -2788,14 +1734,19 @@
         );
 
         enemies.push({
+
             mesh: enemy,
+
             health: 50,
+
             speed:
                 THREE.MathUtils.randFloat(
                     4,
                     7
                 ),
+
             attackTimer: 0
+
         });
     }
 
@@ -2807,6 +1758,7 @@
         ) {
 
             createEnemy();
+
         }
     }
 
@@ -2861,15 +1813,19 @@
     function getMouseWorldPosition() {
 
         mouseNDC.x =
-            (mouse.x /
-                window.innerWidth) *
-                2 -
+            (
+                mouse.x /
+                window.innerWidth
+            ) *
+            2 -
             1;
 
         mouseNDC.y =
-            -(mouse.y /
-                window.innerHeight) *
-                2 +
+            -(
+                mouse.y /
+                window.innerHeight
+            ) *
+            2 +
             1;
 
         const raycaster =
@@ -2901,6 +1857,7 @@
         if (!target) {
 
             return player.position.clone();
+
         }
 
         return target;
@@ -3004,13 +1961,15 @@
         start.add(
             direction
                 .clone()
-                .multiplyScalar(.8)
+                .multiplyScalar(
+                    0.8
+                )
         );
 
         const bulletMesh =
             new THREE.Mesh(
                 new THREE.SphereGeometry(
-                    .18,
+                    0.18,
                     8,
                     8
                 ),
@@ -3028,12 +1987,16 @@
         );
 
         bullets.push({
+
             mesh: bulletMesh,
+
             velocity:
                 direction.multiplyScalar(
                     BULLET_SPEED
                 ),
+
             life: 3
+
         });
 
         createHitEffect(
@@ -3090,7 +2053,7 @@
             const mesh =
                 new THREE.Mesh(
                     new THREE.SphereGeometry(
-                        .09,
+                        0.09,
                         6,
                         6
                     ),
@@ -3108,7 +2071,9 @@
             );
 
             particles.push({
+
                 mesh,
+
                 velocity:
                     new THREE.Vector3(
                         THREE.MathUtils.randFloat(
@@ -3124,7 +2089,9 @@
                             3
                         )
                     ),
-                life: .6
+
+                life: 0.6
+
             });
         }
     }
@@ -3137,15 +2104,19 @@
         delta
     ) {
 
-        let forward = 0;
-        let turn = 0;
+        let forward =
+            0;
+
+        let turn =
+            0;
 
         if (
             keys["w"] ||
             keys["arrowup"]
         ) {
 
-            forward += 1;
+            forward +=
+                1;
         }
 
         if (
@@ -3153,7 +2124,8 @@
             keys["arrowdown"]
         ) {
 
-            forward -= 1;
+            forward -=
+                1;
         }
 
         if (
@@ -3161,7 +2133,8 @@
             keys["arrowleft"]
         ) {
 
-            turn += 1;
+            turn +=
+                1;
         }
 
         if (
@@ -3169,7 +2142,8 @@
             keys["arrowright"]
         ) {
 
-            turn -= 1;
+            turn -=
+                1;
         }
 
         player.rotation.y +=
@@ -3231,6 +2205,7 @@
                 player.position.copy(
                     nextPosition
                 );
+
             }
         }
     }
@@ -3240,6 +2215,12 @@
     // ============================================================
 
     function updateCamera() {
+
+        /*
+         * De camera draait NIET zelfstandig.
+         *
+         * Hij blijft altijd achter de tank.
+         */
 
         const offset =
             new THREE.Vector3(
@@ -3255,11 +2236,13 @@
         const desired =
             player.position
                 .clone()
-                .add(offset);
+                .add(
+                    offset
+                );
 
         camera.position.lerp(
             desired,
-            .12
+            0.12
         );
 
         const lookTarget =
@@ -3283,7 +2266,8 @@
     ) {
 
         for (
-            let i = enemies.length - 1;
+            let i =
+                enemies.length - 1;
             i >= 0;
             i--
         ) {
@@ -3309,7 +2293,9 @@
                 const direction =
                     playerPos
                         .clone()
-                        .sub(enemyPos)
+                        .sub(
+                            enemyPos
+                        )
                         .normalize();
 
                 const next =
@@ -3331,6 +2317,7 @@
                     enemy.mesh.position.copy(
                         next
                     );
+
                 }
 
                 enemy.mesh.lookAt(
@@ -3384,6 +2371,7 @@
                         ) {
 
                             gameOver();
+
                         }
                     }
                 }
@@ -3400,7 +2388,8 @@
     ) {
 
         for (
-            let i = bullets.length - 1;
+            let i =
+                bullets.length - 1;
             i >= 0;
             i--
         ) {
@@ -3424,6 +2413,10 @@
                     .add(
                         movement
                     );
+
+            // ----------------------------------------------------
+            // BUILDING HIT
+            // ----------------------------------------------------
 
             if (
                 lineBlocked(
@@ -3460,8 +2453,13 @@
             let hitEnemy =
                 false;
 
+            // ----------------------------------------------------
+            // ENEMY HIT
+            // ----------------------------------------------------
+
             for (
-                let e = enemies.length - 1;
+                let e =
+                    enemies.length - 1;
                 e >= 0;
                 e--
             ) {
@@ -3580,7 +2578,7 @@
             }
 
             resource.mesh.rotation.y +=
-                .02;
+                0.02;
 
             const distance =
                 resource.mesh.position
@@ -3610,7 +2608,7 @@
     }
 
     // ============================================================
-    // PARTICLE UPDATE
+    // PARTICLES
     // ============================================================
 
     function updateParticles(
@@ -3618,7 +2616,8 @@
     ) {
 
         for (
-            let i = particles.length - 1;
+            let i =
+                particles.length - 1;
             i >= 0;
             i--
         ) {
@@ -3635,7 +2634,8 @@
             );
 
             particle.velocity.y -=
-                8 * delta;
+                8 *
+                delta;
 
             particle.life -=
                 delta;
@@ -3725,6 +2725,7 @@
                     0,
                     playerHealth
                 )}%`;
+
         }
 
         if (
@@ -3736,6 +2737,7 @@
                     0,
                     playerEnergy
                 )}%`;
+
         }
 
         if (
@@ -3744,6 +2746,7 @@
 
             ammoText.textContent =
                 `${ammo} / ${maxAmmo}`;
+
         }
 
         if (
@@ -3752,6 +2755,7 @@
 
             killsText.textContent =
                 kills;
+
         }
 
         if (
@@ -3760,11 +2764,12 @@
 
             creditsText.textContent =
                 credits;
+
         }
     }
 
     // ============================================================
-    // RESET GAME OBJECTS
+    // RESET OBJECTS
     // ============================================================
 
     function resetGameObjects() {
@@ -3776,6 +2781,7 @@
             scene.remove(
                 enemy.mesh
             );
+
         }
 
         enemies.length =
@@ -3788,6 +2794,7 @@
             scene.remove(
                 bullet.mesh
             );
+
         }
 
         bullets.length =
@@ -3800,6 +2807,7 @@
             scene.remove(
                 particle.mesh
             );
+
         }
 
         particles.length =
@@ -3816,6 +2824,7 @@
                 scene.remove(
                     resource.mesh
                 );
+
             }
 
             resource.collected =
@@ -3834,12 +2843,10 @@
     function startNewGame() {
 
         /*
-         * BELANGRIJKE FIX:
-         * eerst alle oude panelen sluiten.
+         * ALLE OUDE PANELEN WORDEN VERWIJDERD.
          *
-         * Hierdoor kan bijvoorbeeld het oude
-         * SHOP- of PAUSE-menu niet boven de game
-         * blijven staan.
+         * Hierdoor kan SHOP, PAUSE of GAME OVER
+         * nooit boven de nieuwe game blijven staan.
          */
 
         closeAllPanels();
@@ -3865,7 +2872,8 @@
             12;
 
         maxAmmo =
-            12 + ammoUpgrade;
+            12 +
+            ammoUpgrade;
 
         reloadTimer =
             0;
@@ -3911,16 +2919,16 @@
 
         spawnEnemies();
 
-        /*
-         * Hoofdmenu gegarandeerd weg.
-         */
+        // --------------------------------------------------------
+        // HOOFDMENU WEG
+        // --------------------------------------------------------
 
         mainMenu.style.display =
             "none";
 
-        /*
-         * HUD gegarandeerd zichtbaar.
-         */
+        // --------------------------------------------------------
+        // HUD AAN
+        // --------------------------------------------------------
 
         hud.style.display =
             "block";
@@ -3954,14 +2962,11 @@
 
     function showPausePanel() {
 
-        /*
-         * Voorkomt dubbele pause-panelen.
-         */
-
         closeAllPanels();
 
         const panel =
-            createPanel(`
+            createPanel(
+                `
 
                 <h1>
                     PAUSED
@@ -3996,7 +3001,12 @@
                     MAIN MENU
                 </button>
 
-            `);
+                `
+            );
+
+        // --------------------------------------------------------
+        // RESUME
+        // --------------------------------------------------------
 
         panel.panel
             .querySelector(
@@ -4010,8 +3020,13 @@
 
                     gameState =
                         "playing";
+
                 }
             );
+
+        // --------------------------------------------------------
+        // SHOP
+        // --------------------------------------------------------
 
         panel.panel
             .querySelector(
@@ -4024,8 +3039,13 @@
                     panel.close();
 
                     openShop();
+
                 }
             );
+
+        // --------------------------------------------------------
+        // MAIN MENU
+        // --------------------------------------------------------
 
         panel.panel
             .querySelector(
@@ -4045,6 +3065,7 @@
 
                     mainMenu.style.display =
                         "flex";
+
                 }
             );
     }
@@ -4056,7 +3077,8 @@
     function openMap() {
 
         const panel =
-            createPanel(`
+            createPanel(
+                `
 
                 <h1>
                     MAP
@@ -4094,7 +3116,8 @@
                     ← BACK
                 </button>
 
-            `);
+                `
+            );
 
         panel.panel
             .querySelector(
@@ -4127,7 +3150,8 @@
             "none";
 
         const panel =
-            createPanel(`
+            createPanel(
+                `
 
                 <h1>
                     SIGNAL LOST
@@ -4165,7 +3189,12 @@
                     MAIN MENU
                 </button>
 
-            `);
+                `
+            );
+
+        // --------------------------------------------------------
+        // NEW RUN
+        // --------------------------------------------------------
 
         panel.panel
             .querySelector(
@@ -4178,8 +3207,13 @@
                     panel.close();
 
                     startNewGame();
+
                 }
             );
+
+        // --------------------------------------------------------
+        // MAIN MENU
+        // --------------------------------------------------------
 
         panel.panel
             .querySelector(
@@ -4191,11 +3225,17 @@
 
                     panel.close();
 
+                    closeAllPanels();
+
                     gameState =
                         "menu";
 
+                    hud.style.display =
+                        "none";
+
                     mainMenu.style.display =
                         "flex";
+
                 }
             );
     }
@@ -4209,6 +3249,7 @@
         const saveData = {
 
             player: {
+
                 x:
                     player.position.x,
 
@@ -4217,6 +3258,7 @@
 
                 rotation:
                     player.rotation.y
+
             },
 
             health:
@@ -4226,10 +3268,13 @@
                 playerEnergy,
 
             credits,
+
             kills,
 
             ammo,
+
             maxAmmo,
+
             ammoUpgrade,
 
             totalPlayTime,
@@ -4237,6 +3282,7 @@
             achievements,
 
             gameState
+
         };
 
         localStorage.setItem(
@@ -4252,7 +3298,7 @@
     }
 
     // ============================================================
-    // LOAD
+    // LOAD GAME
     // ============================================================
 
     function loadGame() {
@@ -4279,9 +3325,8 @@
                 );
 
             /*
-             * BELANGRIJKE FIX:
-             * oude shop/pause/game-over panelen
-             * eerst verwijderen.
+             * ALLE OUDE SHOP / PAUSE /
+             * GAME OVER PANELEN WEG.
              */
 
             closeAllPanels();
@@ -4332,22 +3377,23 @@
                     achievements,
                     data.achievements
                 );
+
             }
 
             resetGameObjects();
 
             spawnEnemies();
 
-            /*
-             * Hoofdmenu weg.
-             */
+            // ----------------------------------------------------
+            // MENU WEG
+            // ----------------------------------------------------
 
             mainMenu.style.display =
                 "none";
 
-            /*
-             * HUD aan.
-             */
+            // ----------------------------------------------------
+            // HUD AAN
+            // ----------------------------------------------------
 
             hud.style.display =
                 "block";
@@ -4373,71 +3419,110 @@
     }
 
     // ============================================================
-    // BUTTONS
+    // MAIN MENU BUTTONS
     // ============================================================
 
-    document
-        .getElementById(
+    const newRunButton =
+        document.getElementById(
             "newRunBtn"
-        )
-        .addEventListener(
+        );
+
+    if (newRunButton) {
+
+        newRunButton.addEventListener(
             "click",
             startNewGame
         );
 
-    document
-        .getElementById(
+    }
+
+    const shopButton =
+        document.getElementById(
             "shopBtn"
-        )
-        .addEventListener(
+        );
+
+    if (shopButton) {
+
+        shopButton.addEventListener(
             "click",
             openShop
         );
 
-    document
-        .getElementById(
+    }
+
+    const achievementsButton =
+        document.getElementById(
             "achievementsBtn"
-        )
-        .addEventListener(
+        );
+
+    if (achievementsButton) {
+
+        achievementsButton.addEventListener(
             "click",
             openAchievements
         );
 
-    document
-        .getElementById(
+    }
+
+    const controlsButton =
+        document.getElementById(
             "controlsBtn"
-        )
-        .addEventListener(
+        );
+
+    if (controlsButton) {
+
+        controlsButton.addEventListener(
             "click",
             openControls
         );
 
-    document
-        .getElementById(
+    }
+
+    const loadButton =
+        document.getElementById(
             "loadBtn"
-        )
-        .addEventListener(
+        );
+
+    if (loadButton) {
+
+        loadButton.addEventListener(
             "click",
             loadGame
         );
 
-    document
-        .getElementById(
+    }
+
+    // ============================================================
+    // HUD BUTTONS
+    // ============================================================
+
+    const pauseButton =
+        document.getElementById(
             "pauseBtn"
-        )
-        .addEventListener(
+        );
+
+    if (pauseButton) {
+
+        pauseButton.addEventListener(
             "click",
             pauseGame
         );
 
-    document
-        .getElementById(
+    }
+
+    const mapButton =
+        document.getElementById(
             "mapBtn"
-        )
-        .addEventListener(
+        );
+
+    if (mapButton) {
+
+        mapButton.addEventListener(
             "click",
             openMap
         );
+
+    }
 
     // ============================================================
     // KEYBOARD
@@ -4451,13 +3536,22 @@
                 event.key.toLowerCase()
             ] = true;
 
+            // ----------------------------------------------------
+            // RELOAD
+            // ----------------------------------------------------
+
             if (
                 event.key.toLowerCase() ===
                 "r"
             ) {
 
                 reload();
+
             }
+
+            // ----------------------------------------------------
+            // ESC
+            // ----------------------------------------------------
 
             if (
                 event.key ===
@@ -4470,8 +3564,11 @@
                 ) {
 
                     pauseGame();
+
                 }
+
             }
+
         }
     );
 
@@ -4482,11 +3579,12 @@
             keys[
                 event.key.toLowerCase()
             ] = false;
+
         }
     );
 
     // ============================================================
-    // MOUSE
+    // MOUSE MOVE
     // ============================================================
 
     window.addEventListener(
@@ -4498,8 +3596,13 @@
 
             mouse.y =
                 event.clientY;
+
         }
     );
+
+    // ============================================================
+    // MOUSE DOWN
+    // ============================================================
 
     window.addEventListener(
         "mousedown",
@@ -4514,9 +3617,15 @@
                     true;
 
                 shoot();
+
             }
+
         }
     );
+
+    // ============================================================
+    // MOUSE UP
+    // ============================================================
 
     window.addEventListener(
         "mouseup",
@@ -4529,7 +3638,9 @@
 
                 mouse.down =
                     false;
+
             }
+
         }
     );
 
@@ -4551,6 +3662,7 @@
                 window.innerWidth,
                 window.innerHeight
             );
+
         }
     );
 
@@ -4572,6 +3684,7 @@
                 const saveData = {
 
                     player: {
+
                         x:
                             player.position.x,
 
@@ -4580,6 +3693,7 @@
 
                         rotation:
                             player.rotation.y
+
                     },
 
                     health:
@@ -4589,10 +3703,13 @@
                         playerEnergy,
 
                     credits,
+
                     kills,
 
                     ammo,
+
                     maxAmmo,
+
                     ammoUpgrade,
 
                     totalPlayTime,
@@ -4600,6 +3717,7 @@
                     achievements,
 
                     gameState
+
                 };
 
                 localStorage.setItem(
@@ -4608,12 +3726,14 @@
                         saveData
                     )
                 );
+
             }
+
         }
     );
 
     // ============================================================
-    // MAIN GAME LOOP
+    // GAME LOOP
     // ============================================================
 
     clock =
@@ -4628,7 +3748,7 @@
         const delta =
             Math.min(
                 clock.getDelta(),
-                .05
+                0.05
             );
 
         if (
@@ -4639,13 +3759,22 @@
             totalPlayTime +=
                 delta;
 
+            // ----------------------------------------------------
+            // FIRE TIMER
+            // ----------------------------------------------------
+
             if (
                 fireTimer > 0
             ) {
 
                 fireTimer -=
                     delta;
+
             }
+
+            // ----------------------------------------------------
+            // RELOAD TIMER
+            // ----------------------------------------------------
 
             if (
                 reloadTimer > 0
@@ -4664,41 +3793,85 @@
                     notify(
                         "RELOAD COMPLETE"
                     );
+
                 }
+
             }
+
+            // ----------------------------------------------------
+            // PLAYER
+            // ----------------------------------------------------
 
             updatePlayer(
                 delta
             );
 
+            // ----------------------------------------------------
+            // TURRET
+            // ----------------------------------------------------
+
             updateTurretAim();
 
+            // ----------------------------------------------------
+            // CAMERA
+            // ----------------------------------------------------
+
             updateCamera();
+
+            // ----------------------------------------------------
+            // ENEMIES
+            // ----------------------------------------------------
 
             updateEnemies(
                 delta
             );
 
+            // ----------------------------------------------------
+            // BULLETS
+            // ----------------------------------------------------
+
             updateBullets(
                 delta
             );
 
+            // ----------------------------------------------------
+            // RESOURCES
+            // ----------------------------------------------------
+
             updateResources();
+
+            // ----------------------------------------------------
+            // PARTICLES
+            // ----------------------------------------------------
 
             updateParticles(
                 delta
             );
 
+            // ----------------------------------------------------
+            // ACHIEVEMENTS
+            // ----------------------------------------------------
+
             updateAchievements();
 
+            // ----------------------------------------------------
+            // HUD
+            // ----------------------------------------------------
+
             updateHUD();
+
+            // ----------------------------------------------------
+            // HOLD MOUSE TO FIRE
+            // ----------------------------------------------------
 
             if (
                 mouse.down
             ) {
 
                 shoot();
+
             }
+
         }
 
         renderer.render(
@@ -4708,10 +3881,28 @@
     }
 
     // ============================================================
-    // START
+    // INITIAL STATE
     // ============================================================
 
+    if (hud) {
+
+        hud.style.display =
+            "none";
+
+    }
+
+    if (mainMenu) {
+
+        mainMenu.style.display =
+            "flex";
+
+    }
+
     updateHUD();
+
+    // ============================================================
+    // START LOOP
+    // ============================================================
 
     animate();
 
