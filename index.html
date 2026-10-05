@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="nl">
-
 <head>
     <meta charset="UTF-8">
 
@@ -11,16 +10,13 @@
 
     <title>EchoBound — The Lost Signal</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
     <!-- =====================================================
-         GAME CANVAS
+         GAME
          ===================================================== -->
 
     <canvas id="game"></canvas>
@@ -129,12 +125,15 @@
 
     <div
         id="hud"
-        style="display:none;"
+        style="display: none;"
     >
 
-        <!-- PLAYER STATUS -->
+        <!-- HEALTH + ENERGY -->
 
-        <div id="playerStats" class="hud-panel">
+        <div
+            id="playerStats"
+            class="hud-panel"
+        >
 
             <div class="stat-row">
 
@@ -144,7 +143,7 @@
                     <div
                         id="healthBar"
                         class="bar-fill health-fill"
-                        style="width:100%;"
+                        style="width: 100%;"
                     ></div>
                 </div>
 
@@ -159,7 +158,7 @@
                     <div
                         id="energyBar"
                         class="bar-fill energy-fill"
-                        style="width:100%;"
+                        style="width: 100%;"
                     ></div>
                 </div>
 
@@ -178,7 +177,7 @@
         <!-- ZONE -->
 
         <div id="zone">
-            UNKNOWN ZONE
+            INNER SECTOR
         </div>
 
 
@@ -221,13 +220,13 @@
 
 
     <!-- =====================================================
-         PAUSE MENU
+         PAUSE
          ===================================================== -->
 
     <div
         id="pause"
         class="screen"
-        style="display:none;"
+        style="display: none;"
     >
 
         <div class="pause-panel">
@@ -301,7 +300,7 @@
     <div
         id="achievement"
         class="screen"
-        style="display:none;"
+        style="display: none;"
     >
 
         <div class="achievement-card">
@@ -311,11 +310,15 @@
             </div>
 
             <div>
-                <small>ACHIEVEMENT</small>
+
+                <small>
+                    ACHIEVEMENT
+                </small>
 
                 <strong id="achievementName">
-                    SYSTEM ONLINE
+                    FIRST ECHO
                 </strong>
+
             </div>
 
         </div>
@@ -330,7 +333,7 @@
     <div
         id="map"
         class="screen"
-        style="display:none;"
+        style="display: none;"
     >
 
         <div class="map-panel">
@@ -338,16 +341,22 @@
             <div class="map-header">
 
                 <div>
-                    <small>TACTICAL SYSTEM</small>
+
+                    <small>
+                        TACTICAL SYSTEM
+                    </small>
 
                     <h2>
                         WORLD MAP
                     </h2>
+
                 </div>
+
 
                 <button
                     id="closeMap"
                     class="menu-button"
+                    type="button"
                 >
                     CLOSE
                 </button>
@@ -355,19 +364,16 @@
             </div>
 
 
-            <div class="map-area">
+            <!--
+                Dit canvas wordt door app.js gebruikt
+                om de wereldkaart te tekenen.
+            -->
 
-                <div class="map-grid"></div>
-
-                <div class="map-player">
-                    ▲
-                </div>
-
-                <div class="map-label">
-                    YOU
-                </div>
-
-            </div>
+            <canvas
+                id="mapCanvas"
+                width="600"
+                height="600"
+            ></canvas>
 
 
             <p class="map-help">
@@ -380,8 +386,14 @@
 
 
     <!-- =====================================================
-         THREE.JS / GAME SCRIPT
+         GAME SCRIPT
          ===================================================== -->
+
+    <!--
+        BELANGRIJK:
+        app.js gebruikt "await import()", daarom moet
+        dit script type="module" zijn.
+    -->
 
     <script
         type="module"
@@ -389,5 +401,4 @@
     ></script>
 
 </body>
-
 </html>
