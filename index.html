@@ -3,104 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>EchoBound — The Lost Signal</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<canvas id="game"></canvas>
-
-<div id="ui">
-
-    <!-- HOOFDMENU -->
-    <div id="menu" class="screen">
-        <div class="menu-card">
-
-            <div class="eyebrow">SIGNAL LOST • SECTOR 07</div>
-
-            <h1>
-                ECHO<span>BOUND</span>
-            </h1>
-
-            <div class="tagline">
-                THE LOST SIGNAL
-            </div>
-
-            <div class="menu-buttons">
-                <button id="newRunBtn">NEW RUN</button>
-                <button id="shopBtn">🛒 SHOP</button>
-                <button id="loadBtn">LOAD GAME</button>
-                <button id="achievementsBtn">🏆 ACHIEVEMENTS</button>
-                <button id="controlsBtn">CONTROLS</button>
-            </div>
-
-            <div class="menu-tip">
-                WASD drive • Mouse aim • Left click fire • R reload • ESC pause
-            </div>
-
-        </div>
-    </div>
+    <!-- GAME -->
+    <canvas id="game"></canvas>
 
 
     <!-- HUD -->
-    <div id="hud" class="hud" style="display:none">
+    <div id="hud">
 
-        <div class="hud-left">
+        <div class="hud-top">
 
-            <div class="stat">
-                <span>HULL</span>
+            <div class="hud-card">
+                <div class="hud-label">HULL</div>
+
                 <div class="bar">
-                    <i id="healthFill"></i>
+                    <div id="healthBar" class="bar-fill health"></div>
+                </div>
+
+                <div class="hud-number">
+                    <span id="healthText">100</span>%
                 </div>
             </div>
 
-            <div class="stat">
-                <span>ENERGY</span>
-                <div class="bar energy">
-                    <i id="energyFill"></i>
+
+            <div class="hud-card">
+                <div class="hud-label">ENERGY</div>
+
+                <div class="bar">
+                    <div id="energyBar" class="bar-fill energy"></div>
+                </div>
+
+                <div class="hud-number">
+                    <span id="energyText">100</span>%
                 </div>
             </div>
 
-        </div>
 
+            <div class="hud-card ammo-card">
+                <div class="hud-label">AMMUNITION</div>
 
-        <div class="hud-right">
-
-            <div class="readout">
-                <small>AMMO</small>
-                <b id="ammoText">12 / 12</b>
+                <div id="ammo">
+                    12 / 12
+                </div>
             </div>
 
-            <div class="readout">
-                <small>KILLS</small>
-                <b id="killsText">0</b>
+
+            <div class="hud-card">
+                <div class="hud-label">KILLS</div>
+
+                <div id="kills">
+                    0
+                </div>
             </div>
 
-            <div class="readout">
-                <small>CREDITS</small>
-                <b id="creditsText">100</b>
+
+            <div class="hud-card">
+                <div class="hud-label">CREDITS</div>
+
+                <div id="credits">
+                    0
+                </div>
             </div>
 
         </div>
 
 
         <div class="crosshair">
-            <span></span>
+
+            <div class="crosshair-line vertical"></div>
+            <div class="crosshair-line horizontal"></div>
+            <div class="crosshair-dot"></div>
+
         </div>
 
 
-        <div class="hud-buttons">
-            <button id="mapBtn">MAP</button>
-            <button id="pauseBtn">Ⅱ</button>
+        <div class="bottom-hud">
+
+            <div>
+                WASD MOVE
+            </div>
+
+            <div>
+                SHIFT BOOST
+            </div>
+
+            <div>
+                MOUSE AIM
+            </div>
+
+            <div>
+                LMB FIRE
+            </div>
+
+            <div>
+                R RELOAD
+            </div>
+
+            <div>
+                ESC PAUSE
+            </div>
+
         </div>
 
     </div>
 
-</div>
 
-
-<script type="module" src="app.js"></script>
+    <!-- THREE.JS GAME -->
+    <script type="module" src="app.js"></script>
 
 </body>
 </html>
