@@ -1,8 +1,7 @@
-```javascript
 // ============================================================
 // ECHOBOUND — THE LOST SIGNAL
 // COMPLETE APP.JS
-// 3D TANK SURVIVAL + FEESTELIJKE SHOP
+// 3D TANK SURVIVAL + FEESTELIJKE SHOP EVENT
 // ============================================================
 
 (async function () {
@@ -263,6 +262,10 @@
                 0 0 35px rgba(255, 210, 60, .4);
         }
 
+        /* ======================================================
+           HUD
+           ====================================================== */
+
         .hud {
             position: absolute;
             inset: 0;
@@ -332,6 +335,10 @@
             font-size: 11px;
         }
 
+        /* ======================================================
+           ALGEMENE PANELEN
+           ====================================================== */
+
         .panel-layer {
             position: absolute;
             inset: 0;
@@ -376,187 +383,350 @@
            ====================================================== */
 
         .shop-panel {
-            width: min(980px, 94vw);
+            position: relative;
+            width: min(1050px, 95vw);
+            max-height: 92vh;
+            overflow: hidden;
+            padding: 32px;
             background:
                 radial-gradient(
-                    circle at 50% -20%,
-                    rgba(255, 211, 72, .18),
-                    transparent 42%
+                    circle at 50% -15%,
+                    rgba(255, 229, 107, .28),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 0% 100%,
+                    rgba(74, 220, 255, .12),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 100% 100%,
+                    rgba(255, 82, 173, .10),
+                    transparent 30%
                 ),
                 linear-gradient(
                     145deg,
                     rgba(20, 25, 35, .99),
-                    rgba(5, 9, 15, .99)
+                    rgba(4, 8, 14, .995)
                 );
-            border: 1px solid rgba(255, 215, 85, .55);
+            border: 1px solid rgba(255, 220, 92, .72);
             box-shadow:
-                0 0 90px rgba(255, 201, 50, .12),
-                inset 0 0 50px rgba(255, 190, 40, .025);
+                0 0 30px rgba(255, 211, 55, .12),
+                0 0 100px rgba(255, 185, 45, .18),
+                inset 0 0 70px rgba(255, 195, 45, .035);
+        }
+
+        .shop-panel::before {
+            content: "";
+            position: absolute;
+            left: -20%;
+            top: -70%;
+            width: 140%;
+            height: 160%;
+            pointer-events: none;
+            background:
+                conic-gradient(
+                    from 0deg,
+                    transparent 0deg,
+                    rgba(255, 228, 92, .045) 8deg,
+                    transparent 16deg,
+                    rgba(99, 222, 255, .035) 25deg,
+                    transparent 35deg,
+                    rgba(255, 90, 174, .03) 45deg,
+                    transparent 60deg
+                );
+            animation: shopRays 14s linear infinite;
         }
 
         .shop-header {
             position: relative;
+            z-index: 3;
             text-align: center;
-            padding: 5px 0 22px;
+            padding: 0 0 12px;
+        }
+
+        .shop-event-badge {
+            display: inline-block;
+            padding: 7px 16px;
+            margin-bottom: 8px;
+            border-radius: 999px;
+            color: #fff4ad;
+            font-size: 10px;
+            font-weight: 1000;
+            letter-spacing: 3px;
+            border: 1px solid rgba(255, 220, 89, .5);
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(255, 190, 40, .08),
+                    rgba(255, 255, 255, .08),
+                    rgba(255, 190, 40, .08)
+                );
+            box-shadow:
+                0 0 20px rgba(255, 210, 70, .12);
+            animation: badgePulse 2.2s ease-in-out infinite;
         }
 
         .shop-sparkles {
-            font-size: 25px;
-            letter-spacing: 14px;
+            font-size: 24px;
+            letter-spacing: 15px;
             color: #ffe87a;
-            text-shadow: 0 0 18px rgba(255, 220, 80, .65);
+            text-shadow:
+                0 0 8px rgba(255, 235, 120, .8),
+                0 0 25px rgba(255, 205, 60, .5);
             animation: sparkle 1.8s infinite ease-in-out;
         }
 
         .shop-title {
-            margin: 5px 0 2px !important;
-            font-size: clamp(38px, 7vw, 66px) !important;
+            margin: 3px 0 0 !important;
+            font-size: clamp(40px, 7vw, 70px) !important;
             font-weight: 1000;
-            letter-spacing: 7px !important;
+            letter-spacing: 8px !important;
             background:
                 linear-gradient(
                     90deg,
-                    #fff,
+                    #ffffff,
                     #ffe06b,
-                    #fff,
-                    #79eaff
+                    #fff4a5,
+                    #ffffff,
+                    #79eaff,
+                    #ffe06b
                 );
-            background-size: 250% 100%;
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             animation: goldFlow 3s linear infinite;
+            filter:
+                drop-shadow(0 0 12px rgba(255, 214, 76, .18));
         }
 
         .shop-unlocked {
             color: #ffe27a;
             font-weight: 900;
             letter-spacing: 4px;
-            font-size: 13px;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .shop-event-text {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            margin: 8px auto 17px;
+            color: #9befff;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 800;
         }
 
         .credits-card {
-            margin: 10px auto 25px;
-            width: min(360px, 90%);
-            padding: 13px 18px;
-            border-radius: 16px;
+            position: relative;
+            z-index: 4;
+            margin: 8px auto 22px;
+            width: min(390px, 90%);
+            padding: 15px 22px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 13px;
             background:
                 linear-gradient(
                     135deg,
-                    rgba(72, 53, 8, .8),
-                    rgba(25, 22, 10, .9)
+                    rgba(93, 67, 10, .9),
+                    rgba(25, 22, 10, .94)
                 );
-            border: 1px solid rgba(255, 214, 82, .45);
+            border: 1px solid rgba(255, 220, 92, .65);
             box-shadow:
-                0 0 25px rgba(255, 205, 60, .08);
+                0 0 25px rgba(255, 205, 60, .1),
+                inset 0 0 20px rgba(255, 218, 75, .06);
+            animation: creditGlow 2.5s ease-in-out infinite;
         }
 
         .coin {
-            width: 30px;
-            height: 30px;
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
             border-radius: 50%;
             display: grid;
             place-items: center;
             font-weight: 1000;
+            font-size: 17px;
             color: #5d4300;
             background:
                 radial-gradient(
-                    circle at 35% 30%,
-                    #fff4a8,
-                    #ffd33d 45%,
-                    #bd8513
+                    circle at 32% 27%,
+                    #fffbd0,
+                    #fff09a 20%,
+                    #ffd33d 48%,
+                    #bd8513 100%
                 );
-            box-shadow: 0 0 18px rgba(255, 211, 60, .4);
+            border: 2px solid rgba(255, 244, 158, .7);
+            box-shadow:
+                0 0 10px rgba(255, 230, 92, .65),
+                0 0 25px rgba(255, 211, 60, .3);
+            animation: coinFloat 2s ease-in-out infinite;
         }
 
         .credits-number {
-            font-size: 24px;
+            font-size: 27px;
             font-weight: 1000;
             color: #ffe681;
+            text-shadow:
+                0 0 12px rgba(255, 218, 83, .35);
         }
 
         .credits-label {
             color: #c9c9c9;
-            font-size: 11px;
+            font-size: 10px;
             letter-spacing: 2px;
+            margin-top: 2px;
         }
 
         .shop-grid {
+            position: relative;
+            z-index: 4;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            gap: 16px;
         }
 
         .shop-card {
             position: relative;
             overflow: hidden;
-            padding: 22px 18px;
-            min-height: 260px;
+            padding: 23px 18px 18px;
+            min-height: 275px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            border-radius: 19px;
+            border-radius: 20px;
             background:
                 linear-gradient(
                     150deg,
                     rgba(18, 31, 43, .98),
-                    rgba(6, 13, 20, .98)
+                    rgba(6, 13, 20, .99)
                 );
-            border: 1px solid rgba(110, 220, 255, .22);
+            border: 1px solid rgba(110, 220, 255, .24);
+            box-shadow:
+                0 8px 30px rgba(0, 0, 0, .22);
             transition:
-                transform .18s ease,
-                border-color .18s ease,
-                box-shadow .18s ease;
+                transform .2s ease,
+                border-color .2s ease,
+                box-shadow .2s ease;
         }
 
         .shop-card::before {
             content: "";
             position: absolute;
-            width: 130px;
-            height: 130px;
+            width: 160px;
+            height: 160px;
             border-radius: 50%;
             left: 50%;
-            top: -85px;
+            top: -105px;
             transform: translateX(-50%);
-            background: rgba(90, 220, 255, .08);
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(90, 220, 255, .14),
+                    transparent 70%
+                );
             filter: blur(5px);
         }
 
+        .shop-card::after {
+            content: "";
+            position: absolute;
+            left: -80%;
+            top: 0;
+            width: 55%;
+            height: 100%;
+            transform: skewX(-20deg);
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,.08),
+                    transparent
+                );
+            transition: left .7s ease;
+        }
+
         .shop-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(120, 230, 255, .7);
+            transform: translateY(-7px) scale(1.015);
+            border-color: rgba(255, 220, 100, .62);
             box-shadow:
-                0 15px 35px rgba(0, 180, 255, .12);
+                0 18px 40px rgba(0, 170, 255, .12),
+                0 0 28px rgba(255, 207, 65, .08);
+        }
+
+        .shop-card:hover::after {
+            left: 140%;
+        }
+
+        .shop-card:nth-child(1):hover {
+            border-color: rgba(113, 218, 255, .75);
+        }
+
+        .shop-card:nth-child(2):hover {
+            border-color: rgba(255, 105, 130, .75);
+        }
+
+        .shop-card:nth-child(3):hover {
+            border-color: rgba(187, 129, 255, .75);
         }
 
         .shop-icon {
-            width: 70px;
-            height: 70px;
+            position: relative;
+            z-index: 2;
+            width: 78px;
+            height: 78px;
             display: grid;
             place-items: center;
-            border-radius: 20px;
-            font-size: 34px;
-            margin-bottom: 14px;
+            border-radius: 22px;
+            font-size: 37px;
+            margin-bottom: 13px;
             background:
                 linear-gradient(
                     145deg,
-                    rgba(65, 120, 145, .22),
-                    rgba(10, 25, 35, .7)
+                    rgba(65, 120, 145, .28),
+                    rgba(10, 25, 35, .8)
                 );
-            border: 1px solid rgba(110, 225, 255, .3);
+            border: 1px solid rgba(110, 225, 255, .35);
+            box-shadow:
+                0 0 25px rgba(80, 220, 255, .08),
+                inset 0 0 20px rgba(100, 220, 255, .05);
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+        }
+
+        .shop-card:nth-child(2) .shop-icon {
+            border-color: rgba(255, 110, 135, .38);
+        }
+
+        .shop-card:nth-child(3) .shop-icon {
+            border-color: rgba(190, 130, 255, .4);
+        }
+
+        .shop-card:hover .shop-icon {
+            transform: translateY(-3px) scale(1.08);
+            box-shadow:
+                0 0 30px rgba(90, 220, 255, .18);
         }
 
         .shop-card h2 {
+            position: relative;
+            z-index: 2;
             margin: 0 0 7px;
             font-size: 19px;
+            letter-spacing: 1px;
         }
 
         .shop-card p {
+            position: relative;
+            z-index: 2;
             margin: 0 0 15px;
             color: #aebac3;
             font-size: 12px;
@@ -565,12 +735,18 @@
         }
 
         .shop-price {
+            position: relative;
+            z-index: 2;
             color: #ffe27a;
             font-weight: 1000;
             margin-bottom: 10px;
+            font-size: 13px;
+            letter-spacing: 1px;
         }
 
         .buy-button {
+            position: relative;
+            z-index: 3;
             width: 100%;
             border-color: rgba(255, 216, 90, .55);
             color: #fff6c8;
@@ -583,19 +759,76 @@
         }
 
         .shop-message {
+            position: relative;
+            z-index: 4;
             text-align: center;
             min-height: 25px;
-            margin-top: 18px;
+            margin-top: 17px;
             color: #83eaff;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 800;
             letter-spacing: 1px;
         }
 
         .shop-back {
+            position: relative;
+            z-index: 4;
             display: block;
-            margin: 12px auto 0;
+            margin: 8px auto 0;
             min-width: 180px;
+        }
+
+        /* ======================================================
+           CONFETTI
+           ====================================================== */
+
+        .shop-confetti {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shop-confetti-piece {
+            position: absolute;
+            top: -20px;
+            width: 6px;
+            height: 13px;
+            border-radius: 2px;
+            opacity: .75;
+            animation:
+                confettiFall var(--fall-time) linear infinite,
+                confettiSpin var(--spin-time) linear infinite;
+            animation-delay: var(--delay);
+        }
+
+        .shop-confetti-piece:nth-child(3n) {
+            width: 5px;
+            height: 9px;
+        }
+
+        .shop-confetti-piece:nth-child(4n) {
+            border-radius: 50%;
+        }
+
+        .shop-top-line {
+            position: relative;
+            z-index: 4;
+            height: 2px;
+            width: 100%;
+            margin: 2px auto 14px;
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    #ffe16b,
+                    #7ceaff,
+                    #ffe16b,
+                    transparent
+                );
+            box-shadow:
+                0 0 15px rgba(255, 220, 75, .45);
         }
 
         @keyframes sparkle {
@@ -603,6 +836,7 @@
                 opacity: .5;
                 transform: scale(.95);
             }
+
             50% {
                 opacity: 1;
                 transform: scale(1.08);
@@ -613,8 +847,91 @@
             0% {
                 background-position: 0% 50%;
             }
+
             100% {
-                background-position: 250% 50%;
+                background-position: 300% 50%;
+            }
+        }
+
+        @keyframes shopRays {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes badgePulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow:
+                    0 0 15px rgba(255, 210, 70, .08);
+            }
+
+            50% {
+                transform: scale(1.025);
+                box-shadow:
+                    0 0 28px rgba(255, 210, 70, .22);
+            }
+        }
+
+        @keyframes creditGlow {
+            0%, 100% {
+                box-shadow:
+                    0 0 20px rgba(255, 205, 60, .08),
+                    inset 0 0 20px rgba(255, 218, 75, .04);
+            }
+
+            50% {
+                box-shadow:
+                    0 0 35px rgba(255, 205, 60, .18),
+                    inset 0 0 25px rgba(255, 218, 75, .07);
+            }
+        }
+
+        @keyframes coinFloat {
+            0%, 100% {
+                transform: translateY(0) rotate(-4deg);
+            }
+
+            50% {
+                transform: translateY(-4px) rotate(4deg);
+            }
+        }
+
+        @keyframes confettiFall {
+            0% {
+                top: -25px;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: .8;
+            }
+
+            90% {
+                opacity: .75;
+            }
+
+            100% {
+                top: 110%;
+                opacity: 0;
+            }
+        }
+
+        @keyframes confettiSpin {
+            0% {
+                transform: rotate(0deg) translateX(0);
+            }
+
+            50% {
+                transform: rotate(180deg) translateX(18px);
+            }
+
+            100% {
+                transform: rotate(360deg) translateX(0);
             }
         }
 
@@ -637,8 +954,16 @@
         }
 
         @media (max-width: 750px) {
+
+            .shop-panel {
+                padding: 22px 16px;
+            }
+
             .shop-grid {
                 grid-template-columns: 1fr;
+                max-height: 55vh;
+                overflow-y: auto;
+                padding-right: 4px;
             }
 
             .shop-card {
@@ -651,6 +976,10 @@
 
             .panel {
                 padding: 22px;
+            }
+
+            .shop-title {
+                letter-spacing: 5px !important;
             }
         }
     `;
@@ -676,6 +1005,7 @@
             <div class="subtitle">THE LOST SIGNAL</div>
 
             <div class="menu-buttons">
+
                 <button class="echo-button" id="newRunBtn">
                     NEW RUN
                 </button>
@@ -695,6 +1025,7 @@
                 <button class="echo-button" id="controlsBtn">
                     CONTROLS
                 </button>
+
             </div>
         </div>
     `;
@@ -710,42 +1041,68 @@
 
     hud.innerHTML = `
         <div class="hud-panel">
-            <div class="hud-title">ECHOBOUND // SYSTEM</div>
+
+            <div class="hud-title">
+                ECHOBOUND // SYSTEM
+            </div>
 
             <div>HULL</div>
+
             <div class="bar">
-                <div class="bar-fill" id="healthFill"></div>
+                <div
+                    class="bar-fill"
+                    id="healthFill"
+                ></div>
             </div>
 
             <div>ENERGY</div>
+
             <div class="bar">
-                <div class="bar-fill" id="energyFill"></div>
+                <div
+                    class="bar-fill"
+                    id="energyFill"
+                ></div>
             </div>
 
             <div class="hud-info">
                 <span>AMMO</span>
-                <strong id="ammoText">12 / 12</strong>
+                <strong id="ammoText">
+                    12 / 12
+                </strong>
             </div>
 
             <div class="hud-info">
                 <span>KILLS</span>
-                <strong id="killsText">0</strong>
+                <strong id="killsText">
+                    0
+                </strong>
             </div>
 
             <div class="hud-info">
                 <span>CREDITS</span>
-                <strong id="creditsText">100</strong>
+                <strong id="creditsText">
+                    100
+                </strong>
             </div>
+
         </div>
 
         <div class="hud-actions">
-            <button class="echo-button hud-small" id="mapBtn">
+
+            <button
+                class="echo-button hud-small"
+                id="mapBtn"
+            >
                 MAP
             </button>
 
-            <button class="echo-button hud-small" id="pauseBtn">
+            <button
+                class="echo-button hud-small"
+                id="pauseBtn"
+            >
                 PAUSE
             </button>
+
         </div>
     `;
 
@@ -761,252 +1118,456 @@
     let notificationTimer = null;
 
     function notify(message) {
+
         notification.textContent = message;
+
         notification.classList.add("show");
 
         clearTimeout(notificationTimer);
 
         notificationTimer = setTimeout(() => {
+
             notification.classList.remove("show");
+
         }, 2200);
     }
 
     // ------------------------------------------------------------
     // PANEL
     // ------------------------------------------------------------
-    function createPanel(html, className = "") {
-        const layer = document.createElement("div");
-        layer.className = "panel-layer";
+    function createPanel(
+        html,
+        className = ""
+    ) {
 
-        const panel = document.createElement("div");
-        panel.className = `panel ${className}`;
+        const layer =
+            document.createElement("div");
 
-        panel.innerHTML = html;
+        layer.className =
+            "panel-layer";
+
+        const panel =
+            document.createElement("div");
+
+        panel.className =
+            `panel ${className}`;
+
+        panel.innerHTML =
+            html;
 
         layer.appendChild(panel);
+
         ui.appendChild(layer);
 
         return {
+
             layer,
             panel,
+
             close() {
                 layer.remove();
             }
+
         };
     }
 
     // ============================================================
-    // SHOP
+    // FEESTELIJKE SHOP
     // ============================================================
 
     function openShop() {
+
         if (gameState === "playing") {
             pauseGame();
         }
 
-        const shop = createPanel(`
-            <div class="shop-header">
+        // --------------------------------------------------------
+        // CONFETTI GENEREREN
+        // --------------------------------------------------------
+        let confettiHTML = "";
 
-                <div class="shop-sparkles">
-                    ✦ ✧ ✦ ✧ ✦
+        const confettiSymbols = [
+            "◆",
+            "●",
+            "■",
+            "✦"
+        ];
+
+        for (let i = 0; i < 42; i++) {
+
+            const left =
+                Math.random() * 100;
+
+            const delay =
+                -(Math.random() * 8);
+
+            const fallTime =
+                5 + Math.random() * 6;
+
+            const spinTime =
+                1.5 + Math.random() * 3;
+
+            const symbol =
+                confettiSymbols[
+                    i % confettiSymbols.length
+                ];
+
+            const hue =
+                [
+                    "#ffe36b",
+                    "#71eaff",
+                    "#ff72b8",
+                    "#a77aff",
+                    "#ffffff"
+                ][
+                    i % 5
+                ];
+
+            confettiHTML += `
+                <span
+                    class="shop-confetti-piece"
+                    style="
+                        left:${left}%;
+                        color:${hue};
+                        background:${hue};
+                        --delay:${delay}s;
+                        --fall-time:${fallTime}s;
+                        --spin-time:${spinTime}s;
+                    "
+                >${symbol}</span>
+            `;
+        }
+
+        // --------------------------------------------------------
+        // SHOP PANEL
+        // --------------------------------------------------------
+        const shop =
+            createPanel(`
+
+                <div class="shop-confetti">
+                    ${confettiHTML}
                 </div>
 
-                <h1 class="shop-title">
-                    SHOP
-                </h1>
+                <div class="shop-header">
 
-                <div class="shop-unlocked">
-                    ★ SUPPLY DEPOT UNLOCKED ★
-                </div>
-            </div>
-
-            <div class="credits-card">
-                <div class="coin">¢</div>
-
-                <div>
-                    <div class="credits-number" id="shopCredits">
-                        ${credits}
+                    <div class="shop-event-badge">
+                        ✦ ECHOBOUND CELEBRATION EVENT ✦
                     </div>
 
-                    <div class="credits-label">
-                        ECHO CREDITS
-                    </div>
-                </div>
-            </div>
-
-            <div class="shop-grid">
-
-                <div class="shop-card">
-                    <div class="shop-icon">
-                        🔫
+                    <div class="shop-sparkles">
+                        ✦ ✧ ✦ ✧ ✦
                     </div>
 
-                    <h2>AMMO PACK</h2>
+                    <h1 class="shop-title">
+                        SHOP
+                    </h1>
 
-                    <p>
-                        Vul je munitie aan en krijg
-                        extra schoten voor je volgende gevecht.
-                    </p>
-
-                    <div class="shop-price">
-                        10 CREDITS
+                    <div class="shop-unlocked">
+                        ★ SUPPLY DEPOT UNLOCKED ★
                     </div>
 
-                    <button
-                        class="echo-button buy-button"
-                        id="buyAmmo"
-                    >
-                        BUY AMMO
-                    </button>
                 </div>
 
-                <div class="shop-card">
-                    <div class="shop-icon">
-                        ❤️
-                    </div>
-
-                    <h2>TANK REPAIR</h2>
-
-                    <p>
-                        Herstel je tank volledig.
-                        Perfect als je net uit een zwaar gevecht komt.
-                    </p>
-
-                    <div class="shop-price">
-                        20 CREDITS
-                    </div>
-
-                    <button
-                        class="echo-button buy-button"
-                        id="buyRepair"
-                    >
-                        REPAIR TANK
-                    </button>
+                <div class="shop-event-text">
+                    🎉 YOUR SIGNAL IS STRONG — CELEBRATE WITH A SUPPLY DROP 🎉
                 </div>
 
-                <div class="shop-card">
-                    <div class="shop-icon">
-                        ⚡
+                <div class="shop-top-line"></div>
+
+                <div class="credits-card">
+
+                    <div class="coin">
+                        ¢
                     </div>
 
-                    <h2>AMMO UPGRADE</h2>
+                    <div>
 
-                    <p>
-                        Vergroot je maximale munitiecapaciteit
-                        met 4 kogels.
-                    </p>
+                        <div
+                            class="credits-number"
+                            id="shopCredits"
+                        >
+                            ${credits}
+                        </div>
 
-                    <div class="shop-price">
-                        50 CREDITS
+                        <div class="credits-label">
+                            ECHO CREDITS
+                        </div>
+
                     </div>
 
-                    <button
-                        class="echo-button buy-button"
-                        id="buyUpgrade"
-                    >
-                        BUY UPGRADE
-                    </button>
                 </div>
 
-            </div>
+                <div class="shop-grid">
 
-            <div class="shop-message" id="shopMessage">
-                WELKOM BIJ DE ECHOBOUND SUPPLY DEPOT
-            </div>
+                    <!-- AMMO -->
+                    <div class="shop-card">
 
-            <button
-                class="echo-button shop-back"
-                id="shopBack"
-            >
-                ← BACK
-            </button>
-        `, "shop-panel");
+                        <div class="shop-icon">
+                            🔫
+                        </div>
 
+                        <h2>
+                            AMMO PACK
+                        </h2>
+
+                        <p>
+                            Vul je munitie volledig aan.
+                            Klaar voor het volgende gevecht.
+                        </p>
+
+                        <div class="shop-price">
+                            ◆ 10 CREDITS
+                        </div>
+
+                        <button
+                            class="echo-button buy-button"
+                            id="buyAmmo"
+                        >
+                            BUY AMMO
+                        </button>
+
+                    </div>
+
+                    <!-- REPAIR -->
+                    <div class="shop-card">
+
+                        <div class="shop-icon">
+                            ❤️
+                        </div>
+
+                        <h2>
+                            TANK REPAIR
+                        </h2>
+
+                        <p>
+                            Herstel je tank volledig.
+                            Laat je machine weer schitteren.
+                        </p>
+
+                        <div class="shop-price">
+                            ◆ 20 CREDITS
+                        </div>
+
+                        <button
+                            class="echo-button buy-button"
+                            id="buyRepair"
+                        >
+                            REPAIR TANK
+                        </button>
+
+                    </div>
+
+                    <!-- UPGRADE -->
+                    <div class="shop-card">
+
+                        <div class="shop-icon">
+                            ⚡
+                        </div>
+
+                        <h2>
+                            AMMO UPGRADE
+                        </h2>
+
+                        <p>
+                            Vergroot je maximale
+                            munitiecapaciteit met 4 kogels.
+                        </p>
+
+                        <div class="shop-price">
+                            ◆ 50 CREDITS
+                        </div>
+
+                        <button
+                            class="echo-button buy-button"
+                            id="buyUpgrade"
+                        >
+                            BUY UPGRADE
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div
+                    class="shop-message"
+                    id="shopMessage"
+                >
+                    🎉 WELKOM BIJ DE ECHOBOUND CELEBRATION DEPOT 🎉
+                </div>
+
+                <button
+                    class="echo-button shop-back"
+                    id="shopBack"
+                >
+                    ← BACK
+                </button>
+
+            `, "shop-panel");
+
+        // --------------------------------------------------------
+        // SHOP ELEMENTEN
+        // --------------------------------------------------------
         const creditsElement =
-            shop.panel.querySelector("#shopCredits");
+            shop.panel.querySelector(
+                "#shopCredits"
+            );
 
         const messageElement =
-            shop.panel.querySelector("#shopMessage");
+            shop.panel.querySelector(
+                "#shopMessage"
+            );
 
         function updateShopCredits() {
-            creditsElement.textContent = credits;
+
+            creditsElement.textContent =
+                credits;
+
             updateHUD();
         }
 
         function shopMessage(message) {
-            messageElement.textContent = message;
+
+            messageElement.textContent =
+                message;
         }
 
+        // --------------------------------------------------------
+        // BUY AMMO
+        // --------------------------------------------------------
         shop.panel
             .querySelector("#buyAmmo")
-            .addEventListener("click", () => {
+            .addEventListener(
+                "click",
+                () => {
 
-                if (credits < 10) {
-                    shopMessage("NOT ENOUGH CREDITS");
-                    return;
+                    if (credits < 10) {
+
+                        shopMessage(
+                            "⚠ NOT ENOUGH CREDITS"
+                        );
+
+                        return;
+                    }
+
+                    credits -= 10;
+
+                    ammo = maxAmmo;
+
+                    updateShopCredits();
+
+                    shopMessage(
+                        "🎉 🔫 AMMO RESTOCKED!"
+                    );
+
+                    notify(
+                        "AMMO RESTOCKED"
+                    );
                 }
+            );
 
-                credits -= 10;
-                ammo = maxAmmo;
-
-                updateShopCredits();
-
-                shopMessage("🔫 AMMO RESTOCKED!");
-                notify("AMMO RESTOCKED");
-            });
-
+        // --------------------------------------------------------
+        // BUY REPAIR
+        // --------------------------------------------------------
         shop.panel
             .querySelector("#buyRepair")
-            .addEventListener("click", () => {
+            .addEventListener(
+                "click",
+                () => {
 
-                if (credits < 20) {
-                    shopMessage("NOT ENOUGH CREDITS");
-                    return;
+                    if (credits < 20) {
+
+                        shopMessage(
+                            "⚠ NOT ENOUGH CREDITS"
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        playerHealth >=
+                        PLAYER_MAX_HEALTH
+                    ) {
+
+                        shopMessage(
+                            "✨ TANK IS ALREADY FULLY REPAIRED"
+                        );
+
+                        return;
+                    }
+
+                    credits -= 20;
+
+                    playerHealth =
+                        PLAYER_MAX_HEALTH;
+
+                    updateShopCredits();
+
+                    shopMessage(
+                        "🎉 ❤️ TANK FULLY REPAIRED!"
+                    );
+
+                    notify(
+                        "TANK REPAIRED"
+                    );
                 }
+            );
 
-                if (playerHealth >= PLAYER_MAX_HEALTH) {
-                    shopMessage("TANK IS ALREADY FULLY REPAIRED");
-                    return;
-                }
-
-                credits -= 20;
-                playerHealth = PLAYER_MAX_HEALTH;
-
-                updateShopCredits();
-
-                shopMessage("❤️ TANK FULLY REPAIRED!");
-                notify("TANK REPAIRED");
-            });
-
+        // --------------------------------------------------------
+        // BUY UPGRADE
+        // --------------------------------------------------------
         shop.panel
             .querySelector("#buyUpgrade")
-            .addEventListener("click", () => {
+            .addEventListener(
+                "click",
+                () => {
 
-                if (credits < 50) {
-                    shopMessage("NOT ENOUGH CREDITS");
-                    return;
+                    if (credits < 50) {
+
+                        shopMessage(
+                            "⚠ NOT ENOUGH CREDITS"
+                        );
+
+                        return;
+                    }
+
+                    credits -= 50;
+
+                    ammoUpgrade += 4;
+
+                    maxAmmo += 4;
+
+                    ammo = maxAmmo;
+
+                    updateShopCredits();
+
+                    shopMessage(
+                        "🎉 ⚡ AMMO CAPACITY UPGRADED!"
+                    );
+
+                    notify(
+                        "AMMO UPGRADED"
+                    );
                 }
+            );
 
-                credits -= 50;
-                ammoUpgrade += 4;
-                maxAmmo += 4;
-                ammo = maxAmmo;
-
-                updateShopCredits();
-
-                shopMessage("⚡ AMMO CAPACITY UPGRADED!");
-                notify("AMMO UPGRADED");
-            });
-
+        // --------------------------------------------------------
+        // BACK
+        // --------------------------------------------------------
         shop.panel
             .querySelector("#shopBack")
-            .addEventListener("click", () => {
-                shop.close();
+            .addEventListener(
+                "click",
+                () => {
 
-                if (gameState === "paused") {
-                    showPausePanel();
+                    shop.close();
+
+                    if (
+                        gameState === "paused"
+                    ) {
+                        showPausePanel();
+                    }
                 }
-            });
+            );
     }
 
     // ------------------------------------------------------------
@@ -1014,52 +1575,68 @@
     // ------------------------------------------------------------
     function openAchievements() {
 
-        const unlocked = Object.values(achievements)
-            .filter(Boolean).length;
+        const unlocked =
+            Object.values(achievements)
+                .filter(Boolean)
+                .length;
 
-        const panel = createPanel(`
-            <h1>🏆 ACHIEVEMENTS</h1>
+        const panel =
+            createPanel(`
 
-            <div class="panel-subtitle">
-                ${unlocked} / ${Object.keys(achievements).length}
-                achievements unlocked
-            </div>
+                <h1>
+                    🏆 ACHIEVEMENTS
+                </h1>
 
-            <p>
-                ${achievements.firstShot ? "🟢" : "⚪"}
-                FIRST SHOT
-            </p>
+                <div class="panel-subtitle">
+                    ${unlocked} /
+                    ${Object.keys(achievements).length}
+                    achievements unlocked
+                </div>
 
-            <p>
-                ${achievements.firstKill ? "🟢" : "⚪"}
-                FIRST KILL
-            </p>
+                <p>
+                    ${achievements.firstShot ? "🟢" : "⚪"}
+                    FIRST SHOT
+                </p>
 
-            <p>
-                ${achievements.fiveKills ? "🟢" : "⚪"}
-                FIVE KILLS
-            </p>
+                <p>
+                    ${achievements.firstKill ? "🟢" : "⚪"}
+                    FIRST KILL
+                </p>
 
-            <p>
-                ${achievements.explorer ? "🟢" : "⚪"}
-                EXPLORER
-            </p>
+                <p>
+                    ${achievements.fiveKills ? "🟢" : "⚪"}
+                    FIVE KILLS
+                </p>
 
-            <p>
-                ${achievements.survivor ? "🟢" : "⚪"}
-                SURVIVOR
-            </p>
+                <p>
+                    ${achievements.explorer ? "🟢" : "⚪"}
+                    EXPLORER
+                </p>
 
-            <br>
+                <p>
+                    ${achievements.survivor ? "🟢" : "⚪"}
+                    SURVIVOR
+                </p>
 
-            <button class="echo-button" id="achievementBack">
-                ← BACK
-            </button>
-        `);
+                <br>
+
+                <button
+                    class="echo-button"
+                    id="achievementBack"
+                >
+                    ← BACK
+                </button>
+
+            `);
 
         panel.panel
-            .querySelector("#achievementBack")
-            .addEventListener("click", panel.close);
+            .querySelector(
+                "#achievementBack"
+            )
+            .addEventListener(
+                "click",
+                panel.close
+            );
     }
 
     // ------------------------------------------------------------
@@ -1067,32 +1644,68 @@
     // ------------------------------------------------------------
     function openControls() {
 
-        const panel = createPanel(`
-            <h1>CONTROLS</h1>
+        const panel =
+            createPanel(`
 
-            <div class="panel-subtitle">
-                ECHOBOUND FIELD MANUAL
-            </div>
+                <h1>
+                    CONTROLS
+                </h1>
 
-            <p><b>W / ↑</b> — Drive forward</p>
-            <p><b>S / ↓</b> — Drive backward</p>
-            <p><b>A / ←</b> — Turn left</p>
-            <p><b>D / →</b> — Turn right</p>
-            <p><b>MOUSE</b> — Aim cannon</p>
-            <p><b>LEFT CLICK</b> — Fire</p>
-            <p><b>R</b> — Reload</p>
-            <p><b>ESC</b> — Pause</p>
+                <div class="panel-subtitle">
+                    ECHOBOUND FIELD MANUAL
+                </div>
 
-            <br>
+                <p>
+                    <b>W / ↑</b> — Drive forward
+                </p>
 
-            <button class="echo-button" id="controlsBack">
-                ← BACK
-            </button>
-        `);
+                <p>
+                    <b>S / ↓</b> — Drive backward
+                </p>
+
+                <p>
+                    <b>A / ←</b> — Turn left
+                </p>
+
+                <p>
+                    <b>D / →</b> — Turn right
+                </p>
+
+                <p>
+                    <b>MOUSE</b> — Aim cannon
+                </p>
+
+                <p>
+                    <b>LEFT CLICK</b> — Fire
+                </p>
+
+                <p>
+                    <b>R</b> — Reload
+                </p>
+
+                <p>
+                    <b>ESC</b> — Pause
+                </p>
+
+                <br>
+
+                <button
+                    class="echo-button"
+                    id="controlsBack"
+                >
+                    ← BACK
+                </button>
+
+            `);
 
         panel.panel
-            .querySelector("#controlsBack")
-            .addEventListener("click", panel.close);
+            .querySelector(
+                "#controlsBack"
+            )
+            .addEventListener(
+                "click",
+                panel.close
+            );
     }
 
     // ------------------------------------------------------------
@@ -1100,31 +1713,52 @@
     // ------------------------------------------------------------
     document
         .getElementById("newRunBtn")
-        .addEventListener("click", startNewGame);
+        .addEventListener(
+            "click",
+            startNewGame
+        );
 
     document
         .getElementById("shopBtn")
-        .addEventListener("click", openShop);
+        .addEventListener(
+            "click",
+            openShop
+        );
 
     document
         .getElementById("achievementsBtn")
-        .addEventListener("click", openAchievements);
+        .addEventListener(
+            "click",
+            openAchievements
+        );
 
     document
         .getElementById("controlsBtn")
-        .addEventListener("click", openControls);
+        .addEventListener(
+            "click",
+            openControls
+        );
 
     document
         .getElementById("loadBtn")
-        .addEventListener("click", loadGame);
+        .addEventListener(
+            "click",
+            loadGame
+        );
 
     document
         .getElementById("pauseBtn")
-        .addEventListener("click", pauseGame);
+        .addEventListener(
+            "click",
+            pauseGame
+        );
 
     document
         .getElementById("mapBtn")
-        .addEventListener("click", openMap);
+        .addEventListener(
+            "click",
+            openMap
+        );
 
     // ============================================================
     // THREE.JS SCENE
@@ -1132,28 +1766,36 @@
 
     scene = new THREE.Scene();
 
-    scene.background = new THREE.Color(0x071019);
+    scene.background =
+        new THREE.Color(0x071019);
 
-    scene.fog = new THREE.Fog(
-        0x071019,
-        90,
-        330
-    );
+    scene.fog =
+        new THREE.Fog(
+            0x071019,
+            90,
+            330
+        );
 
-    camera = new THREE.PerspectiveCamera(
-        60,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        600
-    );
+    camera =
+        new THREE.PerspectiveCamera(
+            60,
+            window.innerWidth /
+                window.innerHeight,
+            .1,
+            600
+        );
 
-    renderer = new THREE.WebGLRenderer({
-        canvas,
-        antialias: true
-    });
+    renderer =
+        new THREE.WebGLRenderer({
+            canvas,
+            antialias: true
+        });
 
     renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio, 2)
+        Math.min(
+            window.devicePixelRatio,
+            2
+        )
     );
 
     renderer.setSize(
@@ -1161,23 +1803,29 @@
         window.innerHeight
     );
 
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled =
+        true;
 
     // ------------------------------------------------------------
     // LIGHTS
     // ------------------------------------------------------------
-    const hemiLight = new THREE.HemisphereLight(
-        0x9bdcff,
-        0x182015,
-        2.1
+
+    const hemiLight =
+        new THREE.HemisphereLight(
+            0x9bdcff,
+            0x182015,
+            2.1
+        );
+
+    scene.add(
+        hemiLight
     );
 
-    scene.add(hemiLight);
-
-    const sun = new THREE.DirectionalLight(
-        0xffffff,
-        2.4
-    );
+    const sun =
+        new THREE.DirectionalLight(
+            0xffffff,
+            2.4
+        );
 
     sun.position.set(
         80,
@@ -1185,44 +1833,63 @@
         50
     );
 
-    sun.castShadow = true;
+    sun.castShadow =
+        true;
 
-    scene.add(sun);
+    scene.add(
+        sun
+    );
 
     // ------------------------------------------------------------
     // GROUND
     // ------------------------------------------------------------
-    const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(
-            WORLD_SIZE,
-            WORLD_SIZE
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0x182b25,
-            roughness: 1
-        })
+
+    const ground =
+        new THREE.Mesh(
+            new THREE.PlaneGeometry(
+                WORLD_SIZE,
+                WORLD_SIZE
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x182b25,
+                roughness: 1
+            })
+        );
+
+    ground.rotation.x =
+        -Math.PI / 2;
+
+    ground.receiveShadow =
+        true;
+
+    scene.add(
+        ground
     );
-
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-
-    scene.add(ground);
 
     // ------------------------------------------------------------
     // GRID
     // ------------------------------------------------------------
-    const grid = new THREE.GridHelper(
-        WORLD_SIZE,
-        36,
-        0x31534d,
-        0x1b332f
+
+    const grid =
+        new THREE.GridHelper(
+            WORLD_SIZE,
+            36,
+            0x31534d,
+            0x1b332f
+        );
+
+    grid.position.y =
+        .02;
+
+    grid.material.opacity =
+        .18;
+
+    grid.material.transparent =
+        true;
+
+    scene.add(
+        grid
     );
-
-    grid.position.y = 0.02;
-    grid.material.opacity = 0.18;
-    grid.material.transparent = true;
-
-    scene.add(grid);
 
     // ============================================================
     // TANK
@@ -1230,37 +1897,58 @@
 
     function createTank() {
 
-        const tank = new THREE.Group();
+        const tank =
+            new THREE.Group();
 
         // Lower chassis
-        const lower = new THREE.Mesh(
-            new THREE.BoxGeometry(4.6, 1.1, 6),
-            new THREE.MeshStandardMaterial({
-                color: 0x283b44,
-                metalness: .7,
-                roughness: .3
-            })
+        const lower =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    4.6,
+                    1.1,
+                    6
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x283b44,
+                    metalness: .7,
+                    roughness: .3
+                })
+            );
+
+        lower.position.y =
+            1;
+
+        lower.castShadow =
+            true;
+
+        tank.add(
+            lower
         );
-
-        lower.position.y = 1;
-        lower.castShadow = true;
-
-        tank.add(lower);
 
         // Main body
-        const body = new THREE.Mesh(
-            new THREE.BoxGeometry(3.8, 1.25, 4.5),
-            new THREE.MeshStandardMaterial({
-                color: 0x38525b,
-                metalness: .75,
-                roughness: .27
-            })
+        const body =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    3.8,
+                    1.25,
+                    4.5
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x38525b,
+                    metalness: .75,
+                    roughness: .27
+                })
+            );
+
+        body.position.y =
+            1.9;
+
+        body.castShadow =
+            true;
+
+        tank.add(
+            body
         );
-
-        body.position.y = 1.9;
-        body.castShadow = true;
-
-        tank.add(body);
 
         // Tracks
         const trackMaterial =
@@ -1269,10 +1957,15 @@
                 roughness: .75
             });
 
-        const leftTrack = new THREE.Mesh(
-            new THREE.BoxGeometry(1.05, 1.35, 6.4),
-            trackMaterial
-        );
+        const leftTrack =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    1.05,
+                    1.35,
+                    6.4
+                ),
+                trackMaterial
+            );
 
         leftTrack.position.set(
             -2.35,
@@ -1280,14 +1973,22 @@
             0
         );
 
-        leftTrack.castShadow = true;
+        leftTrack.castShadow =
+            true;
 
-        tank.add(leftTrack);
-
-        const rightTrack = new THREE.Mesh(
-            new THREE.BoxGeometry(1.05, 1.35, 6.4),
-            trackMaterial
+        tank.add(
+            leftTrack
         );
+
+        const rightTrack =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    1.05,
+                    1.35,
+                    6.4
+                ),
+                trackMaterial
+            );
 
         rightTrack.position.set(
             2.35,
@@ -1295,66 +1996,84 @@
             0
         );
 
-        rightTrack.castShadow = true;
+        rightTrack.castShadow =
+            true;
 
-        tank.add(rightTrack);
+        tank.add(
+            rightTrack
+        );
 
         // Turret
-        const turretBase = new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                1.55,
-                1.7,
-                .55,
-                16
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x263f48,
-                metalness: .8,
-                roughness: .25
-            })
+        const turretBase =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    1.55,
+                    1.7,
+                    .55,
+                    16
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x263f48,
+                    metalness: .8,
+                    roughness: .25
+                })
+            );
+
+        turretBase.position.y =
+            2.75;
+
+        turretBase.castShadow =
+            true;
+
+        tank.add(
+            turretBase
         );
 
-        turretBase.position.y = 2.75;
-        turretBase.castShadow = true;
+        turret =
+            new THREE.Group();
 
-        tank.add(turretBase);
+        turret.position.y =
+            2.85;
 
-        turret = new THREE.Group();
-
-        turret.position.y = 2.85;
-
-        tank.add(turret);
-
-        const turretBody = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                2.6,
-                .75,
-                2.5
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x45616a,
-                metalness: .8,
-                roughness: .25
-            })
+        tank.add(
+            turret
         );
 
-        turretBody.castShadow = true;
+        const turretBody =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    2.6,
+                    .75,
+                    2.5
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x45616a,
+                    metalness: .8,
+                    roughness: .25
+                })
+            );
 
-        turret.add(turretBody);
+        turretBody.castShadow =
+            true;
+
+        turret.add(
+            turretBody
+        );
 
         // Cannon
-        const cannon = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                .48,
-                .48,
-                5.5
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x182329,
-                metalness: .9,
-                roughness: .2
-            })
-        );
+        const cannon =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    .48,
+                    .48,
+                    5.5
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x182329,
+                    metalness: .9,
+                    roughness: .2
+                })
+            );
 
         cannon.position.set(
             0,
@@ -1362,12 +2081,16 @@
             -3.35
         );
 
-        cannon.castShadow = true;
+        cannon.castShadow =
+            true;
 
-        turret.add(cannon);
+        turret.add(
+            cannon
+        );
 
         // Muzzle
-        muzzle = new THREE.Object3D();
+        muzzle =
+            new THREE.Object3D();
 
         muzzle.position.set(
             0,
@@ -1375,15 +2098,22 @@
             -6.1
         );
 
-        turret.add(muzzle);
+        turret.add(
+            muzzle
+        );
 
         // Glow
-        const glow = new THREE.Mesh(
-            new THREE.SphereGeometry(.16, 12, 12),
-            new THREE.MeshBasicMaterial({
-                color: 0x64eaff
-            })
-        );
+        const glow =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    .16,
+                    12,
+                    12
+                ),
+                new THREE.MeshBasicMaterial({
+                    color: 0x64eaff
+                })
+            );
 
         glow.position.set(
             0,
@@ -1391,7 +2121,9 @@
             -6.05
         );
 
-        turret.add(glow);
+        turret.add(
+            glow
+        );
 
         tank.position.set(
             0,
@@ -1399,31 +2131,40 @@
             0
         );
 
-        scene.add(tank);
+        scene.add(
+            tank
+        );
 
         return tank;
     }
 
-    player = createTank();
+    player =
+        createTank();
 
     // ============================================================
     // BUILDINGS
     // ============================================================
 
-    function createBuilding(x, z, w, d) {
+    function createBuilding(
+        x,
+        z,
+        w,
+        d
+    ) {
 
-        const building = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                w,
-                4,
-                d
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x24353b,
-                metalness: .35,
-                roughness: .7
-            })
-        );
+        const building =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    w,
+                    4,
+                    d
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x24353b,
+                    metalness: .35,
+                    roughness: .7
+                })
+            );
 
         building.position.set(
             x,
@@ -1431,10 +2172,15 @@
             z
         );
 
-        building.castShadow = true;
-        building.receiveShadow = true;
+        building.castShadow =
+            true;
 
-        scene.add(building);
+        building.receiveShadow =
+            true;
+
+        scene.add(
+            building
+        );
 
         buildings.push({
             mesh: building,
@@ -1445,54 +2191,111 @@
         });
     }
 
-    createBuilding(-65, -50, 30, 24);
-    createBuilding(50, -60, 35, 26);
-    createBuilding(-75, 55, 25, 32);
-    createBuilding(70, 55, 34, 22);
-    createBuilding(0, 95, 42, 20);
-    createBuilding(95, -5, 25, 34);
-    createBuilding(-105, -5, 25, 34);
+    createBuilding(
+        -65,
+        -50,
+        30,
+        24
+    );
+
+    createBuilding(
+        50,
+        -60,
+        35,
+        26
+    );
+
+    createBuilding(
+        -75,
+        55,
+        25,
+        32
+    );
+
+    createBuilding(
+        70,
+        55,
+        34,
+        22
+    );
+
+    createBuilding(
+        0,
+        95,
+        42,
+        20
+    );
+
+    createBuilding(
+        95,
+        -5,
+        25,
+        34
+    );
+
+    createBuilding(
+        -105,
+        -5,
+        25,
+        34
+    );
 
     // ============================================================
     // TREES
     // ============================================================
 
-    function createTree(x, z) {
+    function createTree(
+        x,
+        z
+    ) {
 
-        const tree = new THREE.Group();
+        const tree =
+            new THREE.Group();
 
-        const trunk = new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                .55,
-                .7,
-                3,
-                8
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x513c27
-            })
+        const trunk =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .55,
+                    .7,
+                    3,
+                    8
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x513c27
+                })
+            );
+
+        trunk.position.y =
+            1.5;
+
+        trunk.castShadow =
+            true;
+
+        tree.add(
+            trunk
         );
 
-        trunk.position.y = 1.5;
-        trunk.castShadow = true;
+        const crown =
+            new THREE.Mesh(
+                new THREE.ConeGeometry(
+                    3.2,
+                    6,
+                    8
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x173c2d
+                })
+            );
 
-        tree.add(trunk);
+        crown.position.y =
+            5;
 
-        const crown = new THREE.Mesh(
-            new THREE.ConeGeometry(
-                3.2,
-                6,
-                8
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x173c2d
-            })
+        crown.castShadow =
+            true;
+
+        tree.add(
+            crown
         );
-
-        crown.position.y = 5;
-        crown.castShadow = true;
-
-        tree.add(crown);
 
         tree.position.set(
             x,
@@ -1500,10 +2303,16 @@
             z
         );
 
-        scene.add(tree);
+        scene.add(
+            tree
+        );
     }
 
-    for (let i = 0; i < 55; i++) {
+    for (
+        let i = 0;
+        i < 55;
+        i++
+    ) {
 
         const x =
             THREE.MathUtils.randFloat(
@@ -1524,26 +2333,33 @@
             continue;
         }
 
-        createTree(x, z);
+        createTree(
+            x,
+            z
+        );
     }
 
     // ============================================================
     // RESOURCES
     // ============================================================
 
-    function createResource(x, z) {
+    function createResource(
+        x,
+        z
+    ) {
 
-        const crystal = new THREE.Mesh(
-            new THREE.OctahedronGeometry(
-                .8,
-                0
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x65dfff,
-                emissive: 0x164b63,
-                emissiveIntensity: 1
-            })
-        );
+        const crystal =
+            new THREE.Mesh(
+                new THREE.OctahedronGeometry(
+                    .8,
+                    0
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x65dfff,
+                    emissive: 0x164b63,
+                    emissiveIntensity: 1
+                })
+            );
 
         crystal.position.set(
             x,
@@ -1551,9 +2367,12 @@
             z
         );
 
-        crystal.castShadow = true;
+        crystal.castShadow =
+            true;
 
-        scene.add(crystal);
+        scene.add(
+            crystal
+        );
 
         resources.push({
             mesh: crystal,
@@ -1561,7 +2380,11 @@
         });
     }
 
-    for (let i = 0; i < 35; i++) {
+    for (
+        let i = 0;
+        i < 35;
+        i++
+    ) {
 
         createResource(
             THREE.MathUtils.randFloat(
@@ -1579,11 +2402,16 @@
     // COLLISION
     // ============================================================
 
-    function collidesWithBuilding(position) {
+    function collidesWithBuilding(
+        position
+    ) {
 
-        const radius = 2.7;
+        const radius =
+            2.7;
 
-        for (const building of buildings) {
+        for (
+            const building of buildings
+        ) {
 
             const minX =
                 building.x -
@@ -1624,36 +2452,44 @@
 
     function createEnemy() {
 
-        const enemy = new THREE.Group();
+        const enemy =
+            new THREE.Group();
 
-        const body = new THREE.Mesh(
-            new THREE.SphereGeometry(
-                1.6,
-                12,
-                10
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x8b4cff,
-                emissive: 0x24104a,
-                emissiveIntensity: .7
-            })
+        const body =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    1.6,
+                    12,
+                    10
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x8b4cff,
+                    emissive: 0x24104a,
+                    emissiveIntensity: .7
+                })
+            );
+
+        body.position.y =
+            1.6;
+
+        body.castShadow =
+            true;
+
+        enemy.add(
+            body
         );
 
-        body.position.y = 1.6;
-        body.castShadow = true;
-
-        enemy.add(body);
-
-        const eye = new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .32,
-                10,
-                10
-            ),
-            new THREE.MeshBasicMaterial({
-                color: 0xff405d
-            })
-        );
+        const eye =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    .32,
+                    10,
+                    10
+                ),
+                new THREE.MeshBasicMaterial({
+                    color: 0xff405d
+                })
+            );
 
         eye.position.set(
             0,
@@ -1661,12 +2497,15 @@
             -1.35
         );
 
-        enemy.add(eye);
+        enemy.add(
+            eye
+        );
 
         let x;
         let z;
 
         do {
+
             const angle =
                 Math.random() *
                 Math.PI *
@@ -1680,15 +2519,19 @@
 
             x =
                 player.position.x +
-                Math.cos(angle) * distance;
+                Math.cos(angle) *
+                distance;
 
             z =
                 player.position.z +
-                Math.sin(angle) * distance;
+                Math.sin(angle) *
+                distance;
 
         } while (
-            Math.abs(x) > HALF_WORLD - 10 ||
-            Math.abs(z) > HALF_WORLD - 10
+            Math.abs(x) >
+                HALF_WORLD - 10 ||
+            Math.abs(z) >
+                HALF_WORLD - 10
         );
 
         enemy.position.set(
@@ -1697,19 +2540,28 @@
             z
         );
 
-        scene.add(enemy);
+        scene.add(
+            enemy
+        );
 
         enemies.push({
             mesh: enemy,
             health: 50,
-            speed: THREE.MathUtils.randFloat(4, 7),
+            speed:
+                THREE.MathUtils.randFloat(
+                    4,
+                    7
+                ),
             attackTimer: 0
         });
     }
 
     function spawnEnemies() {
 
-        while (enemies.length < ENEMY_COUNT) {
+        while (
+            enemies.length <
+            ENEMY_COUNT
+        ) {
             createEnemy();
         }
     }
@@ -1718,7 +2570,10 @@
     // LINE OF SIGHT
     // ============================================================
 
-    function lineBlocked(start, end) {
+    function lineBlocked(
+        start,
+        end
+    ) {
 
         const direction =
             end.clone().sub(start);
@@ -1738,7 +2593,8 @@
 
         const objects =
             buildings.map(
-                building => building.mesh
+                building =>
+                    building.mesh
             );
 
         return raycaster.intersectObjects(
@@ -1751,18 +2607,21 @@
     // MOUSE AIM
     // ============================================================
 
-    const mouseNDC = new THREE.Vector2();
+    const mouseNDC =
+        new THREE.Vector2();
 
     function getMouseWorldPosition() {
 
         mouseNDC.x =
-            (mouse.x / window.innerWidth) *
-            2 -
+            (mouse.x /
+                window.innerWidth) *
+                2 -
             1;
 
         mouseNDC.y =
-            -(mouse.y / window.innerHeight) *
-            2 +
+            -(mouse.y /
+                window.innerHeight) *
+                2 +
             1;
 
         const raycaster =
@@ -1775,7 +2634,11 @@
 
         const plane =
             new THREE.Plane(
-                new THREE.Vector3(0, 1, 0),
+                new THREE.Vector3(
+                    0,
+                    1,
+                    0
+                ),
                 0
             );
 
@@ -1796,7 +2659,10 @@
 
     function updateTurretAim() {
 
-        if (!player || !turret) {
+        if (
+            !player ||
+            !turret
+        ) {
             return;
         }
 
@@ -1828,20 +2694,32 @@
 
     function shoot() {
 
-        if (gameState !== "playing") {
+        if (
+            gameState !== "playing"
+        ) {
             return;
         }
 
-        if (reloadTimer > 0) {
+        if (
+            reloadTimer > 0
+        ) {
             return;
         }
 
-        if (fireTimer > 0) {
+        if (
+            fireTimer > 0
+        ) {
             return;
         }
 
-        if (ammo <= 0) {
-            notify("OUT OF AMMO — PRESS R");
+        if (
+            ammo <= 0
+        ) {
+
+            notify(
+                "OUT OF AMMO — PRESS R"
+            );
+
             return;
         }
 
@@ -1850,12 +2728,15 @@
         fireTimer =
             FIRE_COOLDOWN;
 
-        achievements.firstShot = true;
+        achievements.firstShot =
+            true;
 
         const start =
             new THREE.Vector3();
 
-        muzzle.getWorldPosition(start);
+        muzzle.getWorldPosition(
+            start
+        );
 
         const target =
             getMouseWorldPosition();
@@ -1867,7 +2748,9 @@
                 .normalize();
 
         start.add(
-            direction.clone().multiplyScalar(.8)
+            direction
+                .clone()
+                .multiplyScalar(.8)
         );
 
         const bulletMesh =
@@ -1882,9 +2765,13 @@
                 })
             );
 
-        bulletMesh.position.copy(start);
+        bulletMesh.position.copy(
+            start
+        );
 
-        scene.add(bulletMesh);
+        scene.add(
+            bulletMesh
+        );
 
         bullets.push({
             mesh: bulletMesh,
@@ -1908,17 +2795,24 @@
 
     function reload() {
 
-        if (reloadTimer > 0) {
+        if (
+            reloadTimer > 0
+        ) {
             return;
         }
 
-        if (ammo >= maxAmmo) {
+        if (
+            ammo >= maxAmmo
+        ) {
             return;
         }
 
-        reloadTimer = 1.5;
+        reloadTimer =
+            1.5;
 
-        notify("RELOADING...");
+        notify(
+            "RELOADING..."
+        );
     }
 
     // ============================================================
@@ -1931,7 +2825,11 @@
         count
     ) {
 
-        for (let i = 0; i < count; i++) {
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
 
             const mesh =
                 new THREE.Mesh(
@@ -1945,9 +2843,13 @@
                     })
                 );
 
-            mesh.position.copy(position);
+            mesh.position.copy(
+                position
+            );
 
-            scene.add(mesh);
+            scene.add(
+                mesh
+            );
 
             particles.push({
                 mesh,
@@ -1975,7 +2877,9 @@
     // PLAYER MOVEMENT
     // ============================================================
 
-    function updatePlayer(delta) {
+    function updatePlayer(
+        delta
+    ) {
 
         let forward = 0;
         let turn = 0;
@@ -2013,7 +2917,9 @@
             TANK_TURN_SPEED *
             delta;
 
-        if (forward !== 0) {
+        if (
+            forward !== 0
+        ) {
 
             const speed =
                 forward > 0
@@ -2061,6 +2967,7 @@
                     nextPosition
                 )
             ) {
+
                 player.position.copy(
                     nextPosition
                 );
@@ -2111,11 +3018,18 @@
     // ENEMY UPDATE
     // ============================================================
 
-    function updateEnemies(delta) {
+    function updateEnemies(
+        delta
+    ) {
 
-        for (let i = enemies.length - 1; i >= 0; i--) {
+        for (
+            let i = enemies.length - 1;
+            i >= 0;
+            i--
+        ) {
 
-            const enemy = enemies[i];
+            const enemy =
+                enemies[i];
 
             const enemyPos =
                 enemy.mesh.position;
@@ -2128,7 +3042,9 @@
                     playerPos
                 );
 
-            if (distance > 7) {
+            if (
+                distance > 7
+            ) {
 
                 const direction =
                     playerPos
@@ -2151,6 +3067,7 @@
                         next
                     )
                 ) {
+
                     enemy.mesh.position.copy(
                         next
                     );
@@ -2174,12 +3091,14 @@
                     const start =
                         enemyPos.clone();
 
-                    start.y += 1.5;
+                    start.y +=
+                        1.5;
 
                     const target =
                         playerPos.clone();
 
-                    target.y += 1.5;
+                    target.y +=
+                        1.5;
 
                     if (
                         !lineBlocked(
@@ -2188,7 +3107,8 @@
                         )
                     ) {
 
-                        playerHealth -= 8;
+                        playerHealth -=
+                            8;
 
                         enemy.attackTimer =
                             1.2;
@@ -2202,6 +3122,7 @@
                         if (
                             playerHealth <= 0
                         ) {
+
                             gameOver();
                         }
                     }
@@ -2214,7 +3135,9 @@
     // BULLET UPDATE
     // ============================================================
 
-    function updateBullets(delta) {
+    function updateBullets(
+        delta
+    ) {
 
         for (
             let i = bullets.length - 1;
@@ -2231,12 +3154,16 @@
             const movement =
                 bullet.velocity
                     .clone()
-                    .multiplyScalar(delta);
+                    .multiplyScalar(
+                        delta
+                    );
 
             const newPosition =
                 oldPosition
                     .clone()
-                    .add(movement);
+                    .add(
+                        movement
+                    );
 
             if (
                 lineBlocked(
@@ -2255,7 +3182,10 @@
                     bullet.mesh
                 );
 
-                bullets.splice(i, 1);
+                bullets.splice(
+                    i,
+                    1
+                );
 
                 continue;
             }
@@ -2264,9 +3194,11 @@
                 newPosition
             );
 
-            bullet.life -= delta;
+            bullet.life -=
+                delta;
 
-            let hitEnemy = false;
+            let hitEnemy =
+                false;
 
             for (
                 let e = enemies.length - 1;
@@ -2281,14 +3213,18 @@
                     enemy.mesh.position
                         .clone();
 
-                enemyCenter.y = 1.5;
+                enemyCenter.y =
+                    1.5;
 
                 const distance =
-                    bullet.mesh.position.distanceTo(
-                        enemyCenter
-                    );
+                    bullet.mesh.position
+                        .distanceTo(
+                            enemyCenter
+                        );
 
-                if (distance < 2.8) {
+                if (
+                    distance < 2.8
+                ) {
 
                     enemy.health -=
                         BULLET_DAMAGE;
@@ -2303,9 +3239,13 @@
                         bullet.mesh
                     );
 
-                    bullets.splice(i, 1);
+                    bullets.splice(
+                        i,
+                        1
+                    );
 
-                    hitEnemy = true;
+                    hitEnemy =
+                        true;
 
                     if (
                         enemy.health <= 0
@@ -2321,12 +3261,18 @@
                         );
 
                         kills++;
-                        credits += 25;
 
-                        achievements.firstKill = true;
+                        credits +=
+                            25;
 
-                        if (kills >= 5) {
-                            achievements.fiveKills = true;
+                        achievements.firstKill =
+                            true;
+
+                        if (
+                            kills >= 5
+                        ) {
+                            achievements.fiveKills =
+                                true;
                         }
 
                         notify(
@@ -2347,7 +3293,10 @@
                     bullet.mesh
                 );
 
-                bullets.splice(i, 1);
+                bullets.splice(
+                    i,
+                    1
+                );
             }
         }
     }
@@ -2362,26 +3311,34 @@
             const resource of resources
         ) {
 
-            if (resource.collected) {
+            if (
+                resource.collected
+            ) {
                 continue;
             }
 
-            resource.mesh.rotation.y += .02;
+            resource.mesh.rotation.y +=
+                .02;
 
             const distance =
-                resource.mesh.position.distanceTo(
-                    player.position
-                );
+                resource.mesh.position
+                    .distanceTo(
+                        player.position
+                    );
 
-            if (distance < 4) {
+            if (
+                distance < 4
+            ) {
 
-                resource.collected = true;
+                resource.collected =
+                    true;
 
                 scene.remove(
                     resource.mesh
                 );
 
-                credits += 5;
+                credits +=
+                    5;
 
                 notify(
                     "+5 CREDITS — RESOURCE COLLECTED"
@@ -2394,7 +3351,9 @@
     // PARTICLE UPDATE
     // ============================================================
 
-    function updateParticles(delta) {
+    function updateParticles(
+        delta
+    ) {
 
         for (
             let i = particles.length - 1;
@@ -2408,13 +3367,16 @@
             particle.mesh.position.add(
                 particle.velocity
                     .clone()
-                    .multiplyScalar(delta)
+                    .multiplyScalar(
+                        delta
+                    )
             );
 
             particle.velocity.y -=
                 8 * delta;
 
-            particle.life -= delta;
+            particle.life -=
+                delta;
 
             if (
                 particle.life <= 0
@@ -2444,12 +3406,18 @@
                 player.position.z ** 2
             );
 
-        if (distance > 120) {
-            achievements.explorer = true;
+        if (
+            distance > 120
+        ) {
+            achievements.explorer =
+                true;
         }
 
-        if (totalPlayTime > 300) {
-            achievements.survivor = true;
+        if (
+            totalPlayTime > 300
+        ) {
+            achievements.survivor =
+                true;
         }
     }
 
@@ -2484,7 +3452,10 @@
                 "creditsText"
             );
 
-        if (healthFill) {
+        if (
+            healthFill
+        ) {
+
             healthFill.style.width =
                 `${Math.max(
                     0,
@@ -2492,7 +3463,10 @@
                 )}%`;
         }
 
-        if (energyFill) {
+        if (
+            energyFill
+        ) {
+
             energyFill.style.width =
                 `${Math.max(
                     0,
@@ -2500,17 +3474,26 @@
                 )}%`;
         }
 
-        if (ammoText) {
+        if (
+            ammoText
+        ) {
+
             ammoText.textContent =
                 `${ammo} / ${maxAmmo}`;
         }
 
-        if (killsText) {
+        if (
+            killsText
+        ) {
+
             killsText.textContent =
                 kills;
         }
 
-        if (creditsText) {
+        if (
+            creditsText
+        ) {
+
             creditsText.textContent =
                 credits;
         }
@@ -2522,41 +3505,57 @@
 
     function resetGameObjects() {
 
-        for (const enemy of enemies) {
+        for (
+            const enemy of enemies
+        ) {
+
             scene.remove(
                 enemy.mesh
             );
         }
 
-        enemies.length = 0;
+        enemies.length =
+            0;
 
-        for (const bullet of bullets) {
+        for (
+            const bullet of bullets
+        ) {
+
             scene.remove(
                 bullet.mesh
             );
         }
 
-        bullets.length = 0;
+        bullets.length =
+            0;
 
-        for (const particle of particles) {
+        for (
+            const particle of particles
+        ) {
+
             scene.remove(
                 particle.mesh
             );
         }
 
-        particles.length = 0;
+        particles.length =
+            0;
 
-        for (const resource of resources) {
+        for (
+            const resource of resources
+        ) {
 
             if (
                 resource.mesh.parent
             ) {
+
                 scene.remove(
                     resource.mesh
                 );
             }
 
-            resource.collected = false;
+            resource.collected =
+                false;
 
             scene.add(
                 resource.mesh
@@ -2568,7 +3567,8 @@
 
         resetGameObjects();
 
-        gameState = "playing";
+        gameState =
+            "playing";
 
         playerHealth =
             PLAYER_MAX_HEALTH;
@@ -2576,16 +3576,26 @@
         playerEnergy =
             PLAYER_MAX_ENERGY;
 
-        credits = 100;
-        kills = 0;
+        credits =
+            100;
 
-        ammo = 12;
+        kills =
+            0;
+
+        ammo =
+            12;
+
         maxAmmo =
             12 + ammoUpgrade;
 
-        reloadTimer = 0;
-        fireTimer = 0;
-        totalPlayTime = 0;
+        reloadTimer =
+            0;
+
+        fireTimer =
+            0;
+
+        totalPlayTime =
+            0;
 
         player.position.set(
             0,
@@ -2605,11 +3615,20 @@
             0
         );
 
-        achievements.firstShot = false;
-        achievements.firstKill = false;
-        achievements.fiveKills = false;
-        achievements.explorer = false;
-        achievements.survivor = false;
+        achievements.firstShot =
+            false;
+
+        achievements.firstKill =
+            false;
+
+        achievements.fiveKills =
+            false;
+
+        achievements.explorer =
+            false;
+
+        achievements.survivor =
+            false;
 
         spawnEnemies();
 
@@ -2633,12 +3652,14 @@
     function pauseGame() {
 
         if (
-            gameState !== "playing"
+            gameState !==
+            "playing"
         ) {
             return;
         }
 
-        gameState = "paused";
+        gameState =
+            "paused";
 
         showPausePanel();
     }
@@ -2647,7 +3668,10 @@
 
         const panel =
             createPanel(`
-                <h1>PAUSED</h1>
+
+                <h1>
+                    PAUSED
+                </h1>
 
                 <div class="panel-subtitle">
                     SYSTEM STANDBY
@@ -2677,37 +3701,56 @@
                 >
                     MAIN MENU
                 </button>
+
             `);
 
         panel.panel
-            .querySelector("#resumeBtn")
+            .querySelector(
+                "#resumeBtn"
+            )
             .addEventListener(
                 "click",
                 () => {
+
                     panel.close();
-                    gameState = "playing";
+
+                    gameState =
+                        "playing";
                 }
             );
 
         panel.panel
-            .querySelector("#pauseShopBtn")
+            .querySelector(
+                "#pauseShopBtn"
+            )
             .addEventListener(
                 "click",
                 () => {
+
                     panel.close();
+
                     openShop();
                 }
             );
 
         panel.panel
-            .querySelector("#pauseMenuBtn")
+            .querySelector(
+                "#pauseMenuBtn"
+            )
             .addEventListener(
                 "click",
                 () => {
+
                     panel.close();
-                    gameState = "menu";
-                    hud.style.display = "none";
-                    mainMenu.style.display = "flex";
+
+                    gameState =
+                        "menu";
+
+                    hud.style.display =
+                        "none";
+
+                    mainMenu.style.display =
+                        "flex";
                 }
             );
     }
@@ -2718,37 +3761,51 @@
 
     function openMap() {
 
-        const panel = createPanel(`
-            <h1>MAP</h1>
+        const panel =
+            createPanel(`
 
-            <div class="panel-subtitle">
-                CURRENT POSITION
-            </div>
+                <h1>
+                    MAP
+                </h1>
 
-            <p>
-                X: ${Math.round(player.position.x)}
-            </p>
+                <div class="panel-subtitle">
+                    CURRENT POSITION
+                </div>
 
-            <p>
-                Z: ${Math.round(player.position.z)}
-            </p>
+                <p>
+                    X:
+                    ${Math.round(
+                        player.position.x
+                    )}
+                </p>
 
-            <p>
-                ENEMIES: ${enemies.length}
-            </p>
+                <p>
+                    Z:
+                    ${Math.round(
+                        player.position.z
+                    )}
+                </p>
 
-            <br>
+                <p>
+                    ENEMIES:
+                    ${enemies.length}
+                </p>
 
-            <button
-                class="echo-button"
-                id="mapBack"
-            >
-                ← BACK
-            </button>
-        `);
+                <br>
+
+                <button
+                    class="echo-button"
+                    id="mapBack"
+                >
+                    ← BACK
+                </button>
+
+            `);
 
         panel.panel
-            .querySelector("#mapBack")
+            .querySelector(
+                "#mapBack"
+            )
             .addEventListener(
                 "click",
                 panel.close
@@ -2762,68 +3819,88 @@
     function gameOver() {
 
         if (
-            gameState === "gameover"
+            gameState ===
+            "gameover"
         ) {
             return;
         }
 
-        gameState = "gameover";
+        gameState =
+            "gameover";
 
         hud.style.display =
             "none";
 
-        const panel = createPanel(`
-            <h1>SIGNAL LOST</h1>
+        const panel =
+            createPanel(`
 
-            <div class="panel-subtitle">
-                YOUR TANK HAS BEEN DISABLED
-            </div>
+                <h1>
+                    SIGNAL LOST
+                </h1>
 
-            <p>
-                KILLS: <b>${kills}</b>
-            </p>
+                <div class="panel-subtitle">
+                    YOUR TANK HAS BEEN DISABLED
+                </div>
 
-            <p>
-                CREDITS: <b>${credits}</b>
-            </p>
+                <p>
+                    KILLS:
+                    <b>${kills}</b>
+                </p>
 
-            <br>
+                <p>
+                    CREDITS:
+                    <b>${credits}</b>
+                </p>
 
-            <button
-                class="echo-button"
-                id="gameOverNew"
-            >
-                NEW RUN
-            </button>
+                <br>
 
-            <br><br>
+                <button
+                    class="echo-button"
+                    id="gameOverNew"
+                >
+                    NEW RUN
+                </button>
 
-            <button
-                class="echo-button"
-                id="gameOverMenu"
-            >
-                MAIN MENU
-            </button>
-        `);
+                <br><br>
+
+                <button
+                    class="echo-button"
+                    id="gameOverMenu"
+                >
+                    MAIN MENU
+                </button>
+
+            `);
 
         panel.panel
-            .querySelector("#gameOverNew")
+            .querySelector(
+                "#gameOverNew"
+            )
             .addEventListener(
                 "click",
                 () => {
+
                     panel.close();
+
                     startNewGame();
                 }
             );
 
         panel.panel
-            .querySelector("#gameOverMenu")
+            .querySelector(
+                "#gameOverMenu"
+            )
             .addEventListener(
                 "click",
                 () => {
+
                     panel.close();
-                    gameState = "menu";
-                    mainMenu.style.display = "flex";
+
+                    gameState =
+                        "menu";
+
+                    mainMenu.style.display =
+                        "flex";
                 }
             );
     }
@@ -2835,14 +3912,19 @@
     function saveGame() {
 
         const saveData = {
+
             player: {
                 x: player.position.x,
                 z: player.position.z,
-                rotation: player.rotation.y
+                rotation:
+                    player.rotation.y
             },
 
-            health: playerHealth,
-            energy: playerEnergy,
+            health:
+                playerHealth,
+
+            energy:
+                playerEnergy,
 
             credits,
             kills,
@@ -2860,10 +3942,14 @@
 
         localStorage.setItem(
             SAVE_KEY,
-            JSON.stringify(saveData)
+            JSON.stringify(
+                saveData
+            )
         );
 
-        notify("GAME SAVED");
+        notify(
+            "GAME SAVED"
+        );
     }
 
     // ============================================================
@@ -2878,16 +3964,23 @@
             );
 
         if (!saved) {
-            notify("NO SAVE FOUND");
+
+            notify(
+                "NO SAVE FOUND"
+            );
+
             return;
         }
 
         try {
 
             const data =
-                JSON.parse(saved);
+                JSON.parse(
+                    saved
+                );
 
-            gameState = "playing";
+            gameState =
+                "playing";
 
             player.position.set(
                 data.player.x,
@@ -2917,12 +4010,17 @@
                 data.maxAmmo;
 
             ammoUpgrade =
-                data.ammoUpgrade || 0;
+                data.ammoUpgrade ||
+                0;
 
             totalPlayTime =
-                data.totalPlayTime || 0;
+                data.totalPlayTime ||
+                0;
 
-            if (data.achievements) {
+            if (
+                data.achievements
+            ) {
+
                 Object.assign(
                     achievements,
                     data.achievements
@@ -2941,11 +4039,17 @@
 
             updateHUD();
 
-            notify("GAME LOADED");
+            notify(
+                "GAME LOADED"
+            );
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
             notify(
                 "SAVE FILE IS CORRUPTED"
@@ -2966,18 +4070,23 @@
             ] = true;
 
             if (
-                event.key.toLowerCase() === "r"
+                event.key.toLowerCase() ===
+                "r"
             ) {
+
                 reload();
             }
 
             if (
-                event.key === "Escape"
+                event.key ===
+                "Escape"
             ) {
 
                 if (
-                    gameState === "playing"
+                    gameState ===
+                    "playing"
                 ) {
+
                     pauseGame();
                 }
             }
@@ -3015,10 +4124,12 @@
         event => {
 
             if (
-                event.button === 0
+                event.button ===
+                0
             ) {
 
-                mouse.down = true;
+                mouse.down =
+                    true;
 
                 shoot();
             }
@@ -3030,9 +4141,12 @@
         event => {
 
             if (
-                event.button === 0
+                event.button ===
+                0
             ) {
-                mouse.down = false;
+
+                mouse.down =
+                    false;
             }
         }
     );
@@ -3067,19 +4181,28 @@
         () => {
 
             if (
-                gameState === "playing" ||
-                gameState === "paused"
+                gameState ===
+                    "playing" ||
+                gameState ===
+                    "paused"
             ) {
 
                 const saveData = {
+
                     player: {
-                        x: player.position.x,
-                        z: player.position.z,
-                        rotation: player.rotation.y
+                        x:
+                            player.position.x,
+                        z:
+                            player.position.z,
+                        rotation:
+                            player.rotation.y
                     },
 
-                    health: playerHealth,
-                    energy: playerEnergy,
+                    health:
+                        playerHealth,
+
+                    energy:
+                        playerEnergy,
 
                     credits,
                     kills,
@@ -3097,7 +4220,9 @@
 
                 localStorage.setItem(
                     SAVE_KEY,
-                    JSON.stringify(saveData)
+                    JSON.stringify(
+                        saveData
+                    )
                 );
             }
         }
@@ -3107,7 +4232,8 @@
     // MAIN GAME LOOP
     // ============================================================
 
-    clock = new THREE.Clock();
+    clock =
+        new THREE.Clock();
 
     function animate() {
 
@@ -3122,24 +4248,34 @@
             );
 
         if (
-            gameState === "playing"
+            gameState ===
+            "playing"
         ) {
 
-            totalPlayTime += delta;
+            totalPlayTime +=
+                delta;
 
-            if (fireTimer > 0) {
-                fireTimer -= delta;
+            if (
+                fireTimer > 0
+            ) {
+
+                fireTimer -=
+                    delta;
             }
 
-            if (reloadTimer > 0) {
+            if (
+                reloadTimer > 0
+            ) {
 
-                reloadTimer -= delta;
+                reloadTimer -=
+                    delta;
 
                 if (
                     reloadTimer <= 0
                 ) {
 
-                    ammo = maxAmmo;
+                    ammo =
+                        maxAmmo;
 
                     notify(
                         "RELOAD COMPLETE"
@@ -3147,17 +4283,36 @@
                 }
             }
 
-            updatePlayer(delta);
+            updatePlayer(
+                delta
+            );
+
             updateTurretAim();
+
             updateCamera();
-            updateEnemies(delta);
-            updateBullets(delta);
+
+            updateEnemies(
+                delta
+            );
+
+            updateBullets(
+                delta
+            );
+
             updateResources();
-            updateParticles(delta);
+
+            updateParticles(
+                delta
+            );
+
             updateAchievements();
+
             updateHUD();
 
-            if (mouse.down) {
+            if (
+                mouse.down
+            ) {
+
                 shoot();
             }
         }
@@ -3177,4 +4332,3 @@
     animate();
 
 })();
-```
