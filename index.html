@@ -3,635 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>EchoBound — The Lost Signal</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- =====================================================
-         GAME
-    ====================================================== -->
+<canvas id="game"></canvas>
 
-    <canvas id="game"></canvas>
+<div id="ui">
 
+    <!-- HOOFDMENU -->
+    <div id="menu" class="screen">
+        <div class="menu-card">
 
-    <!-- =====================================================
-         MAIN MENU
-    ====================================================== -->
+            <div class="eyebrow">SIGNAL LOST • SECTOR 07</div>
 
-    <div id="menu" class="screen active">
+            <h1>
+                ECHO<span>BOUND</span>
+            </h1>
 
-        <div class="menu-glow"></div>
-
-        <div class="menu-panel">
-
-            <div class="small-title">
-                SURVIVAL • COMBAT • EXPLORATION
-            </div>
-
-            <h1>ECHObound</h1>
-
-            <div class="subtitle">
+            <div class="tagline">
                 THE LOST SIGNAL
             </div>
 
-            <div class="menu-line"></div>
+            <div class="menu-buttons">
+                <button id="newRunBtn">NEW RUN</button>
+                <button id="shopBtn">🛒 SHOP</button>
+                <button id="loadBtn">LOAD GAME</button>
+                <button id="achievementsBtn">🏆 ACHIEVEMENTS</button>
+                <button id="controlsBtn">CONTROLS</button>
+            </div>
 
-            <button id="newGame" class="menu-button primary">
-                NEW RUN
-            </button>
+            <div class="menu-tip">
+                WASD drive • Mouse aim • Left click fire • R reload • ESC pause
+            </div>
 
-            <button id="loadGame" class="menu-button">
-                LOAD GAME
-            </button>
+        </div>
+    </div>
 
-            <button id="shopButton" class="menu-button shop-button">
-                SHOP
-            </button>
 
-            <button id="achievementsButton" class="menu-button">
-                ACHIEVEMENTS
-            </button>
+    <!-- HUD -->
+    <div id="hud" class="hud" style="display:none">
 
-            <button id="controlsButton" class="menu-button">
-                CONTROLS
-            </button>
+        <div class="hud-left">
 
-            <div class="menu-footer">
-                ECHOBOUND SYSTEM ONLINE
+            <div class="stat">
+                <span>HULL</span>
+                <div class="bar">
+                    <i id="healthFill"></i>
+                </div>
+            </div>
+
+            <div class="stat">
+                <span>ENERGY</span>
+                <div class="bar energy">
+                    <i id="energyFill"></i>
+                </div>
             </div>
 
         </div>
 
-    </div>
 
+        <div class="hud-right">
 
-    <!-- =====================================================
-         HUD
-    ====================================================== -->
-
-    <div id="hud" class="hud hidden">
-
-        <div class="hud-top">
-
-            <div class="status-panel">
-
-                <div class="status-title">
-                    HULL INTEGRITY
-                </div>
-
-                <div class="bar">
-                    <div id="healthBar" class="bar-fill health"></div>
-                </div>
-
-                <div class="status-title energy-title">
-                    ENERGY
-                </div>
-
-                <div class="bar">
-                    <div id="energyBar" class="bar-fill energy"></div>
-                </div>
-
+            <div class="readout">
+                <small>AMMO</small>
+                <b id="ammoText">12 / 12</b>
             </div>
 
-
-            <div class="objective-panel">
-
-                <div class="objective-label">
-                    CURRENT OBJECTIVE
-                </div>
-
-                <div id="objective">
-                    Locate the lost signal.
-                </div>
-
-                <div id="zone">
-                    UNKNOWN ZONE
-                </div>
-
+            <div class="readout">
+                <small>KILLS</small>
+                <b id="killsText">0</b>
             </div>
 
-
-            <div class="combat-panel">
-
-                <div class="weapon-name">
-                    PULSE CANNON
-                </div>
-
-                <div class="ammo">
-                    AMMO <span id="ammo">12</span>
-                </div>
-
-                <div class="combat-small">
-                    KILLS <span id="kills">0</span>
-                </div>
-
-                <div class="credits-display">
-                    ◆ <span id="credits">0</span>
-                </div>
-
+            <div class="readout">
+                <small>CREDITS</small>
+                <b id="creditsText">100</b>
             </div>
 
         </div>
 
 
         <div class="crosshair">
-
-            <div class="crosshair-line top"></div>
-            <div class="crosshair-line right"></div>
-            <div class="crosshair-line bottom"></div>
-            <div class="crosshair-line left"></div>
-
-            <div class="crosshair-dot"></div>
-
+            <span></span>
         </div>
 
 
-        <div class="hud-bottom">
-
-            <div>
-                WASD MOVE
-            </div>
-
-            <div>
-                SHIFT SPRINT
-            </div>
-
-            <div>
-                SPACE DASH
-            </div>
-
-            <div>
-                LMB FIRE
-            </div>
-
-            <div>
-                M MAP
-            </div>
-
-            <button id="hudShopButton">
-                SHOP
-            </button>
-
-            <button id="pauseButton">
-                PAUSE
-            </button>
-
+        <div class="hud-buttons">
+            <button id="mapBtn">MAP</button>
+            <button id="pauseBtn">Ⅱ</button>
         </div>
 
     </div>
 
+</div>
 
-    <!-- =====================================================
-         PAUSE
-    ====================================================== -->
 
-    <div id="pause" class="screen hidden">
-
-        <div class="modal-panel">
-
-            <div class="modal-kicker">
-                SYSTEM PAUSED
-            </div>
-
-            <h2>MISSION PAUSED</h2>
-
-            <button id="resume" class="menu-button primary">
-                RESUME
-            </button>
-
-            <button id="save" class="menu-button">
-                SAVE GAME
-            </button>
-
-            <button id="quit" class="menu-button danger">
-                QUIT TO MENU
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         SHOP
-    ====================================================== -->
-
-    <div id="shop" class="overlay hidden">
-
-        <div class="shop-panel">
-
-            <div class="shop-header">
-
-                <div>
-                    <div class="modal-kicker">
-                        ECHOBOUND SUPPLY NETWORK
-                    </div>
-
-                    <h2>SHOP</h2>
-                </div>
-
-                <div class="shop-balance">
-                    CREDITS
-                    <strong>◆ <span id="shopCredits">0</span></strong>
-                </div>
-
-            </div>
-
-
-            <div class="shop-grid">
-
-                <div class="shop-card">
-
-                    <div class="shop-icon">
-                        ◈
-                    </div>
-
-                    <h3>AMMO PACK</h3>
-
-                    <p>
-                        Restores 12 cannon rounds.
-                    </p>
-
-                    <div class="shop-price">
-                        ◆ 15
-                    </div>
-
-                    <button
-                        class="buy-button"
-                        data-item="ammo">
-                        BUY
-                    </button>
-
-                </div>
-
-
-                <div class="shop-card">
-
-                    <div class="shop-icon">
-                        +
-                    </div>
-
-                    <h3>REPAIR KIT</h3>
-
-                    <p>
-                        Repairs 30% of your hull.
-                    </p>
-
-                    <div class="shop-price">
-                        ◆ 20
-                    </div>
-
-                    <button
-                        class="buy-button"
-                        data-item="repair">
-                        BUY
-                    </button>
-
-                </div>
-
-
-                <div class="shop-card">
-
-                    <div class="shop-icon">
-                        ⚡
-                    </div>
-
-                    <h3>ENERGY CELL</h3>
-
-                    <p>
-                        Restores 40 energy.
-                    </p>
-
-                    <div class="shop-price">
-                        ◆ 15
-                    </div>
-
-                    <button
-                        class="buy-button"
-                        data-item="energy">
-                        BUY
-                    </button>
-
-                </div>
-
-
-                <div class="shop-card">
-
-                    <div class="shop-icon">
-                        ◆
-                    </div>
-
-                    <h3>ARMOR UPGRADE</h3>
-
-                    <p>
-                        Increases maximum hull.
-                    </p>
-
-                    <div class="shop-price">
-                        ◆ 75
-                    </div>
-
-                    <button
-                        class="buy-button"
-                        data-item="armor">
-                        BUY
-                    </button>
-
-                </div>
-
-
-                <div class="shop-card">
-
-                    <div class="shop-icon">
-                        ✦
-                    </div>
-
-                    <h3>CANNON UPGRADE</h3>
-
-                    <p>
-                        Increases cannon damage.
-                    </p>
-
-                    <div class="shop-price">
-                        ◆ 100
-                    </div>
-
-                    <button
-                        class="buy-button"
-                        data-item="cannon">
-                        BUY
-                    </button>
-
-                </div>
-
-
-                <div class="shop-card locked">
-
-                    <div class="shop-icon">
-                        ?
-                    </div>
-
-                    <h3>UNKNOWN MODULE</h3>
-
-                    <p>
-                        Signal corrupted.
-                    </p>
-
-                    <div class="shop-price">
-                        LOCKED
-                    </div>
-
-                    <button class="buy-button" disabled>
-                        LOCKED
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div id="shopMessage" class="shop-message">
-                Select an item.
-            </div>
-
-            <button id="closeShop" class="close-button">
-                CLOSE SHOP
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         ACHIEVEMENTS
-    ====================================================== -->
-
-    <div id="achievements" class="overlay hidden">
-
-        <div class="achievements-panel">
-
-            <div class="modal-kicker">
-                SYSTEM RECORDS
-            </div>
-
-            <h2>ACHIEVEMENTS</h2>
-
-            <div class="achievement-grid">
-
-                <div class="achievement-card unlocked">
-                    <div class="achievement-symbol">
-                        ✓
-                    </div>
-
-                    <div>
-                        <h3>FIRST ECHO</h3>
-                        <p>Start your first run.</p>
-                    </div>
-                </div>
-
-
-                <div class="achievement-card unlocked">
-                    <div class="achievement-symbol">
-                        ✓
-                    </div>
-
-                    <div>
-                        <h3>SIGNAL DEFENDER</h3>
-                        <p>Destroy your first enemy.</p>
-                    </div>
-                </div>
-
-
-                <div class="achievement-card" id="explorerAchievement">
-                    <div class="achievement-symbol">
-                        ?
-                    </div>
-
-                    <div>
-                        <h3>EXPLORER</h3>
-                        <p>Travel deep into the unknown.</p>
-                    </div>
-                </div>
-
-
-                <div class="achievement-card">
-                    <div class="achievement-symbol">
-                        ?
-                    </div>
-
-                    <div>
-                        <h3>THE LOST SIGNAL</h3>
-                        <p>Discover the source of the signal.</p>
-                    </div>
-                </div>
-
-            </div>
-
-            <button id="closeAchievements" class="close-button">
-                CLOSE
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         CONTROLS
-    ====================================================== -->
-
-    <div id="controls" class="overlay hidden">
-
-        <div class="controls-panel">
-
-            <div class="modal-kicker">
-                ECHOBOUND INTERFACE
-            </div>
-
-            <h2>CONTROLS</h2>
-
-            <div class="control-row">
-                <span>MOVE</span>
-                <strong>W A S D</strong>
-            </div>
-
-            <div class="control-row">
-                <span>TURN TANK</span>
-                <strong>A / D</strong>
-            </div>
-
-            <div class="control-row">
-                <span>AIM TURRET</span>
-                <strong>MOUSE</strong>
-            </div>
-
-            <div class="control-row">
-                <span>FIRE</span>
-                <strong>LEFT CLICK</strong>
-            </div>
-
-            <div class="control-row">
-                <span>SPRINT</span>
-                <strong>SHIFT</strong>
-            </div>
-
-            <div class="control-row">
-                <span>DASH</span>
-                <strong>SPACE</strong>
-            </div>
-
-            <div class="control-row">
-                <span>MAP</span>
-                <strong>M</strong>
-            </div>
-
-            <div class="control-row">
-                <span>PAUSE</span>
-                <strong>ESC</strong>
-            </div>
-
-            <button id="closeControls" class="close-button">
-                CLOSE
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         MAP
-    ====================================================== -->
-
-    <div id="map" class="overlay hidden">
-
-        <div class="map-panel">
-
-            <div class="map-header">
-
-                <div>
-                    <div class="modal-kicker">
-                        NAVIGATION SYSTEM
-                    </div>
-
-                    <h2>WORLD MAP</h2>
-                </div>
-
-                <div class="map-info">
-                    SIGNAL RANGE
-                </div>
-
-            </div>
-
-            <canvas id="mapCanvas" width="760" height="500"></canvas>
-
-            <button id="closeMap" class="close-button">
-                CLOSE MAP
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         ACHIEVEMENT POPUP
-    ====================================================== -->
-
-    <div id="achievement" class="achievement-popup hidden">
-
-        <div class="achievement-small">
-            ACHIEVEMENT UNLOCKED
-        </div>
-
-        <div id="achievementName">
-            FIRST ECHO
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         GAME OVER
-    ====================================================== -->
-
-    <div id="gameOver" class="screen hidden">
-
-        <div class="modal-panel game-over-panel">
-
-            <div class="modal-kicker">
-                SIGNAL LOST
-            </div>
-
-            <h2>RUN TERMINATED</h2>
-
-            <p>
-                Your tank has been disabled.
-            </p>
-
-            <button id="retryGame" class="menu-button primary">
-                TRY AGAIN
-            </button>
-
-            <button id="gameOverMenu" class="menu-button">
-                MAIN MENU
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         JAVASCRIPT
-    ====================================================== -->
-
-    <script type="module" src="app.js"></script>
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
