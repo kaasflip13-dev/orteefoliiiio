@@ -1,7 +1,12 @@
-:root {
+```css
+/* ============================================================
+   ECHOBOUND — THE LOST SIGNAL
+   COMPLETE STYLE.CSS
+   ============================================================ */
 
+:root {
     --bg: #02070a;
-    --panel: rgba(4, 13, 18, .95);
+    --panel: rgba(4, 13, 18, .96);
 
     --cyan: #58e9ff;
     --cyanDark: rgba(88, 233, 255, .14);
@@ -12,9 +17,12 @@
 
     --line: rgba(88, 233, 255, .2);
     --lineStrong: rgba(88, 233, 255, .7);
-
 }
 
+
+/* ============================================================
+   RESET
+   ============================================================ */
 
 * {
     box-sizing: border-box;
@@ -23,7 +31,6 @@
 
 html,
 body {
-
     width: 100%;
     height: 100%;
 
@@ -39,12 +46,20 @@ body {
         Arial,
         Helvetica,
         sans-serif;
-
 }
 
 
-body::before {
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
 
+
+/* ============================================================
+   SCREEN EFFECTS
+   ============================================================ */
+
+body::before {
     content: "";
 
     position: fixed;
@@ -53,28 +68,24 @@ body::before {
 
     pointer-events: none;
 
-    z-index: 100;
+    z-index: 90;
 
     background-image:
-
         linear-gradient(
-            rgba(88,233,255,.025) 1px,
+            rgba(88, 233, 255, .025) 1px,
             transparent 1px
         ),
-
         linear-gradient(
             90deg,
-            rgba(88,233,255,.025) 1px,
+            rgba(88, 233, 255, .025) 1px,
             transparent 1px
         );
 
     background-size: 50px 50px;
-
 }
 
 
 body::after {
-
     content: "";
 
     position: fixed;
@@ -83,21 +94,23 @@ body::after {
 
     pointer-events: none;
 
-    z-index: 101;
+    z-index: 91;
 
     background:
         repeating-linear-gradient(
             0deg,
             transparent 0,
             transparent 4px,
-            rgba(255,255,255,.012) 5px
+            rgba(255, 255, 255, .012) 5px
         );
-
 }
 
 
-#game {
+/* ============================================================
+   3D CANVAS
+   ============================================================ */
 
+#game {
     position: fixed;
 
     inset: 0;
@@ -107,15 +120,18 @@ body::after {
 
     display: block;
 
+    z-index: 0;
+
+    background:
+        #071116;
 }
 
 
-/* =================================================
+/* ============================================================
    MENU
-================================================= */
+   ============================================================ */
 
 #menu {
-
     position: fixed;
 
     inset: 0;
@@ -127,25 +143,28 @@ body::after {
     flex-direction: column;
 
     background:
-
         radial-gradient(
             circle at 75% 45%,
-            rgba(40,130,150,.12),
+            rgba(40, 130, 150, .12),
             transparent 45%
         ),
 
         linear-gradient(
             120deg,
-            rgba(2,7,10,.98),
-            rgba(2,10,15,.9)
+            rgba(2, 7, 10, .98),
+            rgba(2, 10, 15, .90)
         );
-
 }
 
 
-.topbar {
+/* ============================================================
+   TOP BAR
+   ============================================================ */
 
+.topbar {
     height: 78px;
+
+    flex-shrink: 0;
 
     display: flex;
 
@@ -157,23 +176,19 @@ body::after {
 
     border-bottom:
         1px solid var(--line);
-
 }
 
 
 .brand {
-
     display: flex;
 
     align-items: center;
 
     gap: 12px;
-
 }
 
 
 .brandMark {
-
     width: 42px;
     height: 42px;
 
@@ -190,22 +205,22 @@ body::after {
 
     font-size: 20px;
 
+    box-shadow:
+        0 0 20px
+        rgba(88, 233, 255, .08);
 }
 
 
 .brand strong {
-
     display: block;
 
     font-size: 17px;
 
     letter-spacing: 4px;
-
 }
 
 
 .brand span {
-
     display: block;
 
     margin-top: 4px;
@@ -215,12 +230,10 @@ body::after {
     font-size: 7px;
 
     letter-spacing: 2px;
-
 }
 
 
 .systemStatus {
-
     display: flex;
 
     align-items: center;
@@ -234,12 +247,10 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .systemStatus i {
-
     width: 7px;
     height: 7px;
 
@@ -249,17 +260,17 @@ body::after {
 
     box-shadow:
         0 0 12px #57e8a5;
-
 }
 
 
-/* =================================================
+/* ============================================================
    MENU CONTENT
-================================================= */
+   ============================================================ */
 
 .menuLayout {
-
     flex: 1;
+
+    min-height: 0;
 
     width: min(
         1200px,
@@ -273,30 +284,35 @@ body::after {
     grid-template-columns:
         1.25fr .75fr;
 
-    background: var(--line);
-
     border:
         1px solid var(--line);
 
+    background:
+        rgba(88, 233, 255, .04);
+
+    box-shadow:
+        0 20px 70px
+        rgba(0, 0, 0, .35);
 }
 
 
-.intro {
+/* ============================================================
+   INTRO
+   ============================================================ */
 
+.intro {
     padding: 70px 65px;
 
     background:
         linear-gradient(
             135deg,
-            rgba(6,18,24,.98),
-            rgba(2,8,12,.98)
+            rgba(6, 18, 24, .98),
+            rgba(2, 8, 12, .98)
         );
-
 }
 
 
 .eyebrow {
-
     color: var(--cyan);
 
     font-size: 8px;
@@ -304,12 +320,10 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 2px;
-
 }
 
 
 .intro h1 {
-
     margin:
         25px 0 20px;
 
@@ -319,24 +333,21 @@ body::after {
     line-height: .84;
 
     letter-spacing: -5px;
-
 }
 
 
 .intro h1 span {
-
     display: block;
 
     color: var(--cyan);
 
     text-shadow:
-        0 0 35px rgba(88,233,255,.2);
-
+        0 0 35px
+        rgba(88, 233, 255, .2);
 }
 
 
 .intro p {
-
     max-width: 530px;
 
     color: var(--text);
@@ -344,12 +355,10 @@ body::after {
     font-size: 13px;
 
     line-height: 1.8;
-
 }
 
 
 .stats {
-
     display: grid;
 
     grid-template-columns:
@@ -360,25 +369,22 @@ body::after {
     max-width: 560px;
 
     margin-top: 50px;
-
 }
 
 
 .stats div {
-
     padding: 15px;
 
     border:
-        1px solid rgba(88,233,255,.12);
+        1px solid
+        rgba(88, 233, 255, .12);
 
     background:
-        rgba(88,233,255,.025);
-
+        rgba(88, 233, 255, .025);
 }
 
 
 .stats small {
-
     display: block;
 
     color: var(--muted);
@@ -388,12 +394,10 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .stats strong {
-
     display: block;
 
     margin-top: 7px;
@@ -401,28 +405,26 @@ body::after {
     font-size: 9px;
 
     letter-spacing: 1px;
-
 }
 
 
-/* =================================================
+/* ============================================================
    COMMAND PANEL
-================================================= */
+   ============================================================ */
 
 .commandPanel {
+    min-height: 0;
 
     display: flex;
 
     flex-direction: column;
 
     background:
-        rgba(5,14,20,.98);
-
+        rgba(5, 14, 20, .98);
 }
 
 
 .panelTitle {
-
     display: flex;
 
     align-items: center;
@@ -433,45 +435,41 @@ body::after {
 
     border-bottom:
         1px solid var(--line);
-
 }
 
 
 .panelTitle small {
-
     color: var(--muted);
 
     font-size: 7px;
 
     letter-spacing: 2px;
-
 }
 
 
 .panelTitle h2 {
-
     margin: 6px 0 0;
 
     font-size: 19px;
 
     letter-spacing: 2px;
-
 }
 
 
 .panelTitle span {
-
     color: var(--cyan);
 
     font-size: 8px;
 
     font-weight: 900;
-
 }
 
 
-.menuButtons {
+/* ============================================================
+   MENU BUTTONS
+   ============================================================ */
 
+.menuButtons {
     display: flex;
 
     flex-direction: column;
@@ -482,11 +480,11 @@ body::after {
 
     flex: 1;
 
+    overflow: auto;
 }
 
 
 .menuButton {
-
     min-height: 67px;
 
     width: 100%;
@@ -500,10 +498,11 @@ body::after {
     padding: 10px 15px;
 
     border:
-        1px solid rgba(88,233,255,.15);
+        1px solid
+        rgba(88, 233, 255, .15);
 
     background:
-        rgba(255,255,255,.015);
+        rgba(255, 255, 255, .015);
 
     color: var(--white);
 
@@ -517,12 +516,10 @@ body::after {
 
     transition:
         .2s ease;
-
 }
 
 
 .menuButton:hover {
-
     transform:
         translateX(5px);
 
@@ -532,58 +529,50 @@ body::after {
     background:
         var(--cyanDark);
 
+    box-shadow:
+        0 0 25px
+        rgba(88, 233, 255, .06);
 }
 
 
 .menuButton.primary {
-
     border-color:
         var(--cyan);
 
     background:
-        rgba(88,233,255,.08);
-
+        rgba(88, 233, 255, .08);
 }
 
 
 .menuButton b {
-
     width: 25px;
 
     color: #49656e;
 
     font-size: 8px;
-
 }
 
 
 .menuButton.primary b {
-
     color: var(--cyan);
-
 }
 
 
 .menuButton div {
-
     flex: 1;
-
 }
 
 
 .menuButton strong {
-
     display: block;
 
     font-size: 10px;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .menuButton small {
-
     display: block;
 
     margin-top: 5px;
@@ -593,30 +582,28 @@ body::after {
     font-size: 7px;
 
     letter-spacing: 1px;
-
 }
 
 
 .menuButton em {
-
     color: #55727b;
 
     font-size: 25px;
 
     font-style: normal;
-
 }
 
 
 .menuButton.primary em {
-
     color: var(--cyan);
-
 }
 
 
-.panelFooter {
+/* ============================================================
+   PANEL FOOTER
+   ============================================================ */
 
+.panelFooter {
     display: flex;
 
     justify-content: space-between;
@@ -633,23 +620,19 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 1px;
-
 }
 
 
 .panelFooter span {
-
     display: flex;
 
     align-items: center;
 
     gap: 7px;
-
 }
 
 
 .panelFooter i {
-
     width: 6px;
     height: 6px;
 
@@ -659,13 +642,17 @@ body::after {
 
     box-shadow:
         0 0 8px var(--cyan);
-
 }
 
 
-.menuFooter {
+/* ============================================================
+   MENU FOOTER
+   ============================================================ */
 
+.menuFooter {
     height: 38px;
+
+    flex-shrink: 0;
 
     display: flex;
 
@@ -682,16 +669,14 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 1.5px;
-
 }
 
 
-/* =================================================
+/* ============================================================
    HUD
-================================================= */
+   ============================================================ */
 
 #hud {
-
     position: fixed;
 
     inset: 0;
@@ -701,12 +686,10 @@ body::after {
     display: none;
 
     pointer-events: none;
-
 }
 
 
 .playerHUD {
-
     position: absolute;
 
     left: 28px;
@@ -717,16 +700,17 @@ body::after {
     padding: 15px;
 
     background:
-        rgba(2,9,13,.72);
+        rgba(2, 9, 13, .72);
 
     border-left:
         2px solid var(--cyan);
 
+    backdrop-filter:
+        blur(5px);
 }
 
 
 .hudLogo {
-
     margin-bottom: 12px;
 
     color: var(--cyan);
@@ -736,19 +720,15 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 3px;
-
 }
 
 
 .hudStat {
-
     margin-top: 8px;
-
 }
 
 
 .hudStat label {
-
     display: block;
 
     margin-bottom: 4px;
@@ -760,22 +740,18 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .bar {
-
     height: 5px;
 
     background:
-        rgba(255,255,255,.09);
-
+        rgba(255, 255, 255, .09);
 }
 
 
 .bar span {
-
     display: block;
 
     height: 100%;
@@ -784,18 +760,21 @@ body::after {
 
     background: var(--cyan);
 
+    transition:
+        width .15s linear;
 }
 
 
 .bar.energy span {
-
     background: #7d9fff;
-
 }
 
 
-.objective {
+/* ============================================================
+   OBJECTIVE
+   ============================================================ */
 
+.objective {
     position: absolute;
 
     top: 30px;
@@ -811,15 +790,16 @@ body::after {
         1px solid var(--line);
 
     background:
-        rgba(2,9,13,.72);
+        rgba(2, 9, 13, .72);
 
     text-align: center;
 
+    backdrop-filter:
+        blur(5px);
 }
 
 
 .objective small {
-
     display: block;
 
     color: var(--muted);
@@ -827,12 +807,10 @@ body::after {
     font-size: 6px;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .objective strong {
-
     display: block;
 
     margin-top: 4px;
@@ -842,12 +820,14 @@ body::after {
     font-size: 9px;
 
     letter-spacing: 1.5px;
-
 }
 
 
-.rightHUD {
+/* ============================================================
+   RIGHT HUD
+   ============================================================ */
 
+.rightHUD {
     position: absolute;
 
     right: 28px;
@@ -864,23 +844,19 @@ body::after {
     line-height: 2;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .rightHUD #zone {
-
     color: var(--cyan);
-
 }
 
 
-/* =================================================
+/* ============================================================
    CROSSHAIR
-================================================= */
+   ============================================================ */
 
 .crosshair {
-
     position: absolute;
 
     top: 50%;
@@ -891,69 +867,61 @@ body::after {
 
     transform:
         translate(-50%, -50%);
-
 }
 
 
 .crosshair span {
-
     position: absolute;
 
     background: white;
 
+    box-shadow:
+        0 0 5px
+        rgba(88, 233, 255, .8);
 }
 
 
 .crosshair span:nth-child(1) {
-
     width: 2px;
     height: 8px;
 
     left: 13px;
     top: 0;
-
 }
 
 
 .crosshair span:nth-child(2) {
-
     width: 2px;
     height: 8px;
 
     left: 13px;
     bottom: 0;
-
 }
 
 
 .crosshair span:nth-child(3) {
-
     width: 8px;
     height: 2px;
 
     left: 0;
     top: 13px;
-
 }
 
 
 .crosshair span:nth-child(4) {
-
     width: 8px;
     height: 2px;
 
     right: 0;
     top: 13px;
-
 }
 
 
-/* =================================================
+/* ============================================================
    WEAPON HUD
-================================================= */
+   ============================================================ */
 
 .weaponHUD {
-
     position: absolute;
 
     right: 28px;
@@ -968,16 +936,17 @@ body::after {
     padding: 15px 20px;
 
     background:
-        rgba(2,9,13,.72);
+        rgba(2, 9, 13, .72);
 
     border-right:
         2px solid var(--cyan);
 
+    backdrop-filter:
+        blur(5px);
 }
 
 
 .weaponHUD small {
-
     display: block;
 
     color: var(--muted);
@@ -985,12 +954,10 @@ body::after {
     font-size: 6px;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .weaponHUD strong {
-
     display: block;
 
     margin-top: 5px;
@@ -998,28 +965,26 @@ body::after {
     font-size: 11px;
 
     letter-spacing: 1.5px;
-
 }
 
 
 .ammo b {
-
     color: var(--cyan);
 
     font-size: 28px;
-
 }
 
 
 .ammo span {
-
     color: #607880;
-
 }
 
 
-.controlHint {
+/* ============================================================
+   CONTROL HINT
+   ============================================================ */
 
+.controlHint {
     position: absolute;
 
     left: 28px;
@@ -1032,25 +997,21 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 1px;
-
 }
 
 
 .controlHint span {
-
     margin: 0 7px;
 
     color: #344c55;
-
 }
 
 
-/* =================================================
+/* ============================================================
    PAUSE
-================================================= */
+   ============================================================ */
 
 #pause {
-
     position: fixed;
 
     inset: 0;
@@ -1064,31 +1025,35 @@ body::after {
     justify-content: center;
 
     background:
-        rgba(1,5,8,.82);
+        rgba(1, 5, 8, .82);
 
     backdrop-filter:
         blur(10px);
-
 }
 
 
 .pausePanel {
-
-    width: min(420px, calc(100% - 40px));
+    width:
+        min(
+            420px,
+            calc(100% - 40px)
+        );
 
     padding: 35px;
 
     background:
-        rgba(4,13,18,.98);
+        rgba(4, 13, 18, .98);
 
     border:
         1px solid var(--lineStrong);
 
+    box-shadow:
+        0 30px 100px
+        rgba(0, 0, 0, .5);
 }
 
 
 .pauseLogo {
-
     color: var(--cyan);
 
     font-size: 9px;
@@ -1096,12 +1061,10 @@ body::after {
     font-weight: 900;
 
     letter-spacing: 3px;
-
 }
 
 
 .pausePanel > small {
-
     display: block;
 
     margin-top: 25px;
@@ -1111,22 +1074,18 @@ body::after {
     font-size: 7px;
 
     letter-spacing: 2px;
-
 }
 
 
 .pausePanel h2 {
-
     margin:
         7px 0 25px;
 
     font-size: 38px;
-
 }
 
 
 .pauseButton {
-
     display: block;
 
     width: 100%;
@@ -1139,7 +1098,7 @@ body::after {
         1px solid var(--line);
 
     background:
-        rgba(255,255,255,.02);
+        rgba(255, 255, 255, .02);
 
     color: white;
 
@@ -1155,25 +1114,25 @@ body::after {
 
     cursor: pointer;
 
+    text-align: center;
 }
 
 
 .pauseButton:hover,
 .pauseButton.primary {
+    border-color:
+        var(--cyan);
 
-    border-color: var(--cyan);
-
-    background: var(--cyanDark);
-
+    background:
+        var(--cyanDark);
 }
 
 
-/* =================================================
+/* ============================================================
    ACHIEVEMENT
-================================================= */
+   ============================================================ */
 
 #achievement {
-
     position: fixed;
 
     top: 95px;
@@ -1196,13 +1155,15 @@ body::after {
         1px solid var(--cyan);
 
     background:
-        rgba(3,13,18,.96);
+        rgba(3, 13, 18, .96);
 
+    box-shadow:
+        0 10px 40px
+        rgba(0, 0, 0, .4);
 }
 
 
 .achievementIcon {
-
     width: 35px;
     height: 35px;
 
@@ -1214,12 +1175,10 @@ body::after {
         1px solid var(--cyan);
 
     color: var(--cyan);
-
 }
 
 
 #achievement small {
-
     display: block;
 
     color: var(--cyan);
@@ -1227,27 +1186,23 @@ body::after {
     font-size: 6px;
 
     letter-spacing: 1.5px;
-
 }
 
 
 #achievement strong {
-
     display: block;
 
     margin-top: 5px;
 
     font-size: 11px;
-
 }
 
 
-/* =================================================
+/* ============================================================
    MAP
-================================================= */
+   ============================================================ */
 
 #map {
-
     position: fixed;
 
     inset: 0;
@@ -1263,31 +1218,35 @@ body::after {
     padding: 25px;
 
     background:
-        rgba(1,5,8,.88);
+        rgba(1, 5, 8, .88);
 
     backdrop-filter:
         blur(10px);
-
 }
 
 
 .mapPanel {
-
-    width: min(900px, 100%);
+    width:
+        min(
+            900px,
+            100%
+        );
 
     padding: 20px;
 
     background:
-        rgba(4,13,18,.98);
+        rgba(4, 13, 18, .98);
 
     border:
         1px solid var(--lineStrong);
 
+    box-shadow:
+        0 30px 100px
+        rgba(0, 0, 0, .5);
 }
 
 
 .mapHeader {
-
     display: flex;
 
     align-items: center;
@@ -1295,32 +1254,26 @@ body::after {
     justify-content: space-between;
 
     margin-bottom: 15px;
-
 }
 
 
 .mapHeader small {
-
     color: var(--muted);
 
     font-size: 6px;
 
     letter-spacing: 2px;
-
 }
 
 
 .mapHeader h2 {
-
     margin: 5px 0 0;
 
     font-size: 18px;
-
 }
 
 
 .mapHeader button {
-
     padding: 9px 15px;
 
     border:
@@ -1331,90 +1284,160 @@ body::after {
     color: white;
 
     cursor: pointer;
+}
 
+
+.mapHeader button:hover {
+    border-color:
+        var(--cyan);
+
+    color: var(--cyan);
 }
 
 
 #mapCanvas {
-
     display: block;
 
     width: 100%;
 
-    background: #02080c;
+    height: 600px;
 
+    max-height: 70vh;
+
+    background:
+        #02080c;
+
+    border:
+        1px solid
+        rgba(88, 233, 255, .12);
 }
 
 
-/* =================================================
+/* ============================================================
+   THREE.JS / POINTER
+   ============================================================ */
+
+#game {
+    cursor: crosshair;
+}
+
+
+/* ============================================================
    RESPONSIVE
-================================================= */
+   ============================================================ */
 
 @media (max-width: 900px) {
 
     .menuLayout {
-
         grid-template-columns: 1fr;
 
         overflow-y: auto;
-
     }
+
 
     .intro {
-
-        padding: 45px 30px;
-
+        padding:
+            45px 30px;
     }
 
+
+    .commandPanel {
+        min-height: 500px;
+    }
 }
 
 
 @media (max-width: 600px) {
 
     .systemStatus {
-
         display: none;
-
     }
+
+
+    .topbar {
+        padding:
+            0 18px;
+    }
+
+
+    .menuLayout {
+        width:
+            calc(100% - 20px);
+    }
+
+
+    .intro {
+        padding:
+            35px 22px;
+    }
+
 
     .intro h1 {
-
         font-size: 52px;
-
     }
+
 
     .stats {
-
-        grid-template-columns: 1fr;
-
+        grid-template-columns:
+            1fr;
     }
 
-    .playerHUD {
 
+    .playerHUD {
         left: 12px;
         top: 15px;
 
         width: 170px;
-
     }
+
 
     .rightHUD {
-
         right: 12px;
         top: 15px;
-
     }
+
 
     .objective {
-
         display: none;
-
     }
+
 
     .controlHint {
-
         display: none;
-
     }
 
+
+    .weaponHUD {
+        right: 12px;
+        bottom: 15px;
+    }
+
+
+    #achievement {
+        right: 12px;
+        left: 12px;
+
+        min-width: 0;
+    }
 }
+
+
+/* ============================================================
+   SAFETY
+   ============================================================ */
+
+button {
+    appearance: none;
+}
+
+
+a,
+button {
+    user-select: none;
+}
+
+
+canvas {
+    image-rendering: auto;
+}
+```
