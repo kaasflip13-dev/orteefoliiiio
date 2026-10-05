@@ -1,8 +1,3 @@
-/* ============================================================
-   ECHOBOUND — THE LOST SIGNAL
-   COMPLETE STYLE
-============================================================ */
-
 * {
     box-sizing: border-box;
     margin: 0;
@@ -14,115 +9,72 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #03070b;
-    color: #e8faff;
-    font-family:
-        Inter,
-        Arial,
-        Helvetica,
-        sans-serif;
+    background: #05090b;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
 }
 
 body {
-    position: relative;
+    user-select: none;
 }
 
-button {
-    font: inherit;
-}
-
-canvas#game {
+#game {
     position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
     display: block;
-    background: #03070b;
+    background: #071013;
+}
+
+#ui {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+}
+
+button {
+    pointer-events: auto;
+    font-family: inherit;
 }
 
 
-/* ============================================================
-   UTILITIES
-============================================================ */
-
-.hidden {
-    display: none !important;
-}
+/* =========================================================
+   MAIN MENU
+========================================================= */
 
 .screen {
     position: fixed;
     inset: 0;
-    z-index: 20;
-
     display: flex;
-    align-items: center;
     justify-content: center;
-
+    align-items: center;
+    pointer-events: auto;
     background:
         radial-gradient(
             circle at center,
-            rgba(0, 180, 255, 0.09),
-            rgba(0, 0, 0, 0.88) 65%
+            rgba(10, 45, 48, 0.15),
+            rgba(0, 0, 0, 0.72)
         );
-
-    backdrop-filter: blur(5px);
 }
 
-.overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background:
-        rgba(1, 5, 9, 0.78);
-
-    backdrop-filter: blur(8px);
-}
-
-
-/* ============================================================
-   MAIN MENU
-============================================================ */
-
-.menu-glow {
-    position: absolute;
-    width: 700px;
-    height: 700px;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(0, 190, 255, 0.12),
-            transparent 65%
-        );
-
-    filter: blur(20px);
-}
-
-.menu-panel {
+.menu-card {
+    width: min(520px, 92vw);
+    padding: 42px;
     position: relative;
-    width: min(520px, 90vw);
-
-    padding: 48px;
-
-    text-align: center;
-
-    border: 1px solid rgba(100, 220, 255, 0.28);
 
     background:
         linear-gradient(
             145deg,
-            rgba(8, 22, 32, 0.96),
-            rgba(3, 10, 16, 0.96)
+            rgba(10, 22, 25, 0.97),
+            rgba(4, 10, 12, 0.97)
         );
 
+    border: 1px solid rgba(79, 238, 226, 0.55);
+
     box-shadow:
-        0 0 80px rgba(0, 170, 255, 0.12),
-        inset 0 0 40px rgba(0, 180, 255, 0.03);
+        0 0 35px rgba(0, 255, 240, 0.12),
+        inset 0 0 35px rgba(0, 255, 240, 0.03);
 
     clip-path: polygon(
         0 18px,
@@ -136,72 +88,79 @@ canvas#game {
     );
 }
 
-.small-title,
-.modal-kicker {
-    color: #66ddff;
+.menu-card::before {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 12px;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #4ffff0,
+        transparent
+    );
+}
+
+.eyebrow {
+    text-align: center;
     font-size: 11px;
     letter-spacing: 4px;
-    font-weight: 700;
+    color: #63e7df;
+    margin-bottom: 18px;
 }
 
-.menu-panel h1 {
-    margin-top: 14px;
-
-    font-size: clamp(46px, 8vw, 76px);
-    letter-spacing: 7px;
-
-    color: #eaffff;
-
+h1 {
+    text-align: center;
+    font-size: clamp(48px, 10vw, 82px);
+    line-height: 0.9;
+    letter-spacing: -5px;
+    font-weight: 900;
+    color: #e9ffff;
     text-shadow:
-        0 0 15px rgba(0, 220, 255, 0.35),
-        0 0 45px rgba(0, 180, 255, 0.15);
+        0 0 15px rgba(66, 255, 241, 0.4),
+        0 0 45px rgba(66, 255, 241, 0.12);
 }
 
-.subtitle {
-    margin-top: 3px;
+h1 span {
+    display: block;
+    color: #50f1df;
+}
 
-    color: #79d8ef;
-
+.tagline {
+    text-align: center;
+    margin-top: 12px;
+    margin-bottom: 35px;
     letter-spacing: 7px;
-    font-size: 13px;
+    font-size: 12px;
+    color: #83999c;
 }
 
-.menu-line {
-    width: 70%;
-    height: 1px;
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-    margin: 28px auto;
+.menu-buttons button {
+    min-height: 48px;
 
+    border: 1px solid rgba(91, 240, 226, 0.35);
     background:
         linear-gradient(
             90deg,
-            transparent,
-            rgba(70, 210, 255, 0.65),
-            transparent
-        );
-}
-
-.menu-button {
-    width: 100%;
-    height: 52px;
-
-    margin-top: 10px;
-
-    border: 1px solid rgba(100, 200, 230, 0.22);
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(12, 28, 39, 0.96),
-            rgba(7, 19, 27, 0.96)
+            rgba(17, 39, 42, 0.95),
+            rgba(10, 23, 25, 0.95)
         );
 
-    color: #ccecf5;
-
-    cursor: pointer;
+    color: #dffefd;
 
     letter-spacing: 2px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
+
+    cursor: pointer;
 
     transition:
         transform 0.15s ease,
@@ -210,257 +169,134 @@ canvas#game {
         box-shadow 0.15s ease;
 }
 
-.menu-button:hover {
-    transform: translateY(-2px);
+.menu-buttons button:hover {
+    transform: translateX(5px);
 
-    border-color: rgba(90, 220, 255, 0.7);
+    border-color: #62fff0;
 
     background:
         linear-gradient(
             90deg,
-            rgba(15, 50, 66, 0.98),
-            rgba(8, 30, 41, 0.98)
+            rgba(29, 72, 76, 0.98),
+            rgba(12, 31, 34, 0.98)
         );
 
     box-shadow:
-        0 0 25px rgba(0, 190, 255, 0.12);
+        0 0 18px rgba(57, 255, 237, 0.13);
 }
 
-.menu-button.primary {
-    border-color: rgba(70, 220, 255, 0.65);
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(0, 115, 155, 0.9),
-            rgba(0, 70, 105, 0.9)
-        );
-
-    color: white;
+.menu-buttons button:active {
+    transform: translateX(2px) scale(0.99);
 }
 
-.menu-button.shop-button {
-    border-color: rgba(90, 220, 180, 0.45);
-    color: #9effdd;
-}
-
-.menu-button.danger {
-    border-color: rgba(255, 90, 90, 0.4);
-    color: #ffb0b0;
-}
-
-.menu-footer {
+.menu-tip {
     margin-top: 25px;
-
-    color: rgba(170, 220, 230, 0.45);
-
+    text-align: center;
     font-size: 10px;
-    letter-spacing: 3px;
+    color: #6d8083;
+    letter-spacing: 0.5px;
 }
 
 
-/* ============================================================
+/* =========================================================
    HUD
-============================================================ */
+========================================================= */
 
 .hud {
     position: fixed;
     inset: 0;
-    z-index: 10;
-
     pointer-events: none;
 }
 
-.hud-top {
+.hud-left {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-
-    display: grid;
-    grid-template-columns: 260px 1fr 240px;
-    gap: 15px;
+    left: 24px;
+    bottom: 25px;
+    width: 240px;
 }
 
-.status-panel,
-.objective-panel,
-.combat-panel {
-    min-height: 100px;
-
-    padding: 15px 17px;
-
-    border: 1px solid rgba(100, 210, 240, 0.18);
-
-    background:
-        rgba(3, 13, 20, 0.78);
-
-    backdrop-filter: blur(5px);
-
-    box-shadow:
-        0 10px 35px rgba(0, 0, 0, 0.2);
+.stat {
+    margin-top: 9px;
 }
 
-.status-title,
-.objective-label {
-    color: rgba(180, 225, 235, 0.58);
-
+.stat span {
+    display: block;
+    margin-bottom: 4px;
     font-size: 9px;
-    letter-spacing: 2px;
-    font-weight: 800;
+    letter-spacing: 3px;
+    color: #b9c8ca;
 }
 
 .bar {
-    height: 7px;
-
-    margin-top: 6px;
-    margin-bottom: 12px;
-
+    height: 9px;
+    background: rgba(0, 0, 0, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     overflow: hidden;
-
-    background: rgba(255, 255, 255, 0.07);
 }
 
-.bar-fill {
-    height: 100%;
-
+.bar i {
+    display: block;
     width: 100%;
-
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        #ff4e58,
+        #ff9a55
+    );
+    box-shadow: 0 0 12px rgba(255, 75, 70, 0.45);
     transition: width 0.15s linear;
 }
 
-.bar-fill.health {
-    background:
-        linear-gradient(
-            90deg,
-            #ff5364,
-            #ff9b76
-        );
+.bar.energy i {
+    background: linear-gradient(
+        90deg,
+        #28c9ff,
+        #62fff0
+    );
 
-    box-shadow: 0 0 15px rgba(255, 70, 80, 0.4);
+    box-shadow:
+        0 0 12px rgba(65, 230, 255, 0.35);
 }
 
-.bar-fill.energy {
-    background:
-        linear-gradient(
-            90deg,
-            #27caff,
-            #8af5ff
-        );
-
-    box-shadow: 0 0 15px rgba(40, 200, 255, 0.4);
+.hud-right {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+    display: flex;
+    gap: 8px;
 }
 
-.objective-panel {
-    text-align: center;
+.readout {
+    min-width: 90px;
+    padding: 9px 12px;
+
+    background: rgba(3, 10, 12, 0.72);
+    border: 1px solid rgba(108, 244, 232, 0.2);
+
+    backdrop-filter: blur(5px);
 }
 
-#objective {
-    margin-top: 9px;
-
-    color: #effcff;
-
-    font-size: 14px;
-    font-weight: 700;
-}
-
-#zone {
-    margin-top: 8px;
-
-    color: #58dfff;
-
-    font-size: 9px;
-    letter-spacing: 3px;
-}
-
-.combat-panel {
-    text-align: right;
-}
-
-.weapon-name {
-    color: #78e6ff;
-
-    font-size: 10px;
+.readout small {
+    display: block;
+    color: #72888a;
+    font-size: 8px;
     letter-spacing: 2px;
 }
 
-.ammo {
-    margin-top: 8px;
-
-    font-size: 21px;
-    font-weight: 800;
-}
-
-.combat-small {
-    margin-top: 4px;
-
-    color: rgba(220, 240, 245, 0.55);
-
-    font-size: 10px;
-}
-
-.credits-display {
-    margin-top: 5px;
-
-    color: #9effd9;
-
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.hud-bottom {
-    position: absolute;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-
-    display: flex;
-    align-items: center;
-    gap: 15px;
-
-    padding: 10px 15px;
-
-    border: 1px solid rgba(100, 200, 230, 0.15);
-
-    background:
-        rgba(2, 9, 14, 0.78);
-
-    color: rgba(200, 235, 240, 0.62);
-
-    font-size: 9px;
-    letter-spacing: 1.5px;
-
-    pointer-events: auto;
-}
-
-.hud-bottom button {
-    padding: 7px 12px;
-
-    border: 1px solid rgba(90, 220, 255, 0.25);
-
-    background: rgba(10, 30, 40, 0.9);
-
-    color: #bdeefa;
-
-    cursor: pointer;
-
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.hud-bottom button:hover {
-    border-color: #5de1ff;
-    color: white;
+.readout b {
+    display: block;
+    margin-top: 3px;
+    color: #e7fffd;
+    font-size: 15px;
 }
 
 
-/* ============================================================
+/* =========================================================
    CROSSHAIR
-============================================================ */
+========================================================= */
 
 .crosshair {
     position: absolute;
-
     left: 50%;
     top: 50%;
 
@@ -470,620 +306,413 @@ canvas#game {
     transform: translate(-50%, -50%);
 }
 
-.crosshair-line {
+.crosshair::before,
+.crosshair::after,
+.crosshair span::before,
+.crosshair span::after {
+    content: "";
     position: absolute;
-
-    background: rgba(120, 235, 255, 0.9);
-
-    box-shadow: 0 0 8px rgba(80, 220, 255, 0.6);
+    background: rgba(108, 255, 241, 0.92);
+    box-shadow: 0 0 7px rgba(108, 255, 241, 0.7);
 }
 
-.crosshair-line.top,
-.crosshair-line.bottom {
+.crosshair::before {
     left: 50%;
+    top: 0;
     width: 1px;
     height: 9px;
     transform: translateX(-50%);
 }
 
-.crosshair-line.top {
-    top: 0;
-}
-
-.crosshair-line.bottom {
+.crosshair::after {
+    left: 50%;
     bottom: 0;
+    width: 1px;
+    height: 9px;
+    transform: translateX(-50%);
 }
 
-.crosshair-line.left,
-.crosshair-line.right {
+.crosshair span::before {
     top: 50%;
+    left: 0;
     width: 9px;
     height: 1px;
     transform: translateY(-50%);
 }
 
-.crosshair-line.left {
-    left: 0;
-}
-
-.crosshair-line.right {
-    right: 0;
-}
-
-.crosshair-dot {
-    position: absolute;
-
-    left: 50%;
+.crosshair span::after {
     top: 50%;
-
-    width: 4px;
-    height: 4px;
-
-    transform: translate(-50%, -50%);
-
-    border-radius: 50%;
-
-    background: white;
-
-    box-shadow:
-        0 0 8px #67eaff;
+    right: 0;
+    width: 9px;
+    height: 1px;
+    transform: translateY(-50%);
 }
 
 
-/* ============================================================
-   MODALS
-============================================================ */
+/* =========================================================
+   HUD BUTTONS
+========================================================= */
 
-.modal-panel,
-.shop-panel,
-.achievements-panel,
-.controls-panel,
-.map-panel {
-    width: min(900px, 92vw);
+.hud-buttons {
+    position: absolute;
+    right: 22px;
+    bottom: 22px;
+    display: flex;
+    gap: 8px;
+    pointer-events: auto;
+}
 
-    padding: 35px;
+.hud-buttons button {
+    min-width: 55px;
+    height: 38px;
 
-    border: 1px solid rgba(100, 220, 255, 0.3);
+    background: rgba(4, 12, 14, 0.8);
+
+    border: 1px solid rgba(100, 243, 230, 0.28);
+
+    color: #bffdf7;
+
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.hud-buttons button:hover {
+    border-color: #68fff0;
+    background: rgba(17, 48, 51, 0.9);
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.panel-layer {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.68);
+
+    backdrop-filter: blur(5px);
+
+    pointer-events: auto;
+
+    z-index: 50;
+}
+
+.panel {
+    width: min(650px, 94vw);
+    max-height: 90vh;
+    overflow-y: auto;
+
+    padding: 30px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(8, 23, 33, 0.98),
-            rgba(2, 10, 16, 0.98)
+            rgba(8, 19, 22, 0.98),
+            rgba(3, 9, 11, 0.98)
         );
 
+    border: 1px solid rgba(79, 238, 226, 0.42);
+
     box-shadow:
-        0 0 90px rgba(0, 170, 255, 0.12),
-        inset 0 0 50px rgba(0, 180, 255, 0.025);
-
-    clip-path: polygon(
-        0 15px,
-        15px 0,
-        calc(100% - 15px) 0,
-        100% 15px,
-        100% calc(100% - 15px),
-        calc(100% - 15px) 100%,
-        15px 100%,
-        0 calc(100% - 15px)
-    );
+        0 0 45px rgba(0, 255, 240, 0.12);
 }
 
-.modal-panel {
-    max-width: 500px;
-    text-align: center;
+.panel h2 {
+    color: #64fff0;
+    font-size: 28px;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
 }
 
-.modal-panel h2,
-.shop-panel h2,
-.achievements-panel h2,
-.controls-panel h2,
-.map-panel h2 {
-    margin-top: 7px;
-
-    font-size: 32px;
-    letter-spacing: 4px;
+.panel p {
+    color: #a6b6b8;
+    line-height: 1.6;
+    margin-bottom: 20px;
 }
 
-.modal-panel p {
-    margin: 18px 0;
+.panel button {
+    min-height: 42px;
+    padding: 0 18px;
+    margin: 4px;
 
-    color: rgba(220, 240, 245, 0.6);
+    background: #10282b;
+    border: 1px solid rgba(100, 255, 241, 0.3);
+
+    color: #d9fffc;
+
+    cursor: pointer;
+}
+
+.panel button:hover {
+    background: #183d40;
+    border-color: #62fff0;
 }
 
 
-/* ============================================================
+/* =========================================================
    SHOP
-============================================================ */
+========================================================= */
 
 .shop-panel {
-    max-height: 90vh;
+    width: min(1050px, 95vw);
+    max-height: 92vh;
     overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
 }
 
-.shop-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+.shop-panel::-webkit-scrollbar {
+    width: 8px;
+}
 
+.shop-panel::-webkit-scrollbar-track {
+    background: #061012;
+}
+
+.shop-panel::-webkit-scrollbar-thumb {
+    background: #2d7775;
+}
+
+.shop-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
     margin-bottom: 25px;
 }
 
-.shop-balance {
-    text-align: right;
-
-    color: rgba(200, 230, 235, 0.5);
-
-    font-size: 9px;
-    letter-spacing: 2px;
+.shop-title h2 {
+    margin: 0;
 }
 
-.shop-balance strong {
-    display: block;
-
-    margin-top: 5px;
-
-    color: #9effd9;
-
-    font-size: 22px;
-    letter-spacing: 1px;
+.shop-credits {
+    padding: 9px 14px;
+    border: 1px solid rgba(96, 255, 238, 0.25);
+    color: #8ffff3;
+    background: rgba(22, 53, 55, 0.6);
 }
 
 .shop-grid {
     display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap: 13px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
 }
 
 .shop-card {
-    min-height: 230px;
+    min-height: 260px;
 
     padding: 20px;
-
-    border: 1px solid rgba(100, 210, 235, 0.16);
 
     background:
         linear-gradient(
             145deg,
-            rgba(11, 31, 41, 0.95),
-            rgba(5, 16, 23, 0.95)
+            rgba(15, 34, 37, 0.95),
+            rgba(6, 15, 17, 0.95)
         );
 
-    transition:
-        transform 0.15s ease,
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.shop-card:hover {
-    transform: translateY(-3px);
-
-    border-color: rgba(90, 220, 255, 0.45);
-
-    box-shadow:
-        0 10px 35px rgba(0, 170, 255, 0.08);
-}
-
-.shop-card.locked {
-    opacity: 0.5;
-}
-
-.shop-icon {
-    width: 45px;
-    height: 45px;
+    border: 1px solid rgba(99, 255, 241, 0.18);
 
     display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-bottom: 14px;
-
-    border: 1px solid rgba(90, 220, 255, 0.3);
-
-    color: #7cecff;
-
-    font-size: 20px;
-
-    background:
-        rgba(20, 70, 90, 0.25);
+    flex-direction: column;
 }
 
 .shop-card h3 {
-    font-size: 13px;
-    letter-spacing: 1.5px;
+    color: #dffffb;
+    font-size: 19px;
+    margin-bottom: 10px;
+}
+
+.shop-icon {
+    font-size: 42px;
+    margin-bottom: 12px;
 }
 
 .shop-card p {
-    min-height: 43px;
-
-    margin-top: 8px;
-
-    color: rgba(205, 230, 235, 0.55);
-
-    font-size: 11px;
-    line-height: 1.5;
+    flex: 1;
+    color: #849b9e;
+    font-size: 13px;
 }
 
-.shop-price {
-    margin-top: 12px;
-
-    color: #9effd9;
-
-    font-size: 15px;
-    font-weight: 800;
+.price {
+    color: #65fff0;
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
-.buy-button {
+.shop-card button {
     width: 100%;
-
-    margin-top: 12px;
-
-    height: 36px;
-
-    border: 1px solid rgba(90, 220, 255, 0.3);
-
-    background:
-        rgba(10, 45, 58, 0.85);
-
-    color: #c9f6ff;
-
-    cursor: pointer;
-
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 2px;
-}
-
-.buy-button:hover:not(:disabled) {
-    border-color: #6eeaff;
-
-    background:
-        rgba(12, 72, 92, 0.95);
-}
-
-.buy-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-}
-
-.shop-message {
-    min-height: 20px;
-
-    margin-top: 18px;
-
-    text-align: center;
-
-    color: #76dcf2;
-
-    font-size: 11px;
-    letter-spacing: 1px;
+    margin: 0;
 }
 
 
-/* ============================================================
+/* =========================================================
    ACHIEVEMENTS
-============================================================ */
+========================================================= */
 
-.achievement-grid {
+.achievement-list {
     display: grid;
-
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-    gap: 12px;
-
-    margin-top: 25px;
+    gap: 10px;
 }
 
-.achievement-card {
-    display: flex;
-    align-items: center;
+.achievement {
+    padding: 15px;
 
-    gap: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
 
-    padding: 17px;
-
-    border: 1px solid rgba(120, 150, 160, 0.14);
-
-    background:
-        rgba(10, 20, 27, 0.75);
+    background: rgba(255, 255, 255, 0.025);
 }
 
-.achievement-card.unlocked {
-    border-color: rgba(80, 220, 180, 0.3);
+.achievement.unlocked {
+    border-color: rgba(87, 255, 215, 0.38);
+    background: rgba(50, 200, 170, 0.06);
 }
 
-.achievement-symbol {
-    width: 38px;
-    height: 38px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-
-    border: 1px solid rgba(100, 200, 220, 0.25);
-
-    color: #6deaff;
-
-    font-weight: 900;
+.achievement strong {
+    display: block;
+    color: #d9fffb;
+    margin-bottom: 5px;
 }
 
-.achievement-card.unlocked .achievement-symbol {
-    color: #9effd9;
-
-    border-color: rgba(90, 240, 180, 0.4);
-}
-
-.achievement-card h3 {
+.achievement span {
+    color: #7f9497;
     font-size: 12px;
-    letter-spacing: 1px;
-}
-
-.achievement-card p {
-    margin-top: 4px;
-
-    color: rgba(210, 230, 235, 0.5);
-
-    font-size: 10px;
 }
 
 
-/* ============================================================
-   CONTROLS
-============================================================ */
-
-.controls-panel {
-    max-width: 580px;
-}
-
-.control-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    margin-top: 8px;
-    padding: 13px 15px;
-
-    border: 1px solid rgba(100, 200, 220, 0.1);
-
-    background:
-        rgba(8, 19, 26, 0.8);
-}
-
-.control-row span {
-    color: rgba(210, 235, 240, 0.58);
-
-    font-size: 10px;
-    letter-spacing: 1px;
-}
-
-.control-row strong {
-    color: #83eaff;
-
-    font-size: 11px;
-    letter-spacing: 2px;
-}
-
-
-/* ============================================================
+/* =========================================================
    MAP
-============================================================ */
+========================================================= */
 
-.map-panel {
-    max-width: 850px;
-}
+.map-box {
+    height: 420px;
 
-.map-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    position: relative;
 
-    margin-bottom: 20px;
-}
-
-.map-info {
-    color: #72dff4;
-
-    font-size: 9px;
-    letter-spacing: 2px;
-}
-
-#mapCanvas {
-    width: 100%;
-    height: auto;
-
-    display: block;
-
-    border: 1px solid rgba(90, 220, 255, 0.18);
-
-    background: #071016;
-}
-
-
-/* ============================================================
-   CLOSE BUTTON
-============================================================ */
-
-.close-button {
-    display: block;
-
-    width: 220px;
-    height: 43px;
-
-    margin: 20px auto 0;
-
-    border: 1px solid rgba(100, 210, 235, 0.25);
-
-    background:
-        rgba(10, 30, 39, 0.9);
-
-    color: #c6f2fa;
-
-    cursor: pointer;
-
-    font-size: 10px;
-    font-weight: 800;
-
-    letter-spacing: 2px;
-}
-
-.close-button:hover {
-    border-color: #64e7ff;
-
-    color: white;
-}
-
-
-/* ============================================================
-   ACHIEVEMENT POPUP
-============================================================ */
-
-.achievement-popup {
-    position: fixed;
-
-    right: 25px;
-    top: 25px;
-
-    z-index: 100;
-
-    width: 280px;
-
-    padding: 17px 20px;
-
-    border-left: 3px solid #6deaff;
+    border: 1px solid rgba(102, 255, 238, 0.25);
 
     background:
         linear-gradient(
+            rgba(47, 115, 112, 0.08) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
             90deg,
-            rgba(5, 24, 34, 0.97),
-            rgba(5, 13, 19, 0.97)
+            rgba(47, 115, 112, 0.08) 1px,
+            transparent 1px
         );
 
+    background-size: 25px 25px;
+
+    overflow: hidden;
+}
+
+.map-player {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
+    width: 14px;
+    height: 14px;
+
+    background: #65fff0;
+
     box-shadow:
-        0 10px 40px rgba(0, 0, 0, 0.3),
-        0 0 30px rgba(0, 190, 255, 0.1);
+        0 0 20px #65fff0;
 
-    animation:
-        achievementIn 0.35s ease;
+    transform: translate(-50%, -50%);
 }
 
-.achievement-small {
-    color: #69def7;
+.map-enemy {
+    position: absolute;
 
-    font-size: 8px;
-    letter-spacing: 2px;
-}
+    width: 8px;
+    height: 8px;
 
-#achievementName {
-    margin-top: 6px;
+    background: #ff5e67;
 
-    color: white;
-
-    font-size: 16px;
-    font-weight: 800;
-
-    letter-spacing: 1px;
-}
-
-@keyframes achievementIn {
-    from {
-        opacity: 0;
-        transform: translateX(40px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    box-shadow:
+        0 0 10px #ff5e67;
 }
 
 
-/* ============================================================
-   GAME OVER
-============================================================ */
+/* =========================================================
+   NOTIFICATION
+========================================================= */
 
-.game-over-panel h2 {
-    color: #ff9292;
+.notification {
+    position: fixed;
+
+    top: 22px;
+    left: 50%;
+
+    transform: translateX(-50%) translateY(-20px);
+
+    padding: 12px 22px;
+
+    background: rgba(4, 16, 18, 0.95);
+
+    border: 1px solid rgba(97, 255, 240, 0.42);
+
+    color: #dffffa;
+
+    opacity: 0;
+
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
+
+    pointer-events: none;
+
+    z-index: 100;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
+/* =========================================================
+   MOBILE
+========================================================= */
 
-@media (max-width: 850px) {
+@media (max-width: 750px) {
 
-    .hud-top {
-        grid-template-columns: 1fr 1fr;
+    .menu-card {
+        padding: 30px 22px;
     }
 
-    .objective-panel {
-        display: none;
+    .hud-right {
+        top: 10px;
+        right: 10px;
     }
 
-    .shop-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    .achievement-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 600px) {
-
-    .menu-panel {
-        padding: 30px 20px;
-    }
-
-    .menu-panel h1 {
-        font-size: 42px;
-        letter-spacing: 4px;
-    }
-
-    .hud-top {
-        top: 8px;
-        left: 8px;
-        right: 8px;
-
-        grid-template-columns: 1fr 1fr;
-
-        gap: 7px;
-    }
-
-    .status-panel,
-    .combat-panel {
-        padding: 10px;
-    }
-
-    .hud-bottom {
-        bottom: 8px;
-
-        gap: 5px;
-
+    .readout {
+        min-width: 70px;
         padding: 7px;
-
-        font-size: 7px;
     }
 
-    .hud-bottom > div {
-        display: none;
+    .hud-left {
+        left: 12px;
+        bottom: 15px;
+        width: 180px;
     }
 
     .shop-grid {
         grid-template-columns: 1fr;
     }
 
-    .shop-panel,
-    .achievements-panel,
-    .controls-panel,
-    .map-panel {
-        padding: 22px;
+    .shop-panel {
+        padding: 20px;
     }
-
 }
