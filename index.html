@@ -1,371 +1,2532 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EchoBound — The Lost Signal</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+```javascript
+// ============================================================
+// ECHOBOUND — THE LOST SIGNAL
+// COMPLETE 3D APP.JS
+// THIRD PERSON TANK CAMERA
+// ============================================================
 
-<body>
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js";
 
-<canvas id="game"></canvas>
+// ============================================================
+// HTML
+// ============================================================
 
-<!-- ================= MENU ================= -->
+const canvas = document.getElementById("game");
 
-<div id="menu">
+const menu = document.getElementById("menu");
+const hud = document.getElementById("hud");
+const pauseScreen = document.getElementById("pause");
+const achievement = document.getElementById("achievement");
+const mapScreen = document.getElementById("map");
 
-    <header class="topbar">
+const newGameButton = document.getElementById("newGame");
+const loadGameButton = document.getElementById("loadGame");
+const achievementsButton = document.getElementById("achievementsButton");
+const controlsButton = document.getElementById("controlsButton");
 
-        <div class="brand">
-            <div class="brandMark">E</div>
+const resumeButton = document.getElementById("resume");
+const saveButton = document.getElementById("save");
+const quitButton = document.getElementById("quit");
 
-            <div>
-                <strong>ECHOBOUND</strong>
-                <span>THE LOST SIGNAL</span>
-            </div>
-        </div>
+const closeMapButton = document.getElementById("closeMap");
 
-        <div class="systemStatus">
-            <i></i>
-            SYSTEM ONLINE
-        </div>
+const healthBar = document.getElementById("healthBar");
+const energyBar = document.getElementById("energyBar");
 
-    </header>
+const ammoText = document.getElementById("ammo");
+const killsText = document.getElementById("kills");
+const creditsText = document.getElementById("credits");
 
+const objectiveText = document.getElementById("objective");
+const zoneText = document.getElementById("zone");
 
-    <main class="menuLayout">
 
-        <section class="intro">
+// ============================================================
+// THREE.JS
+// ============================================================
 
-            <div class="eyebrow">
-                EXPEDITION NETWORK // SECTOR 07
-            </div>
+const scene = new THREE.Scene();
 
-            <h1>
-                THE LOST
-                <span>SIGNAL</span>
-            </h1>
+scene.background = new THREE.Color(0x071014);
 
-            <p>
-                Een onbekend signaal komt uit een verlaten gebied.
-                Ga op onderzoek uit, ontdek wat daar leeft en probeer
-                de bron van het signaal te bereiken.
-            </p>
+scene.fog = new THREE.Fog(
+    0x071014,
+    80,
+    900
+);
 
-            <div class="stats">
 
-                <div>
-                    <small>LOCATION</small>
-                    <strong>SECTOR 07</strong>
-                </div>
+// ============================================================
+// CAMERA
+// ============================================================
 
-                <div>
-                    <small>THREAT</small>
-                    <strong>UNKNOWN</strong>
-                </div>
+const camera = new THREE.PerspectiveCamera(
+    65,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    2000
+);
 
-                <div>
-                    <small>MISSION</small>
-                    <strong>ACTIVE</strong>
-                </div>
 
-            </div>
+// ============================================================
+// RENDERER
+// ============================================================
 
-        </section>
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    antialias: true
+});
 
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
 
-        <section class="commandPanel">
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+);
 
-            <div class="panelTitle">
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-                <div>
-                    <small>MISSION CONTROL</small>
-                    <h2>MAIN MENU</h2>
-                </div>
 
-                <span>EB-07</span>
+// ============================================================
+// LIGHTING
+// ============================================================
 
-            </div>
+const ambientLight = new THREE.HemisphereLight(
+    0x8da7b8,
+    0x172015,
+    2.2
+);
 
+scene.add(ambientLight);
 
-            <div class="menuButtons">
 
-                <button id="newGame" class="menuButton primary">
-                    <b>01</b>
+const sun = new THREE.DirectionalLight(
+    0xffffff,
+    3
+);
 
-                    <div>
-                        <strong>NEW RUN</strong>
-                        <small>START A NEW EXPEDITION</small>
-                    </div>
+sun.position.set(
+    150,
+    250,
+    100
+);
 
-                    <em>›</em>
-                </button>
+sun.castShadow = true;
 
+sun.shadow.mapSize.width = 2048;
+sun.shadow.mapSize.height = 2048;
 
-                <button id="loadGame" class="menuButton">
-                    <b>02</b>
+sun.shadow.camera.left = -500;
+sun.shadow.camera.right = 500;
+sun.shadow.camera.top = 500;
+sun.shadow.camera.bottom = -500;
 
-                    <div>
-                        <strong>CONTINUE</strong>
-                        <small>RESUME SAVED RUN</small>
-                    </div>
+scene.add(sun);
 
-                    <em>›</em>
-                </button>
 
+// ============================================================
+// GAME VARIABLES
+// ============================================================
 
-                <button id="achievementsButton" class="menuButton">
-                    <b>03</b>
+let gameRunning = false;
+let paused = false;
+let gameOver = false;
 
-                    <div>
-                        <strong>ACHIEVEMENTS</strong>
-                        <small>VIEW YOUR RECORDS</small>
-                    </div>
+let kills = 0;
+let credits = 0;
 
-                    <em>›</em>
-                </button>
+let lastTime = performance.now();
 
 
-                <button id="controlsButton" class="menuButton">
-                    <b>04</b>
+// ============================================================
+// PLAYER
+// ============================================================
 
-                    <div>
-                        <strong>CONTROLS</strong>
-                        <small>VIEW GAME CONTROLS</small>
-                    </div>
+const player = {
 
-                    <em>›</em>
-                </button>
+    group: null,
 
+    turret: null,
 
-                <a href="shop.html" class="menuButton">
-                    <b>05</b>
+    barrel: null,
 
-                    <div>
-                        <strong>SUPPLY TERMINAL</strong>
-                        <small>OPEN ECHOBOUND SHOP</small>
-                    </div>
+    x: 0,
 
-                    <em>›</em>
-                </a>
+    z: 0,
 
-            </div>
+    rotation: 0,
 
+    turretRotation: 0,
 
-            <footer class="panelFooter">
+    speed: 12,
 
-                <span>
-                    <i></i>
-                    LOCAL SAVE
-                </span>
+    reverseSpeed: 6,
 
-                <span>
-                    THIRD-PERSON 3D
-                </span>
+    turnSpeed: 2.2,
 
-            </footer>
+    health: 100,
 
-        </section>
+    maxHealth: 100,
 
-    </main>
+    energy: 100,
 
+    maxEnergy: 100,
 
-    <footer class="menuFooter">
-        ECHOBOUND NETWORK
-        <span>•</span>
-        SIGNAL MONITORING ACTIVE
-        <span>•</span>
-        ALL SYSTEMS NOMINAL
-    </footer>
+    ammo: 12,
 
-</div>
+    maxAmmo: 12,
 
+    shootCooldown: 0,
 
-<!-- ================= HUD ================= -->
+    dashCooldown: 0
 
-<div id="hud">
+};
 
-    <div class="playerHUD">
 
-        <div class="hudLogo">
-            ECHOBOUND
-        </div>
+// ============================================================
+// INPUT
+// ============================================================
 
-        <div class="hudStat">
+const keys = {};
 
-            <label>HEALTH</label>
+const mouse = {
 
-            <div class="bar">
-                <span id="healthBar"></span>
-            </div>
+    x: 0,
 
-        </div>
+    y: 0,
 
+    down: false
 
-        <div class="hudStat">
+};
 
-            <label>ENERGY</label>
 
-            <div class="bar energy">
-                <span id="energyBar"></span>
-            </div>
+window.addEventListener("keydown", (event) => {
 
-        </div>
+    keys[event.key.toLowerCase()] = true;
 
-    </div>
+    if (event.key === "Escape") {
 
+        togglePause();
 
-    <div class="objective">
+    }
 
-        <small>CURRENT OBJECTIVE</small>
+    if (event.key.toLowerCase() === "m") {
 
-        <strong id="objective">
-            LOCATE THE SIGNAL
-        </strong>
+        toggleMap();
 
-    </div>
+    }
 
+});
 
-    <div class="rightHUD">
 
-        <div id="zone">
-            OUTER SECTOR
-        </div>
+window.addEventListener("keyup", (event) => {
 
-        <div id="kills">
-            KILLS 00
-        </div>
+    keys[event.key.toLowerCase()] = false;
 
-        <div id="credits">
-            CREDITS 000
-        </div>
+});
 
-    </div>
 
+window.addEventListener("mousemove", (event) => {
 
-    <div class="crosshair">
+    mouse.x = event.clientX;
 
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
+    mouse.y = event.clientY;
 
-    </div>
+    aimTurret();
 
+});
 
-    <div class="weaponHUD">
 
+window.addEventListener("mousedown", (event) => {
+
+    if (event.button === 0) {
+
+        mouse.down = true;
+
+    }
+
+});
+
+
+window.addEventListener("mouseup", (event) => {
+
+    if (event.button === 0) {
+
+        mouse.down = false;
+
+    }
+
+});
+
+
+// ============================================================
+// WORLD
+// ============================================================
+
+const WORLD_SIZE = 900;
+
+const worldObjects = [];
+
+const enemies = [];
+
+const bullets = [];
+
+const trees = [];
+
+const rocks = [];
+
+const buildings = [];
+
+
+// ============================================================
+// GROUND
+// ============================================================
+
+const groundGeometry =
+    new THREE.PlaneGeometry(
+        WORLD_SIZE,
+        WORLD_SIZE,
+        80,
+        80
+    );
+
+
+const groundMaterial =
+    new THREE.MeshStandardMaterial({
+
+        color: 0x273b2d,
+
+        roughness: 1
+
+    });
+
+
+const ground =
+    new THREE.Mesh(
+        groundGeometry,
+        groundMaterial
+    );
+
+
+ground.rotation.x = -Math.PI / 2;
+
+ground.receiveShadow = true;
+
+scene.add(ground);
+
+
+// ============================================================
+// GRID / PATH DETAILS
+// ============================================================
+
+const gridHelper =
+    new THREE.GridHelper(
+        WORLD_SIZE,
+        90,
+        0x344a3b,
+        0x25372d
+    );
+
+gridHelper.position.y = 0.03;
+
+scene.add(gridHelper);
+
+
+// ============================================================
+// RANDOM
+// ============================================================
+
+function random(min, max) {
+
+    return Math.random() *
+        (max - min) +
+        min;
+
+}
+
+
+function randomInt(min, max) {
+
+    return Math.floor(
+        random(min, max + 1)
+    );
+
+}
+
+
+// ============================================================
+// TANK CREATION
+// ============================================================
+
+function createTank() {
+
+    const tank =
+        new THREE.Group();
+
+
+    // --------------------------------------------------------
+    // BODY
+    // --------------------------------------------------------
+
+    const bodyGeometry =
+        new THREE.BoxGeometry(
+            4.2,
+            1.5,
+            6
+        );
+
+
+    const bodyMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: 0x596f5d,
+
+            roughness: 0.7,
+
+            metalness: 0.25
+
+        });
+
+
+    const body =
+        new THREE.Mesh(
+            bodyGeometry,
+            bodyMaterial
+        );
+
+
+    body.position.y = 1.25;
+
+    body.castShadow = true;
+
+    body.receiveShadow = true;
+
+    tank.add(body);
+
+
+    // --------------------------------------------------------
+    // FRONT ARMOR
+    // --------------------------------------------------------
+
+    const frontGeometry =
+        new THREE.BoxGeometry(
+            4.5,
+            1.2,
+            1.3
+        );
+
+
+    const front =
+        new THREE.Mesh(
+            frontGeometry,
+            new THREE.MeshStandardMaterial({
+                color: 0x708674,
+                roughness: 0.7
+            })
+        );
+
+
+    front.position.set(
+        0,
+        1.35,
+        -3.1
+    );
+
+    front.castShadow = true;
+
+    tank.add(front);
+
+
+    // --------------------------------------------------------
+    // TRACKS
+    // --------------------------------------------------------
+
+    const trackMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: 0x171c1c,
+
+            roughness: 0.95
+
+        });
+
+
+    const trackGeometry =
+        new THREE.BoxGeometry(
+            1.0,
+            1.25,
+            6.4
+        );
+
+
+    const leftTrack =
+        new THREE.Mesh(
+            trackGeometry,
+            trackMaterial
+        );
+
+
+    leftTrack.position.set(
+        -2.25,
+        0.9,
+        0
+    );
+
+
+    leftTrack.castShadow = true;
+
+    tank.add(leftTrack);
+
+
+    const rightTrack =
+        new THREE.Mesh(
+            trackGeometry,
+            trackMaterial
+        );
+
+
+    rightTrack.position.set(
+        2.25,
+        0.9,
+        0
+    );
+
+
+    rightTrack.castShadow = true;
+
+    tank.add(rightTrack);
+
+
+    // --------------------------------------------------------
+    // TRACK DETAILS
+    // --------------------------------------------------------
+
+    for (const side of [-2.25, 2.25]) {
+
+        for (let i = -2.4; i <= 2.4; i += 0.8) {
+
+            const wheel =
+                new THREE.Mesh(
+
+                    new THREE.CylinderGeometry(
+                        0.42,
+                        0.42,
+                        1.05,
+                        16
+                    ),
+
+                    new THREE.MeshStandardMaterial({
+                        color: 0x2c3231
+                    })
+
+                );
+
+
+            wheel.rotation.z =
+                Math.PI / 2;
+
+            wheel.position.set(
+                side,
+                0.8,
+                i
+            );
+
+            wheel.castShadow = true;
+
+            tank.add(wheel);
+
+        }
+
+    }
+
+
+    // --------------------------------------------------------
+    // TURRET
+    // --------------------------------------------------------
+
+    const turret =
+        new THREE.Group();
+
+
+    turret.position.y = 2.25;
+
+
+    const turretBase =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                1.55,
+                1.7,
+                0.7,
+                16
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x45584b,
+
+                roughness: 0.65,
+
+                metalness: 0.25
+
+            })
+
+        );
+
+
+    turretBase.castShadow = true;
+
+    turret.add(turretBase);
+
+
+    // --------------------------------------------------------
+    // TURRET TOP
+    // --------------------------------------------------------
+
+    const turretTop =
+        new THREE.Mesh(
+
+            new THREE.BoxGeometry(
+                2.4,
+                0.8,
+                2.4
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x53695a,
+
+                roughness: 0.7
+
+            })
+
+        );
+
+
+    turretTop.position.y = 0.55;
+
+    turretTop.castShadow = true;
+
+    turret.add(turretTop);
+
+
+    // --------------------------------------------------------
+    // BARREL
+    // --------------------------------------------------------
+
+    const barrel =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                0.18,
+                0.24,
+                5.4,
+                16
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x202827,
+
+                metalness: 0.65,
+
+                roughness: 0.35
+
+            })
+
+        );
+
+
+    barrel.rotation.x =
+        Math.PI / 2;
+
+
+    barrel.position.z = -3;
+
+
+    barrel.castShadow = true;
+
+    turret.add(barrel);
+
+
+    // --------------------------------------------------------
+    // MUZZLE
+    // --------------------------------------------------------
+
+    const muzzle =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                0.3,
+                0.3,
+                0.65,
+                16
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x121817,
+
+                metalness: 0.8
+
+            })
+
+        );
+
+
+    muzzle.rotation.x =
+        Math.PI / 2;
+
+
+    muzzle.position.z = -5.65;
+
+    muzzle.castShadow = true;
+
+    turret.add(muzzle);
+
+
+    // --------------------------------------------------------
+    // TURRET LIGHT
+    // --------------------------------------------------------
+
+    const turretLight =
+        new THREE.PointLight(
+            0x86e0ff,
+            2,
+            18
+        );
+
+
+    turretLight.position.set(
+        0,
+        1,
+        -2
+    );
+
+
+    turret.add(turretLight);
+
+
+    tank.add(turret);
+
+
+    player.group = tank;
+
+    player.turret = turret;
+
+    player.barrel = barrel;
+
+
+    tank.position.set(
+        0,
+        0,
+        0
+    );
+
+
+    scene.add(tank);
+
+}
+
+
+createTank();
+
+
+// ============================================================
+// BUILDINGS
+// ============================================================
+
+function createBuildings() {
+
+    buildings.length = 0;
+
+    for (let i = 0; i < 30; i++) {
+
+        let x;
+        let z;
+
+        let valid = false;
+
+        let attempts = 0;
+
+
+        while (!valid && attempts < 100) {
+
+            attempts++;
+
+            x = random(
+                -WORLD_SIZE / 2 + 60,
+                WORLD_SIZE / 2 - 60
+            );
+
+            z = random(
+                -WORLD_SIZE / 2 + 60,
+                WORLD_SIZE / 2 - 60
+            );
+
+
+            if (
+                Math.hypot(x, z) > 100
+            ) {
+
+                valid = true;
+
+            }
+
+        }
+
+
+        const width =
+            randomInt(12, 28);
+
+        const depth =
+            randomInt(12, 28);
+
+        const height =
+            randomInt(5, 12);
+
+
+        const building =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    width,
+                    height,
+                    depth
+                ),
+
+                new THREE.MeshStandardMaterial({
+
+                    color:
+                        randomInt(0, 1)
+                        ? 0x374149
+                        : 0x454b50,
+
+                    roughness: 0.85,
+
+                    metalness: 0.15
+
+                })
+
+            );
+
+
+        building.position.set(
+            x,
+            height / 2,
+            z
+        );
+
+
+        building.castShadow = true;
+
+        building.receiveShadow = true;
+
+
+        scene.add(building);
+
+        buildings.push({
+
+            mesh: building,
+
+            x,
+            z,
+
+            width,
+            depth
+
+        });
+
+    }
+
+}
+
+
+createBuildings();
+
+
+// ============================================================
+// TREES
+// ============================================================
+
+function createTrees() {
+
+    for (let i = 0; i < 240; i++) {
+
+        const x =
+            random(
+                -WORLD_SIZE / 2 + 20,
+                WORLD_SIZE / 2 - 20
+            );
+
+        const z =
+            random(
+                -WORLD_SIZE / 2 + 20,
+                WORLD_SIZE / 2 - 20
+            );
+
+
+        if (Math.hypot(x, z) < 80) {
+
+            continue;
+
+        }
+
+
+        const tree =
+            new THREE.Group();
+
+
+        const trunk =
+            new THREE.Mesh(
+
+                new THREE.CylinderGeometry(
+                    0.45,
+                    0.65,
+                    4,
+                    8
+                ),
+
+                new THREE.MeshStandardMaterial({
+
+                    color: 0x4d3525
+
+                })
+
+            );
+
+
+        trunk.position.y = 2;
+
+        trunk.castShadow = true;
+
+        tree.add(trunk);
+
+
+        const crown =
+            new THREE.Mesh(
+
+                new THREE.DodecahedronGeometry(
+                    random(2.2, 4),
+                    1
+                ),
+
+                new THREE.MeshStandardMaterial({
+
+                    color:
+                        randomInt(0, 1)
+                        ? 0x2e6038
+                        : 0x385f3d,
+
+                    roughness: 1
+
+                })
+
+            );
+
+
+        crown.position.y =
+            random(4.3, 5.4);
+
+        crown.castShadow = true;
+
+        crown.receiveShadow = true;
+
+        tree.add(crown);
+
+
+        tree.position.set(
+            x,
+            0,
+            z
+        );
+
+
+        scene.add(tree);
+
+        trees.push(tree);
+
+    }
+
+}
+
+
+createTrees();
+
+
+// ============================================================
+// ROCKS
+// ============================================================
+
+function createRocks() {
+
+    for (let i = 0; i < 180; i++) {
+
+        const x =
+            random(
+                -WORLD_SIZE / 2 + 20,
+                WORLD_SIZE / 2 - 20
+            );
+
+        const z =
+            random(
+                -WORLD_SIZE / 2 + 20,
+                WORLD_SIZE / 2 - 20
+            );
+
+
+        if (Math.hypot(x, z) < 70) {
+
+            continue;
+
+        }
+
+
+        const rock =
+            new THREE.Mesh(
+
+                new THREE.DodecahedronGeometry(
+                    random(0.5, 1.7),
+                    0
+                ),
+
+                new THREE.MeshStandardMaterial({
+
+                    color: 0x58605e,
+
+                    roughness: 1
+
+                })
+
+            );
+
+
+        rock.position.set(
+            x,
+            0.7,
+            z
+        );
+
+
+        rock.rotation.set(
+            random(0, Math.PI),
+            random(0, Math.PI),
+            random(0, Math.PI)
+        );
+
+
+        rock.castShadow = true;
+
+        scene.add(rock);
+
+        rocks.push(rock);
+
+    }
+
+}
+
+
+createRocks();
+
+
+// ============================================================
+// ENEMIES
+// ============================================================
+
+function createEnemy() {
+
+    const enemy =
+        new THREE.Group();
+
+
+    const body =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                1.2,
+                1.5,
+                2.2,
+                10
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x604878,
+
+                roughness: 0.8
+
+            })
+
+        );
+
+
+    body.position.y = 1.5;
+
+    body.castShadow = true;
+
+    enemy.add(body);
+
+
+    const eye =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                0.35,
+                12,
+                12
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x8de9ff,
+
+                emissive: 0x26758a,
+
+                emissiveIntensity: 2
+
+            })
+
+        );
+
+
+    eye.position.set(
+        0,
+        2,
+        -1
+    );
+
+
+    enemy.add(eye);
+
+
+    const angle =
+        random(0, Math.PI * 2);
+
+
+    const distance =
+        random(120, 280);
+
+
+    enemy.position.set(
+
+        player.group.position.x +
+        Math.cos(angle) * distance,
+
+        0,
+
+        player.group.position.z +
+        Math.sin(angle) * distance
+
+    );
+
+
+    enemy.userData.health = 50;
+
+    enemy.userData.speed =
+        random(2.5, 4.5);
+
+    enemy.userData.attackTimer =
+        random(0, 2);
+
+
+    scene.add(enemy);
+
+    enemies.push(enemy);
+
+}
+
+
+for (let i = 0; i < 8; i++) {
+
+    createEnemy();
+
+}
+
+
+// ============================================================
+// BULLET
+// ============================================================
+
+function shoot() {
+
+    if (
+        player.shootCooldown > 0 ||
+        player.ammo <= 0
+    ) {
+
+        return;
+
+    }
+
+
+    player.shootCooldown =
+        0.28;
+
+
+    player.ammo--;
+
+
+    updateHUD();
+
+
+    const direction =
+        new THREE.Vector3(
+            0,
+            0,
+            -1
+        );
+
+
+    direction.applyQuaternion(
+        player.turret.getWorldQuaternion(
+            new THREE.Quaternion()
+        )
+    );
+
+
+    const start =
+        new THREE.Vector3();
+
+
+    player.barrel.getWorldPosition(
+        start
+    );
+
+
+    const bullet =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                0.18,
+                10,
+                10
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x8deaff,
+
+                emissive: 0x4edfff,
+
+                emissiveIntensity: 4
+
+            })
+
+        );
+
+
+    bullet.position.copy(start);
+
+    bullet.userData.velocity =
+        direction.multiplyScalar(45);
+
+    bullet.userData.life = 3;
+
+    scene.add(bullet);
+
+    bullets.push(bullet);
+
+
+    // muzzle flash
+
+    const flash =
+        new THREE.PointLight(
+            0xb9f3ff,
+            8,
+            12
+        );
+
+
+    flash.position.copy(start);
+
+    scene.add(flash);
+
+
+    setTimeout(() => {
+
+        scene.remove(flash);
+
+    }, 70);
+
+}
+
+
+// ============================================================
+// AIM TURRET
+// ============================================================
+
+const raycaster =
+    new THREE.Raycaster();
+
+const mouseVector =
+    new THREE.Vector2();
+
+const aimPlane =
+    new THREE.Plane(
+        new THREE.Vector3(0, 1, 0),
+        0
+    );
+
+
+function aimTurret() {
+
+    if (!player.turret) {
+
+        return;
+
+    }
+
+
+    mouseVector.x =
+        (mouse.x / window.innerWidth) * 2 - 1;
+
+    mouseVector.y =
+        -(mouse.y / window.innerHeight) * 2 + 1;
+
+
+    raycaster.setFromCamera(
+        mouseVector,
+        camera
+    );
+
+
+    const target =
+        new THREE.Vector3();
+
+
+    const hit =
+        raycaster.ray.intersectPlane(
+            aimPlane,
+            target
+        );
+
+
+    if (!hit) {
+
+        return;
+
+    }
+
+
+    const tankPosition =
+        player.group.position;
+
+
+    const dx =
+        target.x -
+        tankPosition.x;
+
+
+    const dz =
+        target.z -
+        tankPosition.z;
+
+
+    const worldAngle =
+        Math.atan2(
+            dx,
+            dz
+        );
+
+
+    // Tank rotation is already included.
+    // The turret only rotates relative to the tank.
+
+    player.turretRotation =
+        worldAngle -
+        player.rotation;
+
+
+    player.turret.rotation.y =
+        player.turretRotation;
+
+}
+
+
+// ============================================================
+// PLAYER MOVEMENT
+// ============================================================
+
+function updatePlayer(delta) {
+
+    let forward = 0;
+
+    let turn = 0;
+
+
+    if (keys["w"]) {
+
+        forward += 1;
+
+    }
+
+
+    if (keys["s"]) {
+
+        forward -= 1;
+
+    }
+
+
+    if (keys["a"]) {
+
+        turn -= 1;
+
+    }
+
+
+    if (keys["d"]) {
+
+        turn += 1;
+
+    }
+
+
+    // --------------------------------------------------------
+    // ROTATE TANK
+    // --------------------------------------------------------
+
+    if (turn !== 0) {
+
+        player.rotation +=
+            turn *
+            player.turnSpeed *
+            delta;
+
+    }
+
+
+    player.group.rotation.y =
+        player.rotation;
+
+
+    // --------------------------------------------------------
+    // MOVE TANK
+    // --------------------------------------------------------
+
+    if (forward !== 0) {
+
+        const speed =
+            forward > 0
+                ? player.speed
+                : player.reverseSpeed;
+
+
+        const direction =
+            new THREE.Vector3(
+                0,
+                0,
+                -1
+            );
+
+
+        direction.applyAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            player.rotation
+        );
+
+
+        const nextX =
+            player.group.position.x +
+            direction.x *
+            speed *
+            forward *
+            delta;
+
+
+        const nextZ =
+            player.group.position.z +
+            direction.z *
+            speed *
+            forward *
+            delta;
+
+
+        if (
+            !collidesWithBuildings(
+                nextX,
+                nextZ
+            )
+        ) {
+
+            player.group.position.x =
+                nextX;
+
+            player.group.position.z =
+                nextZ;
+
+        }
+
+    }
+
+
+    // --------------------------------------------------------
+    // KEEP TANK IN WORLD
+    // --------------------------------------------------------
+
+    const limit =
+        WORLD_SIZE / 2 - 15;
+
+
+    player.group.position.x =
+        THREE.MathUtils.clamp(
+            player.group.position.x,
+            -limit,
+            limit
+        );
+
+
+    player.group.position.z =
+        THREE.MathUtils.clamp(
+            player.group.position.z,
+            -limit,
+            limit
+        );
+
+}
+
+
+// ============================================================
+// BUILDING COLLISION
+// ============================================================
+
+function collidesWithBuildings(
+    x,
+    z
+) {
+
+    const radius = 3.2;
+
+
+    for (const building of buildings) {
+
+        const closestX =
+            Math.max(
+                building.x -
+                building.width / 2,
+
+                Math.min(
+                    x,
+
+                    building.x +
+                    building.width / 2
+                )
+            );
+
+
+        const closestZ =
+            Math.max(
+                building.z -
+                building.depth / 2,
+
+                Math.min(
+                    z,
+
+                    building.z +
+                    building.depth / 2
+                )
+            );
+
+
+        const dx =
+            x -
+            closestX;
+
+
+        const dz =
+            z -
+            closestZ;
+
+
+        if (
+            dx * dx +
+            dz * dz <
+            radius * radius
+        ) {
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+// ============================================================
+// UPDATE BULLETS
+// ============================================================
+
+function updateBullets(delta) {
+
+    for (
+        let i = bullets.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const bullet =
+            bullets[i];
+
+
+        bullet.position.addScaledVector(
+            bullet.userData.velocity,
+            delta
+        );
+
+
+        bullet.userData.life -=
+            delta;
+
+
+        if (
+            bullet.userData.life <= 0
+        ) {
+
+            scene.remove(bullet);
+
+            bullets.splice(i, 1);
+
+            continue;
+
+        }
+
+
+        // ----------------------------------------------------
+        // ENEMY HIT
+        // ----------------------------------------------------
+
+        for (
+            let j = enemies.length - 1;
+            j >= 0;
+            j--
+        ) {
+
+            const enemy =
+                enemies[j];
+
+
+            const distance =
+                bullet.position.distanceTo(
+                    enemy.position
+                );
+
+
+            if (distance < 2) {
+
+                enemy.userData.health -=
+                    25;
+
+
+                scene.remove(bullet);
+
+                bullets.splice(i, 1);
+
+
+                if (
+                    enemy.userData.health <= 0
+                ) {
+
+                    scene.remove(enemy);
+
+                    enemies.splice(j, 1);
+
+                    kills++;
+
+                    credits += 25;
+
+                    updateHUD();
+
+
+                    setTimeout(() => {
+
+                        if (
+                            gameRunning &&
+                            !gameOver
+                        ) {
+
+                            createEnemy();
+
+                        }
+
+                    }, 1200);
+
+                }
+
+
+                break;
+
+            }
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// UPDATE ENEMIES
+// ============================================================
+
+function updateEnemies(delta) {
+
+    for (const enemy of enemies) {
+
+        const dx =
+            player.group.position.x -
+            enemy.position.x;
+
+
+        const dz =
+            player.group.position.z -
+            enemy.position.z;
+
+
+        const distance =
+            Math.hypot(dx, dz);
+
+
+        if (distance > 5) {
+
+            const direction =
+                new THREE.Vector3(
+                    dx,
+                    0,
+                    dz
+                ).normalize();
+
+
+            enemy.position.addScaledVector(
+                direction,
+                enemy.userData.speed *
+                delta
+            );
+
+
+            enemy.lookAt(
+                player.group.position.x,
+                enemy.position.y,
+                player.group.position.z
+            );
+
+        }
+
+
+        enemy.userData.attackTimer -=
+            delta;
+
+
+        if (
+            distance < 12 &&
+            enemy.userData.attackTimer <= 0
+        ) {
+
+            player.health -= 8;
+
+            enemy.userData.attackTimer =
+                1.5;
+
+
+            updateHUD();
+
+
+            if (player.health <= 0) {
+
+                endGame();
+
+                return;
+
+            }
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// FIXED THIRD-PERSON CAMERA
+// ============================================================
+//
+// IMPORTANT:
+// The camera does NOT rotate independently.
+// It is always positioned behind the tank.
+//
+// ============================================================
+
+function updateCamera(delta) {
+
+    if (!player.group) {
+
+        return;
+
+    }
+
+
+    const tank =
+        player.group;
+
+
+    // Camera distance behind tank
+
+    const CAMERA_DISTANCE = 15;
+
+    // Camera height
+
+    const CAMERA_HEIGHT = 8;
+
+
+    // --------------------------------------------------------
+    // Calculate position BEHIND the tank
+    // --------------------------------------------------------
+
+    const behindX =
+        tank.position.x +
+        Math.sin(player.rotation) *
+        CAMERA_DISTANCE;
+
+
+    const behindZ =
+        tank.position.z +
+        Math.cos(player.rotation) *
+        CAMERA_DISTANCE;
+
+
+    const desiredPosition =
+        new THREE.Vector3(
+            behindX,
+            CAMERA_HEIGHT,
+            behindZ
+        );
+
+
+    // --------------------------------------------------------
+    // Smooth camera
+    // --------------------------------------------------------
+
+    camera.position.lerp(
+        desiredPosition,
+        1 -
+        Math.pow(
+            0.001,
+            delta
+        )
+    );
+
+
+    // --------------------------------------------------------
+    // Camera always looks FORWARD with tank
+    // --------------------------------------------------------
+
+    const lookDistance = 25;
+
+
+    const lookX =
+        tank.position.x -
+        Math.sin(player.rotation) *
+        lookDistance;
+
+
+    const lookZ =
+        tank.position.z -
+        Math.cos(player.rotation) *
+        lookDistance;
+
+
+    const lookTarget =
+        new THREE.Vector3(
+            lookX,
+            2.5,
+            lookZ
+        );
+
+
+    camera.lookAt(
+        lookTarget
+    );
+
+}
+
+
+// ============================================================
+// HUD
+// ============================================================
+
+function updateHUD() {
+
+    if (healthBar) {
+
+        healthBar.style.width =
+            `${Math.max(0, player.health)}%`;
+
+    }
+
+
+    if (energyBar) {
+
+        energyBar.style.width =
+            `${Math.max(0, player.energy)}%`;
+
+    }
+
+
+    if (ammoText) {
+
+        ammoText.textContent =
+            player.ammo;
+
+    }
+
+
+    if (killsText) {
+
+        killsText.textContent =
+            `KILLS ${String(kills).padStart(2, "0")}`;
+
+    }
+
+
+    if (creditsText) {
+
+        creditsText.textContent =
+            `CREDITS ${String(credits).padStart(3, "0")}`;
+
+    }
+
+}
+
+
+// ============================================================
+// ENERGY
+// ============================================================
+
+function updateEnergy(delta) {
+
+    if (
+        keys["shift"] &&
+        player.energy > 0
+    ) {
+
+        player.energy -=
+            25 * delta;
+
+    } else {
+
+        player.energy +=
+            12 * delta;
+
+    }
+
+
+    player.energy =
+        THREE.MathUtils.clamp(
+            player.energy,
+            0,
+            player.maxEnergy
+        );
+
+}
+
+
+// ============================================================
+// SHOOTING
+// ============================================================
+
+function updateShooting(delta) {
+
+    if (player.shootCooldown > 0) {
+
+        player.shootCooldown -=
+            delta;
+
+    }
+
+
+    if (
+        mouse.down &&
+        player.shootCooldown <= 0
+    ) {
+
+        shoot();
+
+    }
+
+
+    if (
+        player.ammo <= 0 &&
+        keys["r"]
+    ) {
+
+        player.ammo =
+            player.maxAmmo;
+
+    }
+
+}
+
+
+// ============================================================
+// START GAME
+// ============================================================
+
+function startGame() {
+
+    menu.style.display = "none";
+
+    hud.style.display = "block";
+
+    pauseScreen.style.display = "none";
+
+    mapScreen.style.display = "none";
+
+
+    gameRunning = true;
+
+    paused = false;
+
+    gameOver = false;
+
+
+    player.health =
+        player.maxHealth;
+
+    player.energy =
+        player.maxEnergy;
+
+    player.ammo =
+        player.maxAmmo;
+
+
+    kills = 0;
+
+    credits = 0;
+
+
+    player.group.position.set(
+        0,
+        0,
+        0
+    );
+
+
+    player.rotation = 0;
+
+    player.group.rotation.y = 0;
+
+
+    camera.position.set(
+        0,
+        8,
+        15
+    );
+
+
+    updateHUD();
+
+
+    objectiveText.textContent =
+        "LOCATE THE SIGNAL";
+
+
+    lastTime =
+        performance.now();
+
+}
+
+
+// ============================================================
+// PAUSE
+// ============================================================
+
+function togglePause() {
+
+    if (!gameRunning) {
+
+        return;
+
+    }
+
+
+    paused = !paused;
+
+
+    pauseScreen.style.display =
+        paused
+            ? "flex"
+            : "none";
+
+}
+
+
+// ============================================================
+// GAME OVER
+// ============================================================
+
+function endGame() {
+
+    gameOver = true;
+
+    gameRunning = false;
+
+    hud.style.display = "none";
+
+    pauseScreen.style.display = "none";
+
+    menu.style.display = "flex";
+
+
+    const title =
+        menu.querySelector("h1");
+
+
+    if (title) {
+
+        title.innerHTML =
+            "SIGNAL<br><span>LOST</span>";
+
+    }
+
+
+    newGameButton.innerHTML = `
+        <b>01</b>
         <div>
-            <small>PRIMARY WEAPON</small>
-            <strong>PULSE RIFLE</strong>
+            <strong>NEW RUN</strong>
+            <small>START A NEW EXPEDITION</small>
         </div>
+        <em>›</em>
+    `;
 
-        <div class="ammo">
-            <b id="ammo">12</b>
-            <span>/ ∞</span>
-        </div>
-
-    </div>
+}
 
 
-    <div class="controlHint">
-        WASD MOVE
-        <span>•</span>
-        MOUSE CAMERA
-        <span>•</span>
-        CLICK FIRE
-        <span>•</span>
-        SHIFT SPRINT
-        <span>•</span>
-        SPACE DASH
-        <span>•</span>
-        M MAP
-        <span>•</span>
-        ESC PAUSE
-    </div>
+// ============================================================
+// SAVE
+// ============================================================
 
-</div>
+function saveGame() {
 
+    const saveData = {
 
-<!-- ================= PAUSE ================= -->
+        x:
+            player.group.position.x,
 
-<div id="pause">
+        z:
+            player.group.position.z,
 
-    <div class="pausePanel">
+        rotation:
+            player.rotation,
 
-        <div class="pauseLogo">
-            ECHOBOUND
-        </div>
+        health:
+            player.health,
 
-        <small>MISSION CONTROL</small>
+        energy:
+            player.energy,
 
-        <h2>PAUSED</h2>
+        ammo:
+            player.ammo,
 
-        <button id="resume" class="pauseButton primary">
-            RESUME
-        </button>
+        kills,
+        credits
 
-        <button id="save" class="pauseButton">
-            SAVE RUN
-        </button>
-
-        <button id="quit" class="pauseButton">
-            QUIT TO MENU
-        </button>
-
-        <a href="shop.html" class="pauseButton">
-            SUPPLY TERMINAL
-        </a>
-
-    </div>
-
-</div>
+    };
 
 
-<!-- ================= ACHIEVEMENT ================= -->
-
-<div id="achievement">
-
-    <div class="achievementIcon">
-        ✓
-    </div>
-
-    <div>
-        <small>ACHIEVEMENT UNLOCKED</small>
-        <strong id="achievementName">FIRST ECHO</strong>
-    </div>
-
-</div>
+    localStorage.setItem(
+        "echobound_save",
+        JSON.stringify(saveData)
+    );
 
 
-<!-- ================= MAP ================= -->
+    showAchievement(
+        "RUN SAVED"
+    );
 
-<div id="map">
-
-    <div class="mapPanel">
-
-        <div class="mapHeader">
-
-            <div>
-                <small>EXPLORATION NETWORK</small>
-                <h2>SECTOR MAP</h2>
-            </div>
-
-            <button id="closeMap">
-                CLOSE
-            </button>
-
-        </div>
-
-        <canvas id="mapCanvas"></canvas>
-
-    </div>
-
-</div>
+}
 
 
-<script type="module" src="app.js"></script>
+// ============================================================
+// LOAD
+// ============================================================
 
-</body>
-</html>
+function loadGame() {
+
+    const saved =
+        localStorage.getItem(
+            "echobound_save"
+        );
+
+
+    if (!saved) {
+
+        startGame();
+
+        return;
+
+    }
+
+
+    try {
+
+        const data =
+            JSON.parse(saved);
+
+
+        startGame();
+
+
+        player.group.position.x =
+            data.x || 0;
+
+
+        player.group.position.z =
+            data.z || 0;
+
+
+        player.rotation =
+            data.rotation || 0;
+
+
+        player.group.rotation.y =
+            player.rotation;
+
+
+        player.health =
+            data.health ?? 100;
+
+
+        player.energy =
+            data.energy ?? 100;
+
+
+        player.ammo =
+            data.ammo ?? 12;
+
+
+        kills =
+            data.kills || 0;
+
+
+        credits =
+            data.credits || 0;
+
+
+        updateHUD();
+
+
+    } catch (error) {
+
+        console.error(
+            "Save could not be loaded:",
+            error
+        );
+
+
+        startGame();
+
+    }
+
+}
+
+
+// ============================================================
+// ACHIEVEMENT
+// ============================================================
+
+function showAchievement(name) {
+
+    const nameElement =
+        document.getElementById(
+            "achievementName"
+        );
+
+
+    if (nameElement) {
+
+        nameElement.textContent =
+            name;
+
+    }
+
+
+    achievement.style.display =
+        "flex";
+
+
+    setTimeout(() => {
+
+        achievement.style.display =
+            "none";
+
+    }, 3000);
+
+}
+
+
+// ============================================================
+// MAP
+// ============================================================
+
+function toggleMap() {
+
+    if (!gameRunning) {
+
+        return;
+
+    }
+
+
+    const visible =
+        mapScreen.style.display === "flex";
+
+
+    mapScreen.style.display =
+        visible
+            ? "none"
+            : "flex";
+
+}
+
+
+// ============================================================
+// BUTTONS
+// ============================================================
+
+newGameButton.addEventListener(
+    "click",
+    () => {
+
+        startGame();
+
+    }
+);
+
+
+loadGameButton.addEventListener(
+    "click",
+    () => {
+
+        loadGame();
+
+    }
+);
+
+
+resumeButton.addEventListener(
+    "click",
+    () => {
+
+        togglePause();
+
+    }
+);
+
+
+saveButton.addEventListener(
+    "click",
+    () => {
+
+        saveGame();
+
+    }
+);
+
+
+quitButton.addEventListener(
+    "click",
+    () => {
+
+        gameRunning = false;
+
+        paused = false;
+
+        hud.style.display = "none";
+
+        pauseScreen.style.display =
+            "none";
+
+        menu.style.display =
+            "flex";
+
+    }
+);
+
+
+closeMapButton.addEventListener(
+    "click",
+    () => {
+
+        mapScreen.style.display =
+            "none";
+
+    }
+);
+
+
+// ============================================================
+// ACHIEVEMENTS BUTTON
+// ============================================================
+
+achievementsButton.addEventListener(
+    "click",
+    () => {
+
+        showAchievement(
+            "ACHIEVEMENTS SYSTEM ONLINE"
+        );
+
+    }
+);
+
+
+// ============================================================
+// CONTROLS BUTTON
+// ============================================================
+
+controlsButton.addEventListener(
+    "click",
+    () => {
+
+        alert(
+            "ECHOBOUND CONTROLS\n\n" +
+            "W / S = vooruit / achteruit\n" +
+            "A / D = tank draaien\n" +
+            "MUIS = kanon richten\n" +
+            "LINKERMUIS = schieten\n" +
+            "SHIFT = sprint\n" +
+            "R = herladen\n" +
+            "M = map\n" +
+            "ESC = pauze"
+        );
+
+    }
+);
+
+
+// ============================================================
+// WINDOW RESIZE
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+
+function gameLoop(time) {
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+
+    const delta =
+        Math.min(
+            (time - lastTime) / 1000,
+            0.05
+        );
+
+
+    lastTime = time;
+
+
+    if (
+        !gameRunning ||
+        paused ||
+        gameOver
+    ) {
+
+        renderer.render(
+            scene,
+            camera
+        );
+
+        return;
+
+    }
+
+
+    updatePlayer(delta);
+
+    updateShooting(delta);
+
+    updateBullets(delta);
+
+    updateEnemies(delta);
+
+    updateEnergy(delta);
+
+    updateCamera(delta);
+
+    aimTurret();
+
+    updateHUD();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+// ============================================================
+// INITIAL STATE
+// ============================================================
+
+hud.style.display = "none";
+
+pauseScreen.style.display = "none";
+
+achievement.style.display = "none";
+
+mapScreen.style.display = "none";
+
+
+// ============================================================
+// START RENDER LOOP
+// ============================================================
+
+requestAnimationFrame(
+    gameLoop
+);
+
+console.log(
+    "ECHOBOUND 3D READY"
+);
+
+console.log(
+    "Camera: FIXED BEHIND TANK"
+);
+
+console.log(
+    "Mouse: TURRET AIM ONLY"
+);
+```
