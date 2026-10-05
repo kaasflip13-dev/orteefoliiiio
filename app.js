@@ -68,6 +68,7 @@
     let totalPlayTime = 0;
 
     let keys = {};
+
     let mouse = {
         x: 0,
         y: 0,
@@ -81,7 +82,6 @@
     let camera;
     let renderer;
     let scene;
-
     let clock;
 
     const bullets = [];
@@ -101,9 +101,10 @@
         survivor: false
     };
 
-    // ------------------------------------------------------------
+    // ============================================================
     // STYLING
-    // ------------------------------------------------------------
+    // ============================================================
+
     const style = document.createElement("style");
 
     style.textContent = `
@@ -115,7 +116,12 @@
             margin: 0;
             overflow: hidden;
             background:
-                radial-gradient(circle at center, #102337 0%, #05080d 55%, #020305 100%);
+                radial-gradient(
+                    circle at center,
+                    #102337 0%,
+                    #05080d 55%,
+                    #020305 100%
+                );
             font-family:
                 Arial,
                 Helvetica,
@@ -228,7 +234,8 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            text-shadow: 0 0 30px rgba(80, 220, 255, .25);
+            text-shadow:
+                0 0 30px rgba(80, 220, 255, .25);
         }
 
         .subtitle {
@@ -306,11 +313,21 @@
         }
 
         #healthFill {
-            background: linear-gradient(90deg, #ff4f62, #ffb14e);
+            background:
+                linear-gradient(
+                    90deg,
+                    #ff4f62,
+                    #ffb14e
+                );
         }
 
         #energyFill {
-            background: linear-gradient(90deg, #45d8ff, #7a7cff);
+            background:
+                linear-gradient(
+                    90deg,
+                    #45d8ff,
+                    #7a7cff
+                );
         }
 
         .hud-info {
@@ -348,12 +365,14 @@
             background: rgba(0, 0, 0, .68);
             pointer-events: auto;
             backdrop-filter: blur(7px);
+            padding: 20px;
         }
 
         .panel {
             width: min(850px, 92vw);
             max-height: 88vh;
             overflow-y: auto;
+            overflow-x: hidden;
             border-radius: 24px;
             padding: 30px;
             background:
@@ -379,15 +398,21 @@
         }
 
         /* ======================================================
-           FEESTELIJKE SHOP
+           SHOP
            ====================================================== */
 
         .shop-panel {
             position: relative;
             width: min(1050px, 95vw);
             max-height: 92vh;
-            overflow: hidden;
+
+            /* BELANGRIJKE FIX:
+               shop mag nu verticaal scrollen */
+            overflow-y: auto;
+            overflow-x: hidden;
+
             padding: 32px;
+
             background:
                 radial-gradient(
                     circle at 50% -15%,
@@ -409,11 +434,39 @@
                     rgba(20, 25, 35, .99),
                     rgba(4, 8, 14, .995)
                 );
+
             border: 1px solid rgba(255, 220, 92, .72);
+
             box-shadow:
                 0 0 30px rgba(255, 211, 55, .12),
                 0 0 100px rgba(255, 185, 45, .18),
                 inset 0 0 70px rgba(255, 195, 45, .035);
+        }
+
+        .shop-panel::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .shop-panel::-webkit-scrollbar-track {
+            background: rgba(255,255,255,.04);
+            border-radius: 10px;
+        }
+
+        .shop-panel::-webkit-scrollbar-thumb {
+            background:
+                linear-gradient(
+                    #ffe36b,
+                    #72eaff
+                );
+            border-radius: 10px;
+            border: 2px solid rgba(0,0,0,.2);
+        }
+
+        .shop-panel {
+            scrollbar-width: thin;
+            scrollbar-color:
+                #ffe36b
+                rgba(255,255,255,.04);
         }
 
         .shop-panel::before {
@@ -435,7 +488,8 @@
                     rgba(255, 90, 174, .03) 45deg,
                     transparent 60deg
                 );
-            animation: shopRays 14s linear infinite;
+            animation:
+                shopRays 14s linear infinite;
         }
 
         .shop-header {
@@ -464,7 +518,8 @@
                 );
             box-shadow:
                 0 0 20px rgba(255, 210, 70, .12);
-            animation: badgePulse 2.2s ease-in-out infinite;
+            animation:
+                badgePulse 2.2s ease-in-out infinite;
         }
 
         .shop-sparkles {
@@ -474,7 +529,8 @@
             text-shadow:
                 0 0 8px rgba(255, 235, 120, .8),
                 0 0 25px rgba(255, 205, 60, .5);
-            animation: sparkle 1.8s infinite ease-in-out;
+            animation:
+                sparkle 1.8s infinite ease-in-out;
         }
 
         .shop-title {
@@ -496,9 +552,13 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            animation: goldFlow 3s linear infinite;
+            animation:
+                goldFlow 3s linear infinite;
             filter:
-                drop-shadow(0 0 12px rgba(255, 214, 76, .18));
+                drop-shadow(
+                    0 0 12px
+                    rgba(255, 214, 76, .18)
+                );
         }
 
         .shop-unlocked {
@@ -541,7 +601,8 @@
             box-shadow:
                 0 0 25px rgba(255, 205, 60, .1),
                 inset 0 0 20px rgba(255, 218, 75, .06);
-            animation: creditGlow 2.5s ease-in-out infinite;
+            animation:
+                creditGlow 2.5s ease-in-out infinite;
         }
 
         .coin {
@@ -566,7 +627,8 @@
             box-shadow:
                 0 0 10px rgba(255, 230, 92, .65),
                 0 0 25px rgba(255, 211, 60, .3);
-            animation: coinFloat 2s ease-in-out infinite;
+            animation:
+                coinFloat 2s ease-in-out infinite;
         }
 
         .credits-number {
@@ -588,7 +650,8 @@
             position: relative;
             z-index: 4;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns:
+                repeat(3, 1fr);
             gap: 16px;
         }
 
@@ -650,15 +713,21 @@
                     rgba(255,255,255,.08),
                     transparent
                 );
-            transition: left .7s ease;
+            transition:
+                left .7s ease;
         }
 
         .shop-card:hover {
-            transform: translateY(-7px) scale(1.015);
-            border-color: rgba(255, 220, 100, .62);
+            transform:
+                translateY(-7px)
+                scale(1.015);
+            border-color:
+                rgba(255, 220, 100, .62);
             box-shadow:
-                0 18px 40px rgba(0, 170, 255, .12),
-                0 0 28px rgba(255, 207, 65, .08);
+                0 18px 40px
+                rgba(0, 170, 255, .12),
+                0 0 28px
+                rgba(255, 207, 65, .08);
         }
 
         .shop-card:hover::after {
@@ -666,15 +735,18 @@
         }
 
         .shop-card:nth-child(1):hover {
-            border-color: rgba(113, 218, 255, .75);
+            border-color:
+                rgba(113, 218, 255, .75);
         }
 
         .shop-card:nth-child(2):hover {
-            border-color: rgba(255, 105, 130, .75);
+            border-color:
+                rgba(255, 105, 130, .75);
         }
 
         .shop-card:nth-child(3):hover {
-            border-color: rgba(187, 129, 255, .75);
+            border-color:
+                rgba(187, 129, 255, .75);
         }
 
         .shop-icon {
@@ -693,27 +765,36 @@
                     rgba(65, 120, 145, .28),
                     rgba(10, 25, 35, .8)
                 );
-            border: 1px solid rgba(110, 225, 255, .35);
+            border:
+                1px solid
+                rgba(110, 225, 255, .35);
             box-shadow:
-                0 0 25px rgba(80, 220, 255, .08),
-                inset 0 0 20px rgba(100, 220, 255, .05);
+                0 0 25px
+                rgba(80, 220, 255, .08),
+                inset 0 0 20px
+                rgba(100, 220, 255, .05);
             transition:
                 transform .2s ease,
                 box-shadow .2s ease;
         }
 
         .shop-card:nth-child(2) .shop-icon {
-            border-color: rgba(255, 110, 135, .38);
+            border-color:
+                rgba(255, 110, 135, .38);
         }
 
         .shop-card:nth-child(3) .shop-icon {
-            border-color: rgba(190, 130, 255, .4);
+            border-color:
+                rgba(190, 130, 255, .4);
         }
 
         .shop-card:hover .shop-icon {
-            transform: translateY(-3px) scale(1.08);
+            transform:
+                translateY(-3px)
+                scale(1.08);
             box-shadow:
-                0 0 30px rgba(90, 220, 255, .18);
+                0 0 30px
+                rgba(90, 220, 255, .18);
         }
 
         .shop-card h2 {
@@ -748,14 +829,16 @@
             position: relative;
             z-index: 3;
             width: 100%;
-            border-color: rgba(255, 216, 90, .55);
+            border-color:
+                rgba(255, 216, 90, .55);
             color: #fff6c8;
         }
 
         .buy-button:hover {
             border-color: #ffe778;
             box-shadow:
-                0 0 24px rgba(255, 214, 70, .2);
+                0 0 24px
+                rgba(255, 214, 70, .2);
         }
 
         .shop-message {
@@ -798,9 +881,12 @@
             border-radius: 2px;
             opacity: .75;
             animation:
-                confettiFall var(--fall-time) linear infinite,
-                confettiSpin var(--spin-time) linear infinite;
-            animation-delay: var(--delay);
+                confettiFall var(--fall-time)
+                linear infinite,
+                confettiSpin var(--spin-time)
+                linear infinite;
+            animation-delay:
+                var(--delay);
         }
 
         .shop-confetti-piece:nth-child(3n) {
@@ -828,8 +914,39 @@
                     transparent
                 );
             box-shadow:
-                0 0 15px rgba(255, 220, 75, .45);
+                0 0 15px
+                rgba(255, 220, 75, .45);
         }
+
+        /* ======================================================
+           NOTIFICATION
+           ====================================================== */
+
+        .notification {
+            position: absolute;
+            left: 50%;
+            bottom: 40px;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 12px;
+            background:
+                rgba(3, 10, 16, .92);
+            border:
+                1px solid
+                rgba(100, 220, 255, .35);
+            color: white;
+            opacity: 0;
+            transition:
+                opacity .2s;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        /* ======================================================
+           ANIMATIES
+           ====================================================== */
 
         @keyframes sparkle {
             0%, 100% {
@@ -845,59 +962,75 @@
 
         @keyframes goldFlow {
             0% {
-                background-position: 0% 50%;
+                background-position:
+                    0% 50%;
             }
 
             100% {
-                background-position: 300% 50%;
+                background-position:
+                    300% 50%;
             }
         }
 
         @keyframes shopRays {
             from {
-                transform: rotate(0deg);
+                transform:
+                    rotate(0deg);
             }
 
             to {
-                transform: rotate(360deg);
+                transform:
+                    rotate(360deg);
             }
         }
 
         @keyframes badgePulse {
             0%, 100% {
-                transform: scale(1);
+                transform:
+                    scale(1);
                 box-shadow:
-                    0 0 15px rgba(255, 210, 70, .08);
+                    0 0 15px
+                    rgba(255, 210, 70, .08);
             }
 
             50% {
-                transform: scale(1.025);
+                transform:
+                    scale(1.025);
                 box-shadow:
-                    0 0 28px rgba(255, 210, 70, .22);
+                    0 0 28px
+                    rgba(255, 210, 70, .22);
             }
         }
 
         @keyframes creditGlow {
             0%, 100% {
                 box-shadow:
-                    0 0 20px rgba(255, 205, 60, .08),
-                    inset 0 0 20px rgba(255, 218, 75, .04);
+                    0 0 20px
+                    rgba(255, 205, 60, .08),
+                    inset 0 0 20px
+                    rgba(255, 218, 75, .04);
             }
 
             50% {
                 box-shadow:
-                    0 0 35px rgba(255, 205, 60, .18),
-                    inset 0 0 25px rgba(255, 218, 75, .07);
+                    0 0 35px
+                    rgba(255, 205, 60, .18),
+                    inset 0 0 25px
+                    rgba(255, 218, 75, .07);
             }
         }
 
         @keyframes coinFloat {
             0%, 100% {
-                transform: translateY(0) rotate(-4deg);
+                transform:
+                    translateY(0)
+                    rotate(-4deg);
             }
 
             50% {
-                transform: translateY(-4px) rotate(4deg);
+                transform:
+                    translateY(-4px)
+                    rotate(4deg);
             }
         }
 
@@ -923,35 +1056,27 @@
 
         @keyframes confettiSpin {
             0% {
-                transform: rotate(0deg) translateX(0);
+                transform:
+                    rotate(0deg)
+                    translateX(0);
             }
 
             50% {
-                transform: rotate(180deg) translateX(18px);
+                transform:
+                    rotate(180deg)
+                    translateX(18px);
             }
 
             100% {
-                transform: rotate(360deg) translateX(0);
+                transform:
+                    rotate(360deg)
+                    translateX(0);
             }
         }
 
-        .notification {
-            position: absolute;
-            left: 50%;
-            bottom: 40px;
-            transform: translateX(-50%);
-            padding: 12px 20px;
-            border-radius: 12px;
-            background: rgba(3, 10, 16, .92);
-            border: 1px solid rgba(100, 220, 255, .35);
-            color: white;
-            opacity: 0;
-            transition: opacity .2s;
-        }
-
-        .notification.show {
-            opacity: 1;
-        }
+        /* ======================================================
+           MOBIEL
+           ====================================================== */
 
         @media (max-width: 750px) {
 
@@ -961,9 +1086,6 @@
 
             .shop-grid {
                 grid-template-columns: 1fr;
-                max-height: 55vh;
-                overflow-y: auto;
-                padding-right: 4px;
             }
 
             .shop-card {
@@ -981,48 +1103,89 @@
             .shop-title {
                 letter-spacing: 5px !important;
             }
+
+            .hud-panel {
+                min-width: 190px;
+                left: 10px;
+                top: 10px;
+            }
+
+            .hud-actions {
+                right: 10px;
+                top: 10px;
+            }
         }
     `;
 
     document.head.appendChild(style);
 
-    // ------------------------------------------------------------
+    // ============================================================
     // UI ROOT
-    // ------------------------------------------------------------
-    const ui = document.createElement("div");
-    ui.className = "echo-ui";
+    // ============================================================
+
+    const ui =
+        document.createElement("div");
+
+    ui.className =
+        "echo-ui";
+
     document.body.appendChild(ui);
 
-    // ------------------------------------------------------------
+    // ============================================================
     // MENU
-    // ------------------------------------------------------------
-    const mainMenu = document.createElement("div");
-    mainMenu.className = "main-menu";
+    // ============================================================
+
+    const mainMenu =
+        document.createElement("div");
+
+    mainMenu.className =
+        "main-menu";
 
     mainMenu.innerHTML = `
         <div class="menu-box">
-            <div class="logo">ECHOBOUND</div>
-            <div class="subtitle">THE LOST SIGNAL</div>
+
+            <div class="logo">
+                ECHOBOUND
+            </div>
+
+            <div class="subtitle">
+                THE LOST SIGNAL
+            </div>
 
             <div class="menu-buttons">
 
-                <button class="echo-button" id="newRunBtn">
+                <button
+                    class="echo-button"
+                    id="newRunBtn"
+                >
                     NEW RUN
                 </button>
 
-                <button class="echo-button shop-main-button" id="shopBtn">
+                <button
+                    class="echo-button shop-main-button"
+                    id="shopBtn"
+                >
                     🛒 SHOP
                 </button>
 
-                <button class="echo-button" id="loadBtn">
+                <button
+                    class="echo-button"
+                    id="loadBtn"
+                >
                     LOAD GAME
                 </button>
 
-                <button class="echo-button" id="achievementsBtn">
+                <button
+                    class="echo-button"
+                    id="achievementsBtn"
+                >
                     🏆 ACHIEVEMENTS
                 </button>
 
-                <button class="echo-button" id="controlsBtn">
+                <button
+                    class="echo-button"
+                    id="controlsBtn"
+                >
                     CONTROLS
                 </button>
 
@@ -1032,12 +1195,18 @@
 
     ui.appendChild(mainMenu);
 
-    // ------------------------------------------------------------
+    // ============================================================
     // HUD
-    // ------------------------------------------------------------
-    const hud = document.createElement("div");
-    hud.className = "hud";
-    hud.style.display = "none";
+    // ============================================================
+
+    const hud =
+        document.createElement("div");
+
+    hud.className =
+        "hud";
+
+    hud.style.display =
+        "none";
 
     hud.innerHTML = `
         <div class="hud-panel">
@@ -1046,7 +1215,9 @@
                 ECHOBOUND // SYSTEM
             </div>
 
-            <div>HULL</div>
+            <div>
+                HULL
+            </div>
 
             <div class="bar">
                 <div
@@ -1055,7 +1226,9 @@
                 ></div>
             </div>
 
-            <div>ENERGY</div>
+            <div>
+                ENERGY
+            </div>
 
             <div class="bar">
                 <div
@@ -1065,21 +1238,30 @@
             </div>
 
             <div class="hud-info">
-                <span>AMMO</span>
+                <span>
+                    AMMO
+                </span>
+
                 <strong id="ammoText">
                     12 / 12
                 </strong>
             </div>
 
             <div class="hud-info">
-                <span>KILLS</span>
+                <span>
+                    KILLS
+                </span>
+
                 <strong id="killsText">
                     0
                 </strong>
             </div>
 
             <div class="hud-info">
-                <span>CREDITS</span>
+                <span>
+                    CREDITS
+                </span>
+
                 <strong id="creditsText">
                     100
                 </strong>
@@ -1108,33 +1290,47 @@
 
     ui.appendChild(hud);
 
-    // ------------------------------------------------------------
+    // ============================================================
     // NOTIFICATION
-    // ------------------------------------------------------------
-    const notification = document.createElement("div");
-    notification.className = "notification";
+    // ============================================================
+
+    const notification =
+        document.createElement("div");
+
+    notification.className =
+        "notification";
+
     ui.appendChild(notification);
 
     let notificationTimer = null;
 
     function notify(message) {
 
-        notification.textContent = message;
+        notification.textContent =
+            message;
 
-        notification.classList.add("show");
+        notification.classList.add(
+            "show"
+        );
 
-        clearTimeout(notificationTimer);
+        clearTimeout(
+            notificationTimer
+        );
 
-        notificationTimer = setTimeout(() => {
+        notificationTimer =
+            setTimeout(() => {
 
-            notification.classList.remove("show");
+                notification.classList.remove(
+                    "show"
+                );
 
-        }, 2200);
+            }, 2200);
     }
 
-    // ------------------------------------------------------------
+    // ============================================================
     // PANEL
-    // ------------------------------------------------------------
+    // ============================================================
+
     function createPanel(
         html,
         className = ""
@@ -1155,9 +1351,13 @@
         panel.innerHTML =
             html;
 
-        layer.appendChild(panel);
+        layer.appendChild(
+            panel
+        );
 
-        ui.appendChild(layer);
+        ui.appendChild(
+            layer
+        );
 
         return {
 
@@ -1165,10 +1365,34 @@
             panel,
 
             close() {
-                layer.remove();
+
+                if (
+                    layer &&
+                    layer.parentNode
+                ) {
+
+                    layer.remove();
+                }
             }
 
         };
+    }
+
+    // ============================================================
+    // ALLE LOSSE PANELEN SLUITEN
+    // ============================================================
+
+    function closeAllPanels() {
+
+        ui
+            .querySelectorAll(
+                ".panel-layer"
+            )
+            .forEach(panel => {
+
+                panel.remove();
+
+            });
     }
 
     // ============================================================
@@ -1177,13 +1401,26 @@
 
     function openShop() {
 
-        if (gameState === "playing") {
-            pauseGame();
+        /*
+         * BELANGRIJKE FIX:
+         *
+         * We gebruiken hier NIET pauseGame().
+         * pauseGame() maakt namelijk een extra
+         * pause-paneel aan.
+         */
+
+        if (
+            gameState === "playing"
+        ) {
+
+            gameState =
+                "paused";
         }
 
         // --------------------------------------------------------
-        // CONFETTI GENEREREN
+        // CONFETTI
         // --------------------------------------------------------
+
         let confettiHTML = "";
 
         const confettiSymbols = [
@@ -1193,7 +1430,19 @@
             "✦"
         ];
 
-        for (let i = 0; i < 42; i++) {
+        const confettiColors = [
+            "#ffe36b",
+            "#71eaff",
+            "#ff72b8",
+            "#a77aff",
+            "#ffffff"
+        ];
+
+        for (
+            let i = 0;
+            i < 42;
+            i++
+        ) {
 
             const left =
                 Math.random() * 100;
@@ -1202,25 +1451,23 @@
                 -(Math.random() * 8);
 
             const fallTime =
-                5 + Math.random() * 6;
+                5 +
+                Math.random() * 6;
 
             const spinTime =
-                1.5 + Math.random() * 3;
+                1.5 +
+                Math.random() * 3;
 
             const symbol =
                 confettiSymbols[
-                    i % confettiSymbols.length
+                    i %
+                    confettiSymbols.length
                 ];
 
             const hue =
-                [
-                    "#ffe36b",
-                    "#71eaff",
-                    "#ff72b8",
-                    "#a77aff",
-                    "#ffffff"
-                ][
-                    i % 5
+                confettiColors[
+                    i %
+                    confettiColors.length
                 ];
 
             confettiHTML += `
@@ -1241,6 +1488,7 @@
         // --------------------------------------------------------
         // SHOP PANEL
         // --------------------------------------------------------
+
         const shop =
             createPanel(`
 
@@ -1299,7 +1547,6 @@
 
                 <div class="shop-grid">
 
-                    <!-- AMMO -->
                     <div class="shop-card">
 
                         <div class="shop-icon">
@@ -1328,7 +1575,6 @@
 
                     </div>
 
-                    <!-- REPAIR -->
                     <div class="shop-card">
 
                         <div class="shop-icon">
@@ -1357,7 +1603,6 @@
 
                     </div>
 
-                    <!-- UPGRADE -->
                     <div class="shop-card">
 
                         <div class="shop-icon">
@@ -1407,6 +1652,7 @@
         // --------------------------------------------------------
         // SHOP ELEMENTEN
         // --------------------------------------------------------
+
         const creditsElement =
             shop.panel.querySelector(
                 "#shopCredits"
@@ -1425,22 +1671,27 @@
             updateHUD();
         }
 
-        function shopMessage(message) {
+        function shopMessage(
+            message
+        ) {
 
             messageElement.textContent =
                 message;
         }
 
         // --------------------------------------------------------
-        // BUY AMMO
+        // AMMO
         // --------------------------------------------------------
+
         shop.panel
             .querySelector("#buyAmmo")
             .addEventListener(
                 "click",
                 () => {
 
-                    if (credits < 10) {
+                    if (
+                        credits < 10
+                    ) {
 
                         shopMessage(
                             "⚠ NOT ENOUGH CREDITS"
@@ -1451,7 +1702,8 @@
 
                     credits -= 10;
 
-                    ammo = maxAmmo;
+                    ammo =
+                        maxAmmo;
 
                     updateShopCredits();
 
@@ -1466,15 +1718,18 @@
             );
 
         // --------------------------------------------------------
-        // BUY REPAIR
+        // REPAIR
         // --------------------------------------------------------
+
         shop.panel
             .querySelector("#buyRepair")
             .addEventListener(
                 "click",
                 () => {
 
-                    if (credits < 20) {
+                    if (
+                        credits < 20
+                    ) {
 
                         shopMessage(
                             "⚠ NOT ENOUGH CREDITS"
@@ -1513,15 +1768,18 @@
             );
 
         // --------------------------------------------------------
-        // BUY UPGRADE
+        // UPGRADE
         // --------------------------------------------------------
+
         shop.panel
             .querySelector("#buyUpgrade")
             .addEventListener(
                 "click",
                 () => {
 
-                    if (credits < 50) {
+                    if (
+                        credits < 50
+                    ) {
 
                         shopMessage(
                             "⚠ NOT ENOUGH CREDITS"
@@ -1536,7 +1794,8 @@
 
                     maxAmmo += 4;
 
-                    ammo = maxAmmo;
+                    ammo =
+                        maxAmmo;
 
                     updateShopCredits();
 
@@ -1553,6 +1812,7 @@
         // --------------------------------------------------------
         // BACK
         // --------------------------------------------------------
+
         shop.panel
             .querySelector("#shopBack")
             .addEventListener(
@@ -1561,24 +1821,61 @@
 
                     shop.close();
 
+                    /*
+                     * Vanuit de game:
+                     * terug naar PAUSED.
+                     */
+
                     if (
                         gameState === "paused"
                     ) {
-                        showPausePanel();
+
+                        /*
+                         * Alleen een pause-menu tonen
+                         * wanneer de HUD actief is.
+                         */
+
+                        if (
+                            hud.style.display !==
+                            "none"
+                        ) {
+
+                            showPausePanel();
+                        }
+
+                        return;
                     }
+
+                    /*
+                     * Vanuit het hoofdmenu:
+                     * het hoofdmenu weer zichtbaar maken.
+                     */
+
+                    if (
+                        gameState === "menu"
+                    ) {
+
+                        mainMenu.style.display =
+                            "flex";
+
+                        hud.style.display =
+                            "none";
+                    }
+
                 }
             );
     }
 
-    // ------------------------------------------------------------
+    // ============================================================
     // ACHIEVEMENTS
-    // ------------------------------------------------------------
+    // ============================================================
+
     function openAchievements() {
 
         const unlocked =
-            Object.values(achievements)
-                .filter(Boolean)
-                .length;
+            Object.values(
+                achievements
+            ).filter(Boolean).length;
 
         const panel =
             createPanel(`
@@ -1639,9 +1936,10 @@
             );
     }
 
-    // ------------------------------------------------------------
+    // ============================================================
     // CONTROLS
-    // ------------------------------------------------------------
+    // ============================================================
+
     function openControls() {
 
         const panel =
@@ -1708,66 +2006,17 @@
             );
     }
 
-    // ------------------------------------------------------------
-    // BUTTONS
-    // ------------------------------------------------------------
-    document
-        .getElementById("newRunBtn")
-        .addEventListener(
-            "click",
-            startNewGame
-        );
-
-    document
-        .getElementById("shopBtn")
-        .addEventListener(
-            "click",
-            openShop
-        );
-
-    document
-        .getElementById("achievementsBtn")
-        .addEventListener(
-            "click",
-            openAchievements
-        );
-
-    document
-        .getElementById("controlsBtn")
-        .addEventListener(
-            "click",
-            openControls
-        );
-
-    document
-        .getElementById("loadBtn")
-        .addEventListener(
-            "click",
-            loadGame
-        );
-
-    document
-        .getElementById("pauseBtn")
-        .addEventListener(
-            "click",
-            pauseGame
-        );
-
-    document
-        .getElementById("mapBtn")
-        .addEventListener(
-            "click",
-            openMap
-        );
-
     // ============================================================
     // THREE.JS SCENE
     // ============================================================
 
-    scene = new THREE.Scene();
+    scene =
+        new THREE.Scene();
 
     scene.background =
-        new THREE.Color(0x071019);
+        new THREE.Color(
+            0x071019
+        );
 
     scene.fog =
         new THREE.Fog(
@@ -1806,9 +2055,9 @@
     renderer.shadowMap.enabled =
         true;
 
-    // ------------------------------------------------------------
+    // ============================================================
     // LIGHTS
-    // ------------------------------------------------------------
+    // ============================================================
 
     const hemiLight =
         new THREE.HemisphereLight(
@@ -1840,9 +2089,9 @@
         sun
     );
 
-    // ------------------------------------------------------------
+    // ============================================================
     // GROUND
-    // ------------------------------------------------------------
+    // ============================================================
 
     const ground =
         new THREE.Mesh(
@@ -1866,9 +2115,9 @@
         ground
     );
 
-    // ------------------------------------------------------------
+    // ============================================================
     // GRID
-    // ------------------------------------------------------------
+    // ============================================================
 
     const grid =
         new THREE.GridHelper(
@@ -1900,7 +2149,6 @@
         const tank =
             new THREE.Group();
 
-        // Lower chassis
         const lower =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
@@ -1925,7 +2173,6 @@
             lower
         );
 
-        // Main body
         const body =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
@@ -1950,7 +2197,6 @@
             body
         );
 
-        // Tracks
         const trackMaterial =
             new THREE.MeshStandardMaterial({
                 color: 0x11191d,
@@ -2003,7 +2249,6 @@
             rightTrack
         );
 
-        // Turret
         const turretBase =
             new THREE.Mesh(
                 new THREE.CylinderGeometry(
@@ -2060,7 +2305,6 @@
             turretBody
         );
 
-        // Cannon
         const cannon =
             new THREE.Mesh(
                 new THREE.BoxGeometry(
@@ -2088,7 +2332,6 @@
             cannon
         );
 
-        // Muzzle
         muzzle =
             new THREE.Object3D();
 
@@ -2102,7 +2345,6 @@
             muzzle
         );
 
-        // Glow
         const glow =
             new THREE.Mesh(
                 new THREE.SphereGeometry(
@@ -2439,6 +2681,7 @@
                 position.z > minZ &&
                 position.z < maxZ
             ) {
+
                 return true;
             }
         }
@@ -2562,6 +2805,7 @@
             enemies.length <
             ENEMY_COUNT
         ) {
+
             createEnemy();
         }
     }
@@ -2576,7 +2820,9 @@
     ) {
 
         const direction =
-            end.clone().sub(start);
+            end.clone().sub(
+                start
+            );
 
         const distance =
             direction.length();
@@ -2597,10 +2843,12 @@
                     building.mesh
             );
 
-        return raycaster.intersectObjects(
-            objects,
-            false
-        ).length > 0;
+        return raycaster
+            .intersectObjects(
+                objects,
+                false
+            )
+            .length > 0;
     }
 
     // ============================================================
@@ -2651,6 +2899,7 @@
         );
 
         if (!target) {
+
             return player.position.clone();
         }
 
@@ -2663,6 +2912,7 @@
             !player ||
             !turret
         ) {
+
             return;
         }
 
@@ -2695,20 +2945,24 @@
     function shoot() {
 
         if (
-            gameState !== "playing"
+            gameState !==
+            "playing"
         ) {
+
             return;
         }
 
         if (
             reloadTimer > 0
         ) {
+
             return;
         }
 
         if (
             fireTimer > 0
         ) {
+
             return;
         }
 
@@ -2798,12 +3052,14 @@
         if (
             reloadTimer > 0
         ) {
+
             return;
         }
 
         if (
             ammo >= maxAmmo
         ) {
+
             return;
         }
 
@@ -2888,6 +3144,7 @@
             keys["w"] ||
             keys["arrowup"]
         ) {
+
             forward += 1;
         }
 
@@ -2895,6 +3152,7 @@
             keys["s"] ||
             keys["arrowdown"]
         ) {
+
             forward -= 1;
         }
 
@@ -2902,6 +3160,7 @@
             keys["a"] ||
             keys["arrowleft"]
         ) {
+
             turn += 1;
         }
 
@@ -2909,6 +3168,7 @@
             keys["d"] ||
             keys["arrowright"]
         ) {
+
             turn -= 1;
         }
 
@@ -3271,6 +3531,7 @@
                         if (
                             kills >= 5
                         ) {
+
                             achievements.fiveKills =
                                 true;
                         }
@@ -3314,6 +3575,7 @@
             if (
                 resource.collected
             ) {
+
                 continue;
             }
 
@@ -3409,6 +3671,7 @@
         if (
             distance > 120
         ) {
+
             achievements.explorer =
                 true;
         }
@@ -3416,6 +3679,7 @@
         if (
             totalPlayTime > 300
         ) {
+
             achievements.survivor =
                 true;
         }
@@ -3500,7 +3764,7 @@
     }
 
     // ============================================================
-    // NEW GAME
+    // RESET GAME OBJECTS
     // ============================================================
 
     function resetGameObjects() {
@@ -3563,7 +3827,22 @@
         }
     }
 
+    // ============================================================
+    // NEW GAME
+    // ============================================================
+
     function startNewGame() {
+
+        /*
+         * BELANGRIJKE FIX:
+         * eerst alle oude panelen sluiten.
+         *
+         * Hierdoor kan bijvoorbeeld het oude
+         * SHOP- of PAUSE-menu niet boven de game
+         * blijven staan.
+         */
+
+        closeAllPanels();
 
         resetGameObjects();
 
@@ -3632,8 +3911,16 @@
 
         spawnEnemies();
 
+        /*
+         * Hoofdmenu gegarandeerd weg.
+         */
+
         mainMenu.style.display =
             "none";
+
+        /*
+         * HUD gegarandeerd zichtbaar.
+         */
 
         hud.style.display =
             "block";
@@ -3655,6 +3942,7 @@
             gameState !==
             "playing"
         ) {
+
             return;
         }
 
@@ -3665,6 +3953,12 @@
     }
 
     function showPausePanel() {
+
+        /*
+         * Voorkomt dubbele pause-panelen.
+         */
+
+        closeAllPanels();
 
         const panel =
             createPanel(`
@@ -3822,6 +4116,7 @@
             gameState ===
             "gameover"
         ) {
+
             return;
         }
 
@@ -3914,8 +4209,12 @@
         const saveData = {
 
             player: {
-                x: player.position.x,
-                z: player.position.z,
+                x:
+                    player.position.x,
+
+                z:
+                    player.position.z,
+
                 rotation:
                     player.rotation.y
             },
@@ -3979,6 +4278,14 @@
                     saved
                 );
 
+            /*
+             * BELANGRIJKE FIX:
+             * oude shop/pause/game-over panelen
+             * eerst verwijderen.
+             */
+
+            closeAllPanels();
+
             gameState =
                 "playing";
 
@@ -4031,8 +4338,16 @@
 
             spawnEnemies();
 
+            /*
+             * Hoofdmenu weg.
+             */
+
             mainMenu.style.display =
                 "none";
+
+            /*
+             * HUD aan.
+             */
 
             hud.style.display =
                 "block";
@@ -4056,6 +4371,73 @@
             );
         }
     }
+
+    // ============================================================
+    // BUTTONS
+    // ============================================================
+
+    document
+        .getElementById(
+            "newRunBtn"
+        )
+        .addEventListener(
+            "click",
+            startNewGame
+        );
+
+    document
+        .getElementById(
+            "shopBtn"
+        )
+        .addEventListener(
+            "click",
+            openShop
+        );
+
+    document
+        .getElementById(
+            "achievementsBtn"
+        )
+        .addEventListener(
+            "click",
+            openAchievements
+        );
+
+    document
+        .getElementById(
+            "controlsBtn"
+        )
+        .addEventListener(
+            "click",
+            openControls
+        );
+
+    document
+        .getElementById(
+            "loadBtn"
+        )
+        .addEventListener(
+            "click",
+            loadGame
+        );
+
+    document
+        .getElementById(
+            "pauseBtn"
+        )
+        .addEventListener(
+            "click",
+            pauseGame
+        );
+
+    document
+        .getElementById(
+            "mapBtn"
+        )
+        .addEventListener(
+            "click",
+            openMap
+        );
 
     // ============================================================
     // KEYBOARD
@@ -4192,8 +4574,10 @@
                     player: {
                         x:
                             player.position.x,
+
                         z:
                             player.position.z,
+
                         rotation:
                             player.rotation.y
                     },
