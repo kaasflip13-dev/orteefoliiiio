@@ -1,113 +1,53 @@
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>EchoBound — The Lost Signal</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+    <title>EchoBound</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
 </head>
+
 
 <body>
 
+
     <!-- GAME -->
+
     <canvas id="game"></canvas>
 
 
-    <!-- HUD -->
-    <div id="hud">
+    <!-- START MENU -->
 
-        <div class="hud-top">
+    <div id="menu">
 
-            <div class="hud-card">
-                <div class="hud-label">HULL</div>
+        <div class="menu-box">
 
-                <div class="bar">
-                    <div id="healthBar" class="bar-fill health"></div>
-                </div>
+            <h1>ECHOBOUND</h1>
 
-                <div class="hud-number">
-                    <span id="healthText">100</span>%
-                </div>
-            </div>
+            <p>THE LOST SIGNAL</p>
 
+            <button id="startButton">
+                START GAME
+            </button>
 
-            <div class="hud-card">
-                <div class="hud-label">ENERGY</div>
+            <div class="instructions">
 
-                <div class="bar">
-                    <div id="energyBar" class="bar-fill energy"></div>
-                </div>
+                <div>W / S = RIJDEN</div>
 
-                <div class="hud-number">
-                    <span id="energyText">100</span>%
-                </div>
-            </div>
+                <div>A / D = DRAAIEN</div>
 
+                <div>MUIS = KANON RICHTEN</div>
 
-            <div class="hud-card ammo-card">
-                <div class="hud-label">AMMUNITION</div>
+                <div>LINKERMUIS = SCHIETEN</div>
 
-                <div id="ammo">
-                    12 / 12
-                </div>
-            </div>
-
-
-            <div class="hud-card">
-                <div class="hud-label">KILLS</div>
-
-                <div id="kills">
-                    0
-                </div>
-            </div>
-
-
-            <div class="hud-card">
-                <div class="hud-label">CREDITS</div>
-
-                <div id="credits">
-                    0
-                </div>
-            </div>
-
-        </div>
-
-
-        <div class="crosshair">
-
-            <div class="crosshair-line vertical"></div>
-            <div class="crosshair-line horizontal"></div>
-            <div class="crosshair-dot"></div>
-
-        </div>
-
-
-        <div class="bottom-hud">
-
-            <div>
-                WASD MOVE
-            </div>
-
-            <div>
-                SHIFT BOOST
-            </div>
-
-            <div>
-                MOUSE AIM
-            </div>
-
-            <div>
-                LMB FIRE
-            </div>
-
-            <div>
-                R RELOAD
-            </div>
-
-            <div>
-                ESC PAUSE
             </div>
 
         </div>
@@ -115,8 +55,74 @@
     </div>
 
 
-    <!-- THREE.JS GAME -->
-    <script type="module" src="app.js"></script>
+    <!-- HUD -->
+
+    <div id="hud">
+
+        <div class="health">
+
+            <span>HEALTH</span>
+
+            <div class="bar">
+
+                <div id="healthBar"></div>
+
+            </div>
+
+        </div>
+
+
+        <div class="ammo">
+
+            AMMO:
+            <span id="ammo">20</span>
+
+            <br>
+
+            KILLS:
+            <span id="kills">0</span>
+
+        </div>
+
+
+        <div id="crosshair">
+            +
+        </div>
+
+    </div>
+
+
+    <!-- GAME OVER -->
+
+    <div id="gameOver">
+
+        <div class="menu-box">
+
+            <h1>GAME OVER</h1>
+
+            <p id="gameOverText">
+                Je tank is vernietigd.
+            </p>
+
+            <button id="restartButton">
+                OPNIEUW
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- THREE.JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.min.js"></script>
+
+
+    <!-- OUR GAME -->
+
+    <script src="app.js"></script>
+
 
 </body>
+
 </html>
