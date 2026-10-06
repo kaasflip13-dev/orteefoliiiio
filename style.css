@@ -1,57 +1,51 @@
-/* =========================================================
-   ECHOBOUND
-   PERFORMANCE STYLE
-   ========================================================= */
-
 * {
     box-sizing: border-box;
 }
 
+
 html,
 body {
-    margin: 0;
-    padding: 0;
 
     width: 100%;
     height: 100%;
 
+    margin: 0;
+
     overflow: hidden;
 
-    background: #071018;
+    background: #071015;
 
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
+    font-family: Arial, sans-serif;
 
     color: white;
 }
 
 
-/* =========================================================
-   GAME CANVAS
-   ========================================================= */
+/* =================================
+   CANVAS
+================================= */
 
 #game {
+
     position: fixed;
 
     left: 0;
     top: 0;
 
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
 
     display: block;
 
-    outline: none;
 }
 
 
-/* =========================================================
-   HUD
-   ========================================================= */
+/* =================================
+   START MENU
+================================= */
 
-#hud {
+#menu {
+
     position: fixed;
 
     left: 0;
@@ -60,342 +54,231 @@ body {
     width: 100%;
     height: 100%;
 
-    pointer-events: none;
-
-    z-index: 10;
-}
-
-
-/* =========================================================
-   TOP HUD
-   ========================================================= */
-
-.hud-top {
-
-    position: absolute;
-
-    left: 18px;
-    right: 18px;
-    top: 18px;
-
     display: flex;
 
-    gap: 10px;
+    justify-content: center;
 
-    align-items: stretch;
-
-}
-
-
-/* =========================================================
-   HUD CARD
-   ========================================================= */
-
-.hud-card {
-
-    min-width: 125px;
-
-    padding: 10px 13px;
+    align-items: center;
 
     background:
-        linear-gradient(
-            135deg,
-            rgba(8, 19, 27, 0.94),
-            rgba(13, 31, 37, 0.86)
-        );
+        rgba(3, 10, 14, 0.88);
 
-    border: 1px solid rgba(100, 225, 235, 0.3);
+    z-index: 100;
+
+}
+
+
+.menu-box {
+
+    width: 450px;
+
+    max-width: 90%;
+
+    padding: 40px;
+
+    text-align: center;
+
+    background:
+        rgba(10, 25, 30, 0.97);
+
+    border:
+        1px solid #36c9ef;
+
+    border-radius: 12px;
 
     box-shadow:
-        0 0 15px rgba(0, 0, 0, 0.35);
-
-    backdrop-filter: blur(4px);
-
-}
-
-
-.hud-label {
-
-    font-size: 10px;
-
-    letter-spacing: 2px;
-
-    color: #7c9aa2;
-
-    margin-bottom: 5px;
+        0 0 35px
+        rgba(0, 200, 255, 0.2);
 
 }
 
 
-.hud-number {
+.menu-box h1 {
 
-    font-size: 12px;
+    margin: 0;
 
-    color: #dcecef;
+    font-size: 55px;
 
-    margin-top: 4px;
+    letter-spacing: 7px;
+
+    color: #d9faff;
 
 }
 
 
-/* =========================================================
-   BARS
-   ========================================================= */
+.menu-box p {
 
-.bar {
+    margin-top: 8px;
+
+    margin-bottom: 30px;
+
+    color: #55d8ff;
+
+    letter-spacing: 4px;
+
+}
+
+
+button {
 
     width: 100%;
 
-    height: 7px;
+    padding: 16px;
 
-    background: #111b20;
+    border: 1px solid #49d9ff;
 
-    border: 1px solid #263a40;
+    border-radius: 6px;
 
-    overflow: hidden;
+    background: #0d303b;
+
+    color: white;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    cursor: pointer;
 
 }
 
 
-.bar-fill {
+button:hover {
+
+    background: #164c5b;
+
+}
+
+
+.instructions {
+
+    margin-top: 30px;
+
+    line-height: 1.9;
+
+    color: #9bb0b6;
+
+    font-size: 13px;
+
+}
+
+
+/* =================================
+   HUD
+================================= */
+
+#hud {
+
+    position: fixed;
+
+    left: 0;
+    top: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: none;
+
+    pointer-events: none;
+
+    z-index: 50;
+
+}
+
+
+.health {
+
+    position: absolute;
+
+    left: 20px;
+
+    top: 20px;
+
+    width: 230px;
+
+    font-size: 12px;
+
+    letter-spacing: 2px;
+
+}
+
+
+.bar {
+
+    width: 230px;
+
+    height: 14px;
+
+    margin-top: 6px;
+
+    background: #111;
+
+    border: 1px solid #555;
+
+}
+
+
+#healthBar {
 
     width: 100%;
 
     height: 100%;
 
-    transition:
-        width 0.15s linear;
+    background: #42e878;
 
 }
 
 
-.bar-fill.health {
+.ammo {
 
-    background:
-        linear-gradient(
-            90deg,
-            #e33b4e,
-            #ff6a55
-        );
+    position: absolute;
 
-}
+    right: 25px;
 
+    top: 25px;
 
-.bar-fill.energy {
+    font-size: 18px;
 
-    background:
-        linear-gradient(
-            90deg,
-            #26b9ff,
-            #5cecff
-        );
+    line-height: 1.8;
+
+    text-align: right;
 
 }
 
 
-.ammo-card {
+.ammo span {
 
-    min-width: 145px;
-
-}
-
-
-#ammo {
-
-    font-size: 17px;
+    color: #5bdcff;
 
     font-weight: bold;
 
-    color: #bff8ff;
-
 }
 
 
-/* =========================================================
-   CROSSHAIR
-   ========================================================= */
-
-.crosshair {
+#crosshair {
 
     position: absolute;
 
     left: 50%;
     top: 50%;
 
-    width: 40px;
-    height: 40px;
-
     transform:
         translate(-50%, -50%);
 
-}
+    color: #72e5ff;
 
+    font-size: 30px;
 
-.crosshair-line {
-
-    position: absolute;
-
-    background: rgba(
-        112,
-        239,
-        255,
-        0.9
-    );
+    text-shadow:
+        0 0 10px #00cfff;
 
 }
 
 
-.crosshair-line.vertical {
+/* =================================
+   GAME OVER
+================================= */
 
-    width: 2px;
-    height: 12px;
-
-    left: 19px;
-    top: 0;
-
-}
-
-
-.crosshair-line.vertical::after {
-
-    content: "";
-
-    position: absolute;
-
-    width: 2px;
-    height: 12px;
-
-    top: 28px;
-    left: 0;
-
-    background:
-        rgba(
-            112,
-            239,
-            255,
-            0.9
-        );
-
-}
-
-
-.crosshair-line.horizontal {
-
-    width: 12px;
-    height: 2px;
-
-    left: 0;
-    top: 19px;
-
-}
-
-
-.crosshair-line.horizontal::after {
-
-    content: "";
-
-    position: absolute;
-
-    width: 12px;
-    height: 2px;
-
-    left: 28px;
-    top: 0;
-
-    background:
-        rgba(
-            112,
-            239,
-            255,
-            0.9
-        );
-
-}
-
-
-.crosshair-dot {
-
-    position: absolute;
-
-    width: 5px;
-    height: 5px;
-
-    left: 18px;
-    top: 18px;
-
-    border-radius: 50%;
-
-    background: #ffffff;
-
-    box-shadow:
-        0 0 7px #55eaff;
-
-}
-
-
-/* =========================================================
-   BOTTOM HUD
-   ========================================================= */
-
-.bottom-hud {
-
-    position: absolute;
-
-    left: 50%;
-    bottom: 18px;
-
-    transform:
-        translateX(-50%);
-
-    display: flex;
-
-    gap: 7px;
-
-    white-space: nowrap;
-
-}
-
-
-.bottom-hud div {
-
-    padding:
-        7px
-        10px;
-
-    background:
-        rgba(
-            5,
-            15,
-            20,
-            0.82
-        );
-
-    border:
-        1px solid
-        rgba(
-            91,
-            211,
-            226,
-            0.2
-        );
-
-    color:
-        #8faeb5;
-
-    font-size:
-        9px;
-
-    letter-spacing:
-        1px;
-
-}
-
-
-/* =========================================================
-   PANELS
-   ========================================================= */
-
-.panel-layer {
+#gameOver {
 
     position: fixed;
 
@@ -405,324 +288,15 @@ body {
     width: 100%;
     height: 100%;
 
-    z-index: 100;
-
-    display: flex;
+    display: none;
 
     justify-content: center;
+
     align-items: center;
 
     background:
-        radial-gradient(
-            circle at center,
-            rgba(23, 73, 83, 0.22),
-            rgba(0, 0, 0, 0.82)
-        );
+        rgba(5, 5, 8, 0.9);
 
-}
-
-
-.panel {
-
-    width: min(
-        520px,
-        calc(100vw - 30px)
-    );
-
-    max-height:
-        calc(100vh - 30px);
-
-    overflow-y: auto;
-
-    padding: 35px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(10, 24, 32, 0.98),
-            rgba(8, 14, 20, 0.98)
-        );
-
-    border:
-        1px solid
-        rgba(
-            89,
-            221,
-            235,
-            0.45
-        );
-
-    box-shadow:
-        0 0 50px
-        rgba(
-            0,
-            0,
-            0,
-            0.75
-        );
-
-    text-align: center;
-
-}
-
-
-.panel h2 {
-
-    margin:
-        0 0 7px;
-
-    font-size:
-        38px;
-
-    letter-spacing:
-        6px;
-
-    color:
-        #c8faff;
-
-}
-
-
-.panel > p {
-
-    color:
-        #75949b;
-
-    letter-spacing:
-        2px;
-
-}
-
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-.panel button {
-
-    display: block;
-
-    width: 100%;
-
-    margin:
-        10px 0;
-
-    padding:
-        14px 18px;
-
-    border:
-        1px solid
-        rgba(
-            94,
-            226,
-            239,
-            0.42
-        );
-
-    background:
-        linear-gradient(
-            90deg,
-            #102a32,
-            #153b43
-        );
-
-    color:
-        #c8faff;
-
-    font-weight:
-        bold;
-
-    letter-spacing:
-        2px;
-
-    cursor:
-        pointer;
-
-    transition:
-        transform 0.12s,
-        background 0.12s,
-        border-color 0.12s;
-
-}
-
-
-.panel button:hover {
-
-    transform:
-        translateY(-1px);
-
-    background:
-        linear-gradient(
-            90deg,
-            #17404a,
-            #1a515b
-        );
-
-    border-color:
-        #72edff;
-
-}
-
-
-.panel button:active {
-
-    transform:
-        translateY(1px);
-
-}
-
-
-/* =========================================================
-   SHOP
-   ========================================================= */
-
-.shop-panel {
-
-    text-align:
-        left;
-
-}
-
-
-.shop-panel h3 {
-
-    margin-top:
-        25px;
-
-    margin-bottom:
-        4px;
-
-    color:
-        #a9eff7;
-
-    letter-spacing:
-        2px;
-
-}
-
-
-.shop-panel p {
-
-    color:
-        #6f8c94;
-
-}
-
-
-/* =========================================================
-   ACHIEVEMENTS
-   ========================================================= */
-
-.achievement-list {
-
-    text-align:
-        left;
-
-}
-
-
-.achievement-list p {
-
-    padding:
-        13px;
-
-    margin:
-        8px 0;
-
-    background:
-        rgba(
-            30,
-            65,
-            72,
-            0.25
-        );
-
-    border:
-        1px solid
-        rgba(
-            95,
-            215,
-            225,
-            0.18
-        );
-
-    color:
-        #a9c4c9;
-
-    line-height:
-        1.5;
-
-}
-
-
-/* =========================================================
-   GAME OVER
-   ========================================================= */
-
-.game-over h2 {
-
-    color:
-        #ff6672;
-
-}
-
-
-.game-over p {
-
-    color:
-        #91aab0;
-
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (
-    max-width: 800px
-) {
-
-    .hud-top {
-
-        left: 8px;
-        right: 8px;
-        top: 8px;
-
-        gap: 5px;
-
-        overflow-x: auto;
-
-    }
-
-
-    .hud-card {
-
-        min-width: 95px;
-
-        padding: 7px;
-
-    }
-
-
-    .bottom-hud {
-
-        display: none;
-
-    }
-
-
-    .panel {
-
-        padding: 24px;
-
-    }
-
-
-    .panel h2 {
-
-        font-size: 28px;
-
-    }
+    z-index: 200;
 
 }
