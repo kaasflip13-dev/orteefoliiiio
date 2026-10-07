@@ -11,79 +11,75 @@
 
 <body>
 
-    <!-- =========================
+    <!-- =====================================================
          START MENU
-    ========================== -->
-    <div id="menu" class="screen">
+    ====================================================== -->
+
+    <div id="menu" class="screen active">
 
         <div class="menu-box">
 
             <div class="logo">
-                ECHOBOUND
+                ECHO<span>BOUND</span>
             </div>
 
             <div class="subtitle">
                 THE LOST SIGNAL
             </div>
 
-            <p class="description">
-                SURVIVE • EXPLORE • FIGHT
-            </p>
+            <div class="menu-buttons">
 
-            <button id="startButton">
-                START GAME
-            </button>
+                <button id="startBtn" class="main-button">
+                    NEW RUN
+                </button>
 
-            <button id="achievementsButton">
-                ACHIEVEMENTS
-            </button>
+                <button id="continueBtn" class="menu-button">
+                    CONTINUE
+                </button>
 
-            <button id="shopButton">
-                SHOP
-            </button>
+                <button id="saveBtnMenu" class="menu-button">
+                    SAVE GAME
+                </button>
+
+                <button id="achievementsBtn" class="menu-button">
+                    ACHIEVEMENTS
+                </button>
+
+                <button id="shopBtn" class="menu-button">
+                    SHOP
+                </button>
+
+            </div>
+
+            <div class="controls-info">
+                <b>CONTROLS</b><br>
+                WASD / Pijltjes = bewegen<br>
+                Muis = richten<br>
+                Linkermuisknop = schieten<br>
+                SHIFT = sprint<br>
+                SPACE = dash<br>
+                P = pauze
+            </div>
 
         </div>
 
     </div>
 
 
-    <!-- =========================
+    <!-- =====================================================
          ACHIEVEMENTS
-    ========================== -->
+    ====================================================== -->
+
     <div id="achievementsScreen" class="screen hidden">
 
-        <div class="menu-box">
+        <div class="panel">
 
-            <div class="logo small">
-                ACHIEVEMENTS
-            </div>
+            <h1>ACHIEVEMENTS</h1>
 
-            <div id="achievementList">
+            <div id="achievementsList"></div>
 
-                <div class="achievement locked">
-                    <strong>FIRST SIGNAL</strong>
-                    <span>Start your first mission.</span>
-                </div>
-
-                <div class="achievement locked">
-                    <strong>FIRST KILL</strong>
-                    <span>Destroy your first enemy.</span>
-                </div>
-
-                <div class="achievement locked">
-                    <strong>SURVIVOR</strong>
-                    <span>Survive for 5 minutes.</span>
-                </div>
-
-                <div class="achievement locked">
-                    <strong>HUNTER</strong>
-                    <span>Destroy 10 enemies.</span>
-                </div>
-
-            </div>
-
-            <button id="backAchievementsButton">
-                BACK
+            <button id="achievementsBackBtn" class="main-button">
+                TERUG
             </button>
 
         </div>
@@ -91,32 +87,51 @@
     </div>
 
 
-    <!-- =========================
+    <!-- =====================================================
          SHOP
-    ========================== -->
+    ====================================================== -->
+
     <div id="shopScreen" class="screen hidden">
 
-        <div class="menu-box">
+        <div class="panel">
 
-            <div class="logo small">
-                SHOP
-            </div>
+            <h1>SHOP</h1>
 
-            <p class="creditsText">
+            <div class="credits-display">
                 CREDITS:
                 <span id="shopCredits">0</span>
-            </p>
+            </div>
 
-            <button id="buyHealthButton">
-                REPAIR TANK — 50
-            </button>
+            <div class="shop-items">
 
-            <button id="buyAmmoButton">
-                BUY AMMO — 25
-            </button>
+                <button class="shop-item" data-item="health">
+                    <strong>REPAIR KIT</strong>
+                    <span>+25 health</span>
+                    <b>50 credits</b>
+                </button>
 
-            <button id="backShopButton">
-                BACK
+                <button class="shop-item" data-item="energy">
+                    <strong>ENERGY CELL</strong>
+                    <span>+40 energy</span>
+                    <b>40 credits</b>
+                </button>
+
+                <button class="shop-item" data-item="damage">
+                    <strong>WEAPON UPGRADE</strong>
+                    <span>+1 damage</span>
+                    <b>150 credits</b>
+                </button>
+
+                <button class="shop-item" data-item="speed">
+                    <strong>ENGINE UPGRADE</strong>
+                    <span>+20 speed</span>
+                    <b>200 credits</b>
+                </button>
+
+            </div>
+
+            <button id="shopBackBtn" class="main-button">
+                TERUG
             </button>
 
         </div>
@@ -124,169 +139,139 @@
     </div>
 
 
-    <!-- =========================
+    <!-- =====================================================
          GAME
-    ========================== -->
+    ====================================================== -->
 
-    <canvas id="game"></canvas>
+    <div id="gameContainer" class="hidden">
+
+        <canvas id="game"></canvas>
 
 
-    <!-- =========================
-         GAME HUD
-    ========================== -->
+        <!-- HUD -->
 
-    <div id="hud" class="hidden">
+        <div id="hud">
 
-        <div class="hud-left">
+            <div class="hud-left">
 
-            <div class="hud-item">
-                HEALTH
-                <div class="bar">
-                    <div id="healthBar"></div>
+                <div class="hud-card">
+                    <div class="hud-label">HULL</div>
+
+                    <div class="bar">
+                        <div id="healthBar" class="bar-fill health"></div>
+                    </div>
+
+                    <span id="healthText">100 / 100</span>
                 </div>
+
+
+                <div class="hud-card">
+                    <div class="hud-label">ENERGY</div>
+
+                    <div class="bar">
+                        <div id="energyBar" class="bar-fill energy"></div>
+                    </div>
+
+                    <span id="energyText">100 / 100</span>
+                </div>
+
             </div>
 
-            <div class="hud-item">
-                AMMO
-                <span id="ammo">
-                    30
-                </span>
+
+            <div class="hud-center">
+
+                <div class="location-name">
+                    LOST SECTOR
+                </div>
+
+                <div id="objective">
+                    FIND THE SIGNAL
+                </div>
+
             </div>
 
-            <div class="hud-item">
-                KILLS
-                <span id="kills">
-                    0
-                </span>
+
+            <div class="hud-right">
+
+                <div class="stat">
+                    CREDITS
+                    <b id="credits">0</b>
+                </div>
+
+                <div class="stat">
+                    KILLS
+                    <b id="kills">0</b>
+                </div>
+
+                <div class="stat">
+                    AMMO
+                    <b id="ammo">∞</b>
+                </div>
+
             </div>
 
         </div>
 
 
-        <div class="hud-top">
-            ECHOBOUND
+        <!-- Crosshair -->
+
+        <div id="crosshair">
+            <span></span>
         </div>
 
 
-        <div class="hud-right">
+        <!-- Notifications -->
 
-            <div>
-                CREDITS:
-                <span id="credits">
-                    0
-                </span>
+        <div id="notification"></div>
+
+
+        <!-- Pause -->
+
+        <div id="pauseScreen" class="overlay hidden">
+
+            <div class="overlay-box">
+
+                <h1>PAUSED</h1>
+
+                <button id="resumeBtn" class="main-button">
+                    RESUME
+                </button>
+
+                <button id="pauseMenuBtn" class="menu-button">
+                    MAIN MENU
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- Game over -->
+
+        <div id="gameOverScreen" class="overlay hidden">
+
+            <div class="overlay-box">
+
+                <h1>SIGNAL LOST</h1>
+
+                <p id="gameOverText">
+                    Your tank has been destroyed.
+                </p>
+
+                <button id="restartBtn" class="main-button">
+                    TRY AGAIN
+                </button>
+
+                <button id="gameOverMenuBtn" class="menu-button">
+                    MAIN MENU
+                </button>
+
             </div>
 
         </div>
 
     </div>
 
-
-    <!-- =========================
-         PAUSE MENU
-    ========================== -->
-
-    <div id="pauseScreen" class="screen hidden">
-
-        <div class="menu-box">
-
-            <div class="logo small">
-                PAUSED
-            </div>
-
-            <button id="resumeButton">
-                RESUME
-            </button>
-
-            <button id="restartButton">
-                RESTART
-            </button>
-
-            <button id="menuButton">
-                MAIN MENU
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         GAME OVER
-    ========================== -->
-
-    <div id="gameOverScreen" class="screen hidden">
-
-        <div class="menu-box">
-
-            <div class="gameOverTitle">
-                TANK DESTROYED
-            </div>
-
-            <p>
-                THE SIGNAL HAS BEEN LOST
-            </p>
-
-            <p>
-                KILLS:
-                <span id="finalKills">
-                    0
-                </span>
-            </p>
-
-            <button id="newRunButton">
-                NEW RUN
-            </button>
-
-            <button id="gameOverMenuButton">
-                MAIN MENU
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         CONTROLS
-    ========================== -->
-
-    <div id="controls" class="hidden">
-
-        <div>
-            <b>W</b> Forward
-        </div>
-
-        <div>
-            <b>S</b> Backward
-        </div>
-
-        <div>
-            <b>A</b> Turn left
-        </div>
-
-        <div>
-            <b>D</b> Turn right
-        </div>
-
-        <div>
-            <b>MOUSE</b> Aim cannon
-        </div>
-
-        <div>
-            <b>LEFT CLICK</b> Shoot
-        </div>
-
-        <div>
-            <b>ESC</b> Pause
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         JAVASCRIPT
-    ========================== -->
 
     <script src="app.js"></script>
 
