@@ -3,273 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>EchoBound — The Lost Signal</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- =====================================================
-         START MENU
-    ====================================================== -->
-
-    <div id="menu" class="screen active">
-
+    <div id="menu" class="menu">
         <div class="menu-box">
+            <div class="logo">ECHOBOUND</div>
+            <div class="subtitle">THE LOST SIGNAL</div>
 
-            <div class="logo">
-                ECHO<span>BOUND</span>
+            <button id="startButton">START GAME</button>
+            <button id="achievementsButton">ACHIEVEMENTS</button>
+
+            <div class="controls">
+                <p><b>WASD</b> — bewegen</p>
+                <p><b>MUIS</b> — richten</p>
+                <p><b>LINKERMUIS</b> — schieten</p>
+                <p><b>SHIFT</b> — sprinten</p>
+                <p><b>R</b> — herladen</p>
+                <p><b>1 / 2 / 3</b> — wapen kiezen</p>
+                <p><b>E</b> — grondstof pakken</p>
+                <p><b>ESC</b> — pauze</p>
             </div>
-
-            <div class="subtitle">
-                THE LOST SIGNAL
-            </div>
-
-            <div class="menu-buttons">
-
-                <button id="startBtn" class="main-button">
-                    NEW RUN
-                </button>
-
-                <button id="continueBtn" class="menu-button">
-                    CONTINUE
-                </button>
-
-                <button id="saveBtnMenu" class="menu-button">
-                    SAVE GAME
-                </button>
-
-                <button id="achievementsBtn" class="menu-button">
-                    ACHIEVEMENTS
-                </button>
-
-                <button id="shopBtn" class="menu-button">
-                    SHOP
-                </button>
-
-            </div>
-
-            <div class="controls-info">
-                <b>CONTROLS</b><br>
-                WASD / Pijltjes = bewegen<br>
-                Muis = richten<br>
-                Linkermuisknop = schieten<br>
-                SHIFT = sprint<br>
-                SPACE = dash<br>
-                P = pauze
-            </div>
-
         </div>
-
     </div>
 
 
-    <!-- =====================================================
-         ACHIEVEMENTS
-    ====================================================== -->
-
-    <div id="achievementsScreen" class="screen hidden">
-
+    <div id="achievementScreen" class="overlay hidden">
         <div class="panel">
+            <h2>ACHIEVEMENTS</h2>
 
-            <h1>ACHIEVEMENTS</h1>
+            <div class="achievement">
+                <span>FIRST SIGNAL</span>
+                <small>Start je eerste game</small>
+            </div>
 
-            <div id="achievementsList"></div>
+            <div class="achievement">
+                <span>HUNTER</span>
+                <small>Versla 10 aliens</small>
+            </div>
 
-            <button id="achievementsBackBtn" class="main-button">
-                TERUG
-            </button>
+            <div class="achievement">
+                <span>SCAVENGER</span>
+                <small>Verzamel 10 grondstoffen</small>
+            </div>
 
+            <button id="closeAchievements">TERUG</button>
         </div>
-
     </div>
 
 
-    <!-- =====================================================
-         SHOP
-    ====================================================== -->
-
-    <div id="shopScreen" class="screen hidden">
-
+    <div id="pauseScreen" class="overlay hidden">
         <div class="panel">
+            <h2>PAUSED</h2>
+            <button id="resumeButton">VERDER</button>
+            <button id="pauseMenuButton">MENU</button>
+        </div>
+    </div>
 
-            <h1>SHOP</h1>
 
-            <div class="credits-display">
-                CREDITS:
-                <span id="shopCredits">0</span>
+    <div id="gameOverScreen" class="overlay hidden">
+        <div class="panel">
+            <h2>GAME OVER</h2>
+
+            <p id="finalScore">Score: 0</p>
+            <p id="finalKills">Kills: 0</p>
+
+            <button id="restartButton">OPNIEUW</button>
+            <button id="gameOverMenuButton">MENU</button>
+        </div>
+    </div>
+
+
+    <canvas id="game"></canvas>
+
+
+    <div id="hud">
+
+        <div class="hud-left">
+
+            <div class="bar-title">HEALTH</div>
+            <div class="bar">
+                <div id="healthBar" class="health"></div>
             </div>
 
-            <div class="shop-items">
-
-                <button class="shop-item" data-item="health">
-                    <strong>REPAIR KIT</strong>
-                    <span>+25 health</span>
-                    <b>50 credits</b>
-                </button>
-
-                <button class="shop-item" data-item="energy">
-                    <strong>ENERGY CELL</strong>
-                    <span>+40 energy</span>
-                    <b>40 credits</b>
-                </button>
-
-                <button class="shop-item" data-item="damage">
-                    <strong>WEAPON UPGRADE</strong>
-                    <span>+1 damage</span>
-                    <b>150 credits</b>
-                </button>
-
-                <button class="shop-item" data-item="speed">
-                    <strong>ENGINE UPGRADE</strong>
-                    <span>+20 speed</span>
-                    <b>200 credits</b>
-                </button>
-
+            <div class="bar-title">ENERGY</div>
+            <div class="bar">
+                <div id="energyBar" class="energy"></div>
             </div>
 
-            <button id="shopBackBtn" class="main-button">
-                TERUG
-            </button>
+            <div id="weaponText">PULSE</div>
+            <div id="ammoText">12 / 12</div>
 
+        </div>
+
+
+        <div class="hud-right">
+            <div id="killsText">KILLS: 0</div>
+            <div id="creditsText">CREDITS: 100</div>
+            <div id="resourceText">
+                WOOD 0 | STONE 0 | CRYSTAL 0 | METAL 0
+            </div>
         </div>
 
     </div>
 
 
-    <!-- =====================================================
-         GAME
-    ====================================================== -->
-
-    <div id="gameContainer" class="hidden">
-
-        <canvas id="game"></canvas>
-
-
-        <!-- HUD -->
-
-        <div id="hud">
-
-            <div class="hud-left">
-
-                <div class="hud-card">
-                    <div class="hud-label">HULL</div>
-
-                    <div class="bar">
-                        <div id="healthBar" class="bar-fill health"></div>
-                    </div>
-
-                    <span id="healthText">100 / 100</span>
-                </div>
-
-
-                <div class="hud-card">
-                    <div class="hud-label">ENERGY</div>
-
-                    <div class="bar">
-                        <div id="energyBar" class="bar-fill energy"></div>
-                    </div>
-
-                    <span id="energyText">100 / 100</span>
-                </div>
-
-            </div>
-
-
-            <div class="hud-center">
-
-                <div class="location-name">
-                    LOST SECTOR
-                </div>
-
-                <div id="objective">
-                    FIND THE SIGNAL
-                </div>
-
-            </div>
-
-
-            <div class="hud-right">
-
-                <div class="stat">
-                    CREDITS
-                    <b id="credits">0</b>
-                </div>
-
-                <div class="stat">
-                    KILLS
-                    <b id="kills">0</b>
-                </div>
-
-                <div class="stat">
-                    AMMO
-                    <b id="ammo">∞</b>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- Crosshair -->
-
-        <div id="crosshair">
-            <span></span>
-        </div>
-
-
-        <!-- Notifications -->
-
-        <div id="notification"></div>
-
-
-        <!-- Pause -->
-
-        <div id="pauseScreen" class="overlay hidden">
-
-            <div class="overlay-box">
-
-                <h1>PAUSED</h1>
-
-                <button id="resumeBtn" class="main-button">
-                    RESUME
-                </button>
-
-                <button id="pauseMenuBtn" class="menu-button">
-                    MAIN MENU
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- Game over -->
-
-        <div id="gameOverScreen" class="overlay hidden">
-
-            <div class="overlay-box">
-
-                <h1>SIGNAL LOST</h1>
-
-                <p id="gameOverText">
-                    Your tank has been destroyed.
-                </p>
-
-                <button id="restartBtn" class="main-button">
-                    TRY AGAIN
-                </button>
-
-                <button id="gameOverMenuBtn" class="menu-button">
-                    MAIN MENU
-                </button>
-
-            </div>
-
-        </div>
-
+    <div id="interaction">
+        Druk <b>E</b> om een grondstof te verzamelen
     </div>
 
 
