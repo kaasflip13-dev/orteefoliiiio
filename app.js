@@ -1,56 +1,144 @@
-"use strict";
-
 /* =========================================================
-   ECHOBOUND — THE LOST SIGNAL
-   SIMPLE 2D VERSION
+   SIGNALWAKE
+   A completely new 2D game concept
+   No libraries required
    ========================================================= */
 
-
-/* =========================================================
-   CANVAS
-   ========================================================= */
-
-const canvas = document.getElementById("game");
+const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+
+// =========================================================
+// SCREEN ELEMENTS
+// =========================================================
+
+const menu = document.getElementById("menu");
+const game = document.getElementById("game");
+const hud = document.getElementById("hud");
+
+const saveScreen = document.getElementById("saveScreen");
+const achievementScreen = document.getElementById("achievementScreen");
+const pauseScreen = document.getElementById("pauseScreen");
+const gameOverScreen = document.getElementById("gameOverScreen");
+
+const startButton = document.getElementById("startButton");
+const continueButton = document.getElementById("continueButton");
+const saveButton = document.getElementById("saveButton");
+
+const achievementButton =
+    document.getElementById("achievementButton");
+
+const closeAchievements =
+    document.getElementById("closeAchievements");
+
+const backSave =
+    document.getElementById("backSave");
+
+const resumeButton =
+    document.getElementById("resumeButton");
+
+const pauseSaveButton =
+    document.getElementById("pauseSaveButton");
+
+const pauseMenuButton =
+    document.getElementById("pauseMenuButton");
+
+const restartButton =
+    document.getElementById("restartButton");
+
+const gameOverMenuButton =
+    document.getElementById("gameOverMenuButton");
+
+
+// =========================================================
+// HUD
+// =========================================================
+
+const healthBar =
+    document.getElementById("healthBar");
+
+const energyBar =
+    document.getElementById("energyBar");
+
+const phaseText =
+    document.getElementById("phaseText");
+
+const shardText =
+    document.getElementById("shardText");
+
+const resonatorText =
+    document.getElementById("resonatorText");
+
+const signalText =
+    document.getElementById("signalText");
+
+const objective =
+    document.getElementById("objective");
+
+
+// =========================================================
+// CANVAS
+// =========================================================
+
 function resizeCanvas() {
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
 window.addEventListener("resize", resizeCanvas);
+
 resizeCanvas();
 
 
-/* =========================================================
-   GAME
-   ========================================================= */
+// =========================================================
+// WORLD
+// =========================================================
+
+const WORLD_WIDTH = 6000;
+const WORLD_HEIGHT = 6000;
+
+const world = {
+    seed: Math.random() * 100000
+};
+
+
+// =========================================================
+// GAME STATE
+// =========================================================
 
 let running = false;
 let paused = false;
-let lastTime = 0;
+let gameOver = false;
 
-const WORLD_WIDTH = 5000;
-const WORLD_HEIGHT = 5000;
+let selectedSave = 0;
 
-const camera = {
+let phase = 0;
+
+let score = 0;
+
+let lastTime = performance.now();
+
+let pulseRadius = 0;
+let pulseActive = false;
+
+let camera = {
     x: 0,
     y: 0
 };
 
 
-/* =========================================================
-   PLAYER
-   ========================================================= */
+// =========================================================
+// PLAYER
+// =========================================================
 
 const player = {
     x: WORLD_WIDTH / 2,
     y: WORLD_HEIGHT / 2,
 
-    radius: 25,
+    radius: 18,
 
-    speed: 220,
-    sprintSpeed: 340,
+    speed: 210,
 
     health: 100,
     maxHealth: 100,
@@ -58,409 +146,917 @@ const player = {
     energy: 100,
     maxEnergy: 100,
 
-    angle: 0,
+    shards: 0,
 
-    weapon: 0,
+    resonators: 0,
 
-    ammo: 12,
+    signal: 0,
 
-    cooldown: 0,
-    reload: 0,
+    invincible: 0,
 
-    resources: {
-        wood: 0,
-        stone: 0,
-        crystal: 0,
-        metal: 0
-    }
+    moving: false
 };
 
 
-/* =========================================================
-   WEAPONS
-   ========================================================= */
-
-const weapons = [
-
-    {
-        name: "PULSE",
-        damage: 25,
-        speed: 800,
-        cooldown: 0.25,
-        ammo: 12
-    },
-
-    {
-        name: "BURST",
-        damage: 12,
-        speed: 900,
-        cooldown: 0.10,
-        ammo: 24
-    },
-
-    {
-        name: "CANNON",
-        damage: 65,
-        speed: 600,
-        cooldown: 0.8,
-        ammo: 5
-    }
-
-];
-
-
-/* =========================================================
-   INPUT
-   ========================================================= */
+// =========================================================
+// INPUT
+// =========================================================
 
 const keys = {};
 
-const mouse = {
-    x: 0,
-    y: 0,
-    down: false
-};
-
-
-window.addEventListener("keydown", function (event) {
+window.addEventListener("keydown", event => {
 
     keys[event.key.toLowerCase()] = true;
 
     if (event.key === "Escape") {
-        togglePause();
+
+        if (running && !gameOver) {
+
+            paused = !paused;
+
+            pauseScreen.classList.toggle(
+                "hidden",
+                !paused
+            );
+        }
     }
 
-    if (event.key === "1") {
-        changeWeapon(0);
+    if (event.code === "Space") {
+
+        event.preventDefault();
+
+        usePulse();
     }
 
-    if (event.key === "2") {
-        changeWeapon(1);
-    }
+    if (event.key.toLowerCase() === "q") {
 
-    if (event.key === "3") {
-        changeWeapon(2);
-    }
-
-    if (event.key.toLowerCase() === "r") {
-        startReload();
+        changePhase();
     }
 
     if (event.key.toLowerCase() === "e") {
-        collectResource();
+
+        buildResonator();
     }
 });
 
+window.addEventListener("keyup", event => {
 
-window.addEventListener("keyup", function (event) {
     keys[event.key.toLowerCase()] = false;
 });
 
 
-canvas.addEventListener("mousemove", function (event) {
+// =========================================================
+// WORLD OBJECTS
+// =========================================================
 
-    const rect = canvas.getBoundingClientRect();
-
-    mouse.x = event.clientX - rect.left;
-    mouse.y = event.clientY - rect.top;
-});
-
-
-canvas.addEventListener("mousedown", function () {
-    mouse.down = true;
-});
-
-
-window.addEventListener("mouseup", function () {
-    mouse.down = false;
-});
-
-
-/* =========================================================
-   WORLD OBJECTS
-   ========================================================= */
-
-const trees = [];
-const rocks = [];
-const buildings = [];
-const resources = [];
-const aliens = [];
-const bullets = [];
+const shards = [];
+const creatures = [];
+const nodes = [];
+const gates = [];
+const resonators = [];
 const particles = [];
+const echoes = [];
 
 
-/* =========================================================
-   GAME DATA
-   ========================================================= */
-
-let kills = 0;
-let credits = 100;
-let score = 0;
-
-
-/* =========================================================
-   RANDOM
-   ========================================================= */
+// =========================================================
+// RANDOM HELPERS
+// =========================================================
 
 function random(min, max) {
+
     return Math.random() * (max - min) + min;
 }
 
 function randomInt(min, max) {
+
     return Math.floor(random(min, max + 1));
 }
 
-
-/* =========================================================
-   DISTANCE
-   ========================================================= */
-
-function distance(x1, y1, x2, y2) {
+function distance(a, b) {
 
     return Math.hypot(
-        x2 - x1,
-        y2 - y1
+        a.x - b.x,
+        a.y - b.y
     );
 }
 
 
-/* =========================================================
-   START
-   ========================================================= */
+// =========================================================
+// WORLD GENERATION
+// =========================================================
 
-function startGame() {
+function generateWorld() {
 
-    running = true;
-    paused = false;
+    shards.length = 0;
+    creatures.length = 0;
+    nodes.length = 0;
+    gates.length = 0;
+    resonators.length = 0;
+    particles.length = 0;
+    echoes.length = 0;
+
+
+    // Energy shards
+    for (let i = 0; i < 90; i++) {
+
+        shards.push({
+            x: random(100, WORLD_WIDTH - 100),
+            y: random(100, WORLD_HEIGHT - 100),
+
+            radius: random(5, 9),
+
+            value: randomInt(1, 3),
+
+            phase: randomInt(0, 1),
+
+            collected: false,
+
+            angle: random(0, Math.PI * 2)
+        });
+    }
+
+
+    // Resonance nodes
+    for (let i = 0; i < 18; i++) {
+
+        nodes.push({
+            x: random(300, WORLD_WIDTH - 300),
+            y: random(300, WORLD_HEIGHT - 300),
+
+            radius: 28,
+
+            activated: false,
+
+            phase: randomInt(0, 1),
+
+            power: random(1, 4)
+        });
+    }
+
+
+    // Phase gates
+    for (let i = 0; i < 24; i++) {
+
+        gates.push({
+            x: random(200, WORLD_WIDTH - 200),
+            y: random(200, WORLD_HEIGHT - 200),
+
+            width: random(50, 110),
+
+            height: random(50, 110),
+
+            phase: randomInt(0, 1)
+        });
+    }
+
+
+    // Creatures
+    for (let i = 0; i < 28; i++) {
+
+        let x;
+        let y;
+
+        do {
+
+            x = random(100, WORLD_WIDTH - 100);
+            y = random(100, WORLD_HEIGHT - 100);
+
+        } while (
+            Math.hypot(
+                x - player.x,
+                y - player.y
+            ) < 500
+        );
+
+        creatures.push({
+
+            x,
+            y,
+
+            radius: random(13, 22),
+
+            speed: random(40, 75),
+
+            health: 3,
+
+            alert: 0,
+
+            phase: randomInt(0, 1),
+
+            wobble: random(0, 10)
+        });
+    }
+}
+
+
+// =========================================================
+// RESET PLAYER
+// =========================================================
+
+function resetPlayer() {
 
     player.x = WORLD_WIDTH / 2;
     player.y = WORLD_HEIGHT / 2;
 
-    player.health = 100;
-    player.energy = 100;
+    player.health = player.maxHealth;
 
-    player.weapon = 0;
-    player.ammo = weapons[0].ammo;
+    player.energy = player.maxEnergy;
 
-    player.resources.wood = 0;
-    player.resources.stone = 0;
-    player.resources.crystal = 0;
-    player.resources.metal = 0;
+    player.shards = 0;
 
-    kills = 0;
-    credits = 100;
+    player.resonators = 0;
+
+    player.signal = 0;
+
+    player.invincible = 0;
+
     score = 0;
 
-    bullets.length = 0;
-    aliens.length = 0;
-    particles.length = 0;
+    phase = 0;
+}
 
-    createWorld();
-    createAliens();
 
-    document.getElementById("menu").style.display = "none";
+// =========================================================
+// START GAME
+// =========================================================
 
-    document
-        .getElementById("gameOverScreen")
-        .classList.add("hidden");
+function startGame() {
 
-    updateHUD();
+    menu.classList.add("hidden");
+
+    saveScreen.classList.add("hidden");
+
+    achievementScreen.classList.add("hidden");
+
+    pauseScreen.classList.add("hidden");
+
+    gameOverScreen.classList.add("hidden");
+
+    game.style.display = "block";
+
+    hud.style.display = "block";
+
+    resetPlayer();
+
+    generateWorld();
+
+    running = true;
+
+    paused = false;
+
+    gameOver = false;
 
     lastTime = performance.now();
+
+    objective.textContent =
+        "Find a Resonance Node and activate it.";
 
     requestAnimationFrame(gameLoop);
 }
 
 
-/* =========================================================
-   CREATE WORLD
-   ========================================================= */
+// =========================================================
+// RETURN MENU
+// =========================================================
 
-function createWorld() {
+function returnToMenu() {
 
-    trees.length = 0;
-    rocks.length = 0;
-    buildings.length = 0;
-    resources.length = 0;
+    running = false;
 
+    paused = false;
 
-    /* TREES */
+    gameOver = false;
 
-    for (let i = 0; i < 180; i++) {
+    game.style.display = "none";
 
-        trees.push({
-            x: random(50, WORLD_WIDTH - 50),
-            y: random(50, WORLD_HEIGHT - 50),
-            size: random(22, 38)
-        });
-    }
+    hud.style.display = "none";
 
+    saveScreen.classList.add("hidden");
 
-    /* ROCKS */
+    achievementScreen.classList.add("hidden");
 
-    for (let i = 0; i < 100; i++) {
+    pauseScreen.classList.add("hidden");
 
-        rocks.push({
-            x: random(50, WORLD_WIDTH - 50),
-            y: random(50, WORLD_HEIGHT - 50),
-            size: random(15, 28)
-        });
-    }
+    gameOverScreen.classList.add("hidden");
 
-
-    /* BUILDINGS */
-
-    const buildingPositions = [
-
-        [700, 700],
-        [1450, 850],
-        [2250, 650],
-        [3100, 900],
-        [4100, 700],
-
-        [800, 1800],
-        [1800, 1600],
-        [2800, 1850],
-        [3900, 1700],
-
-        [650, 3000],
-        [1550, 3300],
-        [2600, 3000],
-        [3800, 3200],
-        [4500, 2800],
-
-        [1200, 4300],
-        [2400, 4200],
-        [3600, 4300]
-    ];
-
-
-    for (const position of buildingPositions) {
-
-        buildings.push({
-
-            x: position[0],
-            y: position[1],
-
-            width: randomInt(230, 360),
-            height: randomInt(180, 280)
-
-        });
-    }
-
-
-    /* RESOURCES */
-
-    const types = [
-        "wood",
-        "stone",
-        "crystal",
-        "metal"
-    ];
-
-
-    for (let i = 0; i < 150; i++) {
-
-        resources.push({
-
-            x: random(80, WORLD_WIDTH - 80),
-            y: random(80, WORLD_HEIGHT - 80),
-
-            type: types[
-                randomInt(0, types.length - 1)
-            ],
-
-            amount: randomInt(1, 3),
-
-            radius: 15
-        });
-    }
+    menu.classList.remove("hidden");
 }
 
 
-/* =========================================================
-   ALIENS
-   ========================================================= */
+// =========================================================
+// PHASE SHIFT
+// =========================================================
 
-function createAliens() {
+function changePhase() {
 
-    for (let i = 0; i < 10; i++) {
-        spawnAlien();
+    if (!running || paused || gameOver) {
+        return;
     }
-}
 
+    if (player.energy < 15) {
+        return;
+    }
 
-function spawnAlien() {
+    player.energy -= 15;
 
-    let x;
-    let y;
+    phase = phase === 0 ? 1 : 0;
 
-    do {
-
-        x = random(100, WORLD_WIDTH - 100);
-        y = random(100, WORLD_HEIGHT - 100);
-
-    } while (
-        distance(
-            x,
-            y,
-            player.x,
-            player.y
-        ) < 700
+    createBurst(
+        player.x,
+        player.y,
+        25
     );
 
-
-    const types = [
-        "crawler",
-        "stalker",
-        "guardian"
-    ];
-
-    const type =
-        types[randomInt(0, 2)];
-
-
-    let health = 45;
-    let speed = 60;
-    let size = 22;
-
-
-    if (type === "stalker") {
-        health = 60;
-        speed = 90;
-        size = 25;
-    }
-
-
-    if (type === "guardian") {
-        health = 110;
-        speed = 40;
-        size = 35;
-    }
-
-
-    aliens.push({
-
-        x,
-        y,
-
-        type,
-
-        health,
-        maxHealth: health,
-
-        speed,
-        radius: size,
-
-        attackCooldown: 0
-
-    });
+    checkAchievements();
 }
 
 
-/* =========================================================
-   CAMERA
-   ========================================================= */
+// =========================================================
+// PULSE
+// =========================================================
+
+function usePulse() {
+
+    if (!running || paused || gameOver) {
+        return;
+    }
+
+    if (pulseActive) {
+        return;
+    }
+
+    if (player.energy < 20) {
+        return;
+    }
+
+    player.energy -= 20;
+
+    pulseActive = true;
+
+    pulseRadius = 0;
+
+    score += 5;
+
+    // The pulse makes creatures hear you.
+    for (const creature of creatures) {
+
+        const d = distance(player, creature);
+
+        if (d < 900) {
+
+            creature.alert = 5;
+        }
+    }
+
+    createBurst(
+        player.x,
+        player.y,
+        45
+    );
+
+    unlock("firstPulse");
+}
+
+
+// =========================================================
+// RESONATOR
+// =========================================================
+
+function buildResonator() {
+
+    if (!running || paused || gameOver) {
+        return;
+    }
+
+    if (player.shards < 5) {
+        objective.textContent =
+            "You need 5 Echo Shards to build a Resonator.";
+
+        return;
+    }
+
+    player.shards -= 5;
+
+    player.resonators++;
+
+    resonators.push({
+
+        x: player.x,
+        y: player.y,
+
+        radius: 25,
+
+        power: 0,
+
+        active: true
+    });
+
+    createBurst(
+        player.x,
+        player.y,
+        30
+    );
+
+    objective.textContent =
+        "Resonator deployed. Stay nearby to amplify it.";
+
+    unlock("builder");
+}
+
+
+// =========================================================
+// PARTICLES
+// =========================================================
+
+function createBurst(x, y, amount) {
+
+    for (let i = 0; i < amount; i++) {
+
+        const angle =
+            random(0, Math.PI * 2);
+
+        const speed =
+            random(30, 160);
+
+        particles.push({
+
+            x,
+            y,
+
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+
+            life: random(0.4, 1),
+
+            size: random(2, 5)
+        });
+    }
+}
+
+
+// =========================================================
+// UPDATE
+// =========================================================
+
+function update(dt) {
+
+    updatePlayer(dt);
+
+    updateCreatures(dt);
+
+    updateShards(dt);
+
+    updateResonators(dt);
+
+    updateParticles(dt);
+
+    updatePulse(dt);
+
+    updateEchoes(dt);
+
+    updateCamera();
+
+    checkNodes();
+
+    updateHUD();
+
+    if (player.health <= 0) {
+
+        endGame();
+    }
+}
+
+
+// =========================================================
+// PLAYER
+// =========================================================
+
+function updatePlayer(dt) {
+
+    let dx = 0;
+    let dy = 0;
+
+    if (keys["w"] || keys["arrowup"]) {
+        dy -= 1;
+    }
+
+    if (keys["s"] || keys["arrowdown"]) {
+        dy += 1;
+    }
+
+    if (keys["a"] || keys["arrowleft"]) {
+        dx -= 1;
+    }
+
+    if (keys["d"] || keys["arrowright"]) {
+        dx += 1;
+    }
+
+
+    const moving =
+        dx !== 0 ||
+        dy !== 0;
+
+    player.moving = moving;
+
+
+    if (moving) {
+
+        const length =
+            Math.hypot(dx, dy);
+
+        dx /= length;
+        dy /= length;
+
+        let speed =
+            player.speed;
+
+        if (keys["shift"]) {
+
+            speed *= 1.65;
+
+            player.energy -= 10 * dt;
+
+            if (player.energy < 0) {
+                player.energy = 0;
+            }
+        }
+
+        player.x += dx * speed * dt;
+        player.y += dy * speed * dt;
+
+        player.x =
+            Math.max(
+                30,
+                Math.min(
+                    WORLD_WIDTH - 30,
+                    player.x
+                )
+            );
+
+        player.y =
+            Math.max(
+                30,
+                Math.min(
+                    WORLD_HEIGHT - 30,
+                    player.y
+                )
+            );
+
+
+        // Create a memory echo behind you.
+        if (Math.random() < dt * 5) {
+
+            echoes.push({
+
+                x: player.x,
+                y: player.y,
+
+                life: 2
+            });
+        }
+    }
+
+
+    // Regenerate resonance.
+    if (!keys["shift"]) {
+
+        player.energy += 12 * dt;
+    }
+
+    player.energy =
+        Math.min(
+            player.maxEnergy,
+            player.energy
+        );
+
+
+    if (player.invincible > 0) {
+
+        player.invincible -= dt;
+    }
+}
+
+
+// =========================================================
+// CREATURES
+// =========================================================
+
+function updateCreatures(dt) {
+
+    for (const creature of creatures) {
+
+        if (creature.health <= 0) {
+            continue;
+        }
+
+        creature.wobble += dt;
+
+
+        // Creatures only exist in their own phase.
+        if (creature.phase !== phase) {
+            continue;
+        }
+
+
+        const d =
+            distance(
+                creature,
+                player
+            );
+
+
+        // Pulse alert
+        if (creature.alert > 0) {
+
+            creature.alert -= dt;
+        }
+
+
+        let targetX = creature.x;
+        let targetY = creature.y;
+
+
+        if (
+            d < 550 ||
+            creature.alert > 0
+        ) {
+
+            targetX = player.x;
+            targetY = player.y;
+        }
+        else {
+
+            targetX =
+                creature.x +
+                Math.cos(creature.wobble) *
+                40;
+
+            targetY =
+                creature.y +
+                Math.sin(creature.wobble * 0.7) *
+                40;
+        }
+
+
+        const dx =
+            targetX - creature.x;
+
+        const dy =
+            targetY - creature.y;
+
+        const len =
+            Math.hypot(dx, dy);
+
+
+        if (len > 1) {
+
+            creature.x +=
+                (dx / len) *
+                creature.speed *
+                dt;
+
+            creature.y +=
+                (dy / len) *
+                creature.speed *
+                dt;
+        }
+
+
+        if (
+            d <
+            creature.radius +
+            player.radius +
+            5
+        ) {
+
+            if (player.invincible <= 0) {
+
+                player.health -= 15;
+
+                player.invincible = 0.8;
+
+                createBurst(
+                    player.x,
+                    player.y,
+                    12
+                );
+            }
+        }
+    }
+}
+
+
+// =========================================================
+// SHARDS
+// =========================================================
+
+function updateShards(dt) {
+
+    for (const shard of shards) {
+
+        if (shard.collected) {
+            continue;
+        }
+
+        shard.angle += dt;
+
+
+        if (shard.phase !== phase) {
+            continue;
+        }
+
+
+        const d =
+            distance(
+                player,
+                shard
+            );
+
+
+        if (d < 40) {
+
+            shard.collected = true;
+
+            player.shards +=
+                shard.value;
+
+            score +=
+                shard.value * 10;
+
+            createBurst(
+                shard.x,
+                shard.y,
+                8
+            );
+
+            unlock("collector");
+        }
+    }
+}
+
+
+// =========================================================
+// RESONATORS
+// =========================================================
+
+function updateResonators(dt) {
+
+    for (const resonator of resonators) {
+
+        const d =
+            distance(
+                player,
+                resonator
+            );
+
+        if (d < 280) {
+
+            resonator.power += dt * 20;
+
+            player.signal +=
+                dt * 4;
+
+            if (player.signal > 100) {
+                player.signal = 100;
+            }
+
+            score += dt * 2;
+        }
+    }
+}
+
+
+// =========================================================
+// NODES
+// =========================================================
+
+function checkNodes() {
+
+    for (const node of nodes) {
+
+        if (node.activated) {
+            continue;
+        }
+
+        if (node.phase !== phase) {
+            continue;
+        }
+
+        const d =
+            distance(
+                player,
+                node
+            );
+
+
+        if (d < 80) {
+
+            node.activated = true;
+
+            player.signal += 12;
+
+            score += 100;
+
+            createBurst(
+                node.x,
+                node.y,
+                35
+            );
+
+            objective.textContent =
+                "Node activated. Search for another signal.";
+
+            unlock("node");
+
+            const total =
+                nodes.filter(
+                    n => n.activated
+                ).length;
+
+            if (total >= 5) {
+
+                objective.textContent =
+                    "Five nodes awakened. The world is listening.";
+
+                unlock("fiveNodes");
+            }
+        }
+    }
+}
+
+
+// =========================================================
+// PULSE UPDATE
+// =========================================================
+
+function updatePulse(dt) {
+
+    if (!pulseActive) {
+        return;
+    }
+
+    pulseRadius +=
+        1000 * dt;
+
+
+    if (pulseRadius > 950) {
+
+        pulseActive = false;
+
+        pulseRadius = 0;
+    }
+}
+
+
+// =========================================================
+// PARTICLE UPDATE
+// =========================================================
+
+function updateParticles(dt) {
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+
+        const p = particles[i];
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        p.life -= dt;
+
+        p.vx *= 0.97;
+        p.vy *= 0.97;
+
+
+        if (p.life <= 0) {
+
+            particles.splice(i, 1);
+        }
+    }
+}
+
+
+// =========================================================
+// ECHOES
+// =========================================================
+
+function updateEchoes(dt) {
+
+    for (let i = echoes.length - 1; i >= 0; i--) {
+
+        echoes[i].life -= dt;
+
+        if (echoes[i].life <= 0) {
+
+            echoes.splice(i, 1);
+        }
+    }
+}
+
+
+// =========================================================
+// CAMERA
+// =========================================================
 
 function updateCamera() {
 
@@ -473,748 +1069,29 @@ function updateCamera() {
         canvas.height / 2;
 
 
-    camera.x = Math.max(
-        0,
-        Math.min(
-            WORLD_WIDTH - canvas.width,
-            camera.x
-        )
-    );
-
-
-    camera.y = Math.max(
-        0,
-        Math.min(
-            WORLD_HEIGHT - canvas.height,
-            camera.y
-        )
-    );
-}
-
-
-/* =========================================================
-   PLAYER ANGLE
-   ========================================================= */
-
-function updatePlayerAngle() {
-
-    const worldMouseX =
-        mouse.x + camera.x;
-
-    const worldMouseY =
-        mouse.y + camera.y;
-
-
-    player.angle = Math.atan2(
-        worldMouseY - player.y,
-        worldMouseX - player.x
-    );
-}
-
-
-/* =========================================================
-   PLAYER MOVEMENT
-   ========================================================= */
-
-function updatePlayer(dt) {
-
-    let x = 0;
-    let y = 0;
-
-
-    if (keys["w"] || keys["arrowup"]) {
-        y -= 1;
-    }
-
-    if (keys["s"] || keys["arrowdown"]) {
-        y += 1;
-    }
-
-    if (keys["a"] || keys["arrowleft"]) {
-        x -= 1;
-    }
-
-    if (keys["d"] || keys["arrowright"]) {
-        x += 1;
-    }
-
-
-    if (x === 0 && y === 0) {
-
-        player.energy += 15 * dt;
-
-        player.energy = Math.min(
-            player.maxEnergy,
-            player.energy
+    camera.x =
+        Math.max(
+            0,
+            Math.min(
+                WORLD_WIDTH - canvas.width,
+                camera.x
+            )
         );
 
-        return;
-    }
-
-
-    const length = Math.hypot(x, y);
-
-    x /= length;
-    y /= length;
-
-
-    let speed = player.speed;
-
-
-    if (
-        keys["shift"] &&
-        player.energy > 0
-    ) {
-
-        speed = player.sprintSpeed;
-
-        player.energy -= 30 * dt;
-
-    } else {
-
-        player.energy += 15 * dt;
-    }
-
-
-    player.energy = Math.max(
-        0,
-        Math.min(
-            player.maxEnergy,
-            player.energy
-        )
-    );
-
-
-    const newX =
-        player.x +
-        x * speed * dt;
-
-    const newY =
-        player.y +
-        y * speed * dt;
-
-
-    if (!collidesWithBuilding(
-        newX,
-        player.y,
-        player.radius
-    )) {
-        player.x = newX;
-    }
-
-
-    if (!collidesWithBuilding(
-        player.x,
-        newY,
-        player.radius
-    )) {
-        player.y = newY;
-    }
-
-
-    player.x = Math.max(
-        player.radius,
-        Math.min(
-            WORLD_WIDTH - player.radius,
-            player.x
-        )
-    );
-
-
-    player.y = Math.max(
-        player.radius,
-        Math.min(
-            WORLD_HEIGHT - player.radius,
-            player.y
-        )
-    );
+    camera.y =
+        Math.max(
+            0,
+            Math.min(
+                WORLD_HEIGHT - canvas.height,
+                camera.y
+            )
+        );
 }
 
 
-/* =========================================================
-   BUILDING COLLISION
-   ========================================================= */
-
-function collidesWithBuilding(x, y, radius) {
-
-    for (const building of buildings) {
-
-        const left =
-            building.x -
-            building.width / 2;
-
-        const right =
-            building.x +
-            building.width / 2;
-
-        const top =
-            building.y -
-            building.height / 2;
-
-        const bottom =
-            building.y +
-            building.height / 2;
-
-
-        const closestX =
-            Math.max(
-                left,
-                Math.min(x, right)
-            );
-
-        const closestY =
-            Math.max(
-                top,
-                Math.min(y, bottom)
-            );
-
-
-        const dx = x - closestX;
-        const dy = y - closestY;
-
-
-        if (
-            dx * dx +
-            dy * dy <
-            radius * radius
-        ) {
-            return true;
-        }
-    }
-
-
-    return false;
-}
-
-
-/* =========================================================
-   SHOOTING
-   ========================================================= */
-
-function shoot() {
-
-    if (!running || paused) {
-        return;
-    }
-
-    if (player.reload > 0) {
-        return;
-    }
-
-    if (player.cooldown > 0) {
-        return;
-    }
-
-
-    if (player.ammo <= 0) {
-
-        startReload();
-
-        return;
-    }
-
-
-    const weapon =
-        weapons[player.weapon];
-
-
-    player.ammo--;
-
-    player.cooldown =
-        weapon.cooldown;
-
-
-    const startDistance = 38;
-
-
-    const startX =
-        player.x +
-        Math.cos(player.angle) *
-        startDistance;
-
-
-    const startY =
-        player.y +
-        Math.sin(player.angle) *
-        startDistance;
-
-
-    bullets.push({
-
-        x: startX,
-        y: startY,
-
-        vx:
-            Math.cos(player.angle) *
-            weapon.speed,
-
-        vy:
-            Math.sin(player.angle) *
-            weapon.speed,
-
-        damage: weapon.damage,
-
-        life: 1.5
-
-    });
-
-
-    createParticles(
-        startX,
-        startY,
-        "#72eaff",
-        5
-    );
-}
-
-
-/* =========================================================
-   RELOAD
-   ========================================================= */
-
-function startReload() {
-
-    if (player.reload > 0) {
-        return;
-    }
-
-
-    const weapon =
-        weapons[player.weapon];
-
-
-    if (player.ammo >= weapon.ammo) {
-        return;
-    }
-
-
-    player.reload = 1.1;
-}
-
-
-/* =========================================================
-   CHANGE WEAPON
-   ========================================================= */
-
-function changeWeapon(index) {
-
-    if (!weapons[index]) {
-        return;
-    }
-
-
-    player.weapon = index;
-
-    player.ammo =
-        weapons[index].ammo;
-
-
-    updateHUD();
-}
-
-
-/* =========================================================
-   BULLETS
-   ========================================================= */
-
-function updateBullets(dt) {
-
-    for (
-        let i = bullets.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const bullet = bullets[i];
-
-
-        bullet.x +=
-            bullet.vx * dt;
-
-        bullet.y +=
-            bullet.vy * dt;
-
-
-        bullet.life -= dt;
-
-
-        if (
-            bullet.life <= 0 ||
-            bullet.x < 0 ||
-            bullet.y < 0 ||
-            bullet.x > WORLD_WIDTH ||
-            bullet.y > WORLD_HEIGHT
-        ) {
-
-            bullets.splice(i, 1);
-
-            continue;
-        }
-
-
-        /* BUILDING HIT */
-
-        if (
-            bulletHitsBuilding(bullet)
-        ) {
-
-            createParticles(
-                bullet.x,
-                bullet.y,
-                "#ffffff",
-                5
-            );
-
-            bullets.splice(i, 1);
-
-            continue;
-        }
-
-
-        /* ALIEN HIT */
-
-        for (
-            let j = aliens.length - 1;
-            j >= 0;
-            j--
-        ) {
-
-            const alien = aliens[j];
-
-
-            const d =
-                distance(
-                    bullet.x,
-                    bullet.y,
-                    alien.x,
-                    alien.y
-                );
-
-
-            if (
-                d <
-                alien.radius + 5
-            ) {
-
-                alien.health -=
-                    bullet.damage;
-
-
-                createParticles(
-                    bullet.x,
-                    bullet.y,
-                    "#8cff8c",
-                    8
-                );
-
-
-                bullets.splice(i, 1);
-
-
-                if (alien.health <= 0) {
-
-                    kills++;
-                    score += 100;
-                    credits += 20;
-
-
-                    createParticles(
-                        alien.x,
-                        alien.y,
-                        "#72ff88",
-                        20
-                    );
-
-
-                    aliens.splice(j, 1);
-
-
-                    if (kills % 5 === 0) {
-                        spawnAlien();
-                    }
-                }
-
-
-                break;
-            }
-        }
-    }
-}
-
-
-/* =========================================================
-   BULLET / BUILDING
-   ========================================================= */
-
-function bulletHitsBuilding(bullet) {
-
-    for (const building of buildings) {
-
-        const left =
-            building.x -
-            building.width / 2;
-
-        const right =
-            building.x +
-            building.width / 2;
-
-        const top =
-            building.y -
-            building.height / 2;
-
-        const bottom =
-            building.y +
-            building.height / 2;
-
-
-        if (
-            bullet.x >= left &&
-            bullet.x <= right &&
-            bullet.y >= top &&
-            bullet.y <= bottom
-        ) {
-            return true;
-        }
-    }
-
-
-    return false;
-}
-
-
-/* =========================================================
-   ALIENS
-   ========================================================= */
-
-function updateAliens(dt) {
-
-    for (const alien of aliens) {
-
-        alien.attackCooldown -= dt;
-
-
-        const dx =
-            player.x - alien.x;
-
-        const dy =
-            player.y - alien.y;
-
-        const d =
-            Math.hypot(dx, dy);
-
-
-        if (d > 5 && d < 850) {
-
-            const nx = dx / d;
-            const ny = dy / d;
-
-
-            const nextX =
-                alien.x +
-                nx *
-                alien.speed *
-                dt;
-
-
-            const nextY =
-                alien.y +
-                ny *
-                alien.speed *
-                dt;
-
-
-            if (
-                !collidesWithBuilding(
-                    nextX,
-                    alien.y,
-                    alien.radius
-                )
-            ) {
-                alien.x = nextX;
-            }
-
-
-            if (
-                !collidesWithBuilding(
-                    alien.x,
-                    nextY,
-                    alien.radius
-                )
-            ) {
-                alien.y = nextY;
-            }
-        }
-
-
-        if (
-            d <
-            player.radius +
-            alien.radius +
-            8
-        ) {
-
-            if (
-                alien.attackCooldown <= 0
-            ) {
-
-                player.health -=
-                    alien.type === "guardian"
-                        ? 15
-                        : 7;
-
-                alien.attackCooldown = 1;
-
-                createParticles(
-                    player.x,
-                    player.y,
-                    "#ff5555",
-                    8
-                );
-            }
-        }
-    }
-}
-
-
-/* =========================================================
-   RESOURCES
-   ========================================================= */
-
-function collectResource() {
-
-    let closest = null;
-    let closestDistance = 70;
-
-
-    for (const resource of resources) {
-
-        const d =
-            distance(
-                player.x,
-                player.y,
-                resource.x,
-                resource.y
-            );
-
-
-        if (d < closestDistance) {
-
-            closest = resource;
-            closestDistance = d;
-        }
-    }
-
-
-    if (!closest) {
-        return;
-    }
-
-
-    player.resources[
-        closest.type
-    ] += closest.amount;
-
-
-    createParticles(
-        closest.x,
-        closest.y,
-        "#ffe66d",
-        10
-    );
-
-
-    const index =
-        resources.indexOf(closest);
-
-
-    if (index !== -1) {
-        resources.splice(index, 1);
-    }
-
-
-    updateHUD();
-}
-
-
-/* =========================================================
-   PARTICLES
-   ========================================================= */
-
-function createParticles(
-    x,
-    y,
-    color,
-    amount
-) {
-
-    for (let i = 0; i < amount; i++) {
-
-        const angle =
-            random(0, Math.PI * 2);
-
-        const speed =
-            random(30, 130);
-
-
-        particles.push({
-
-            x,
-            y,
-
-            vx:
-                Math.cos(angle) *
-                speed,
-
-            vy:
-                Math.sin(angle) *
-                speed,
-
-            life: random(0.2, 0.6),
-
-            size: random(2, 5),
-
-            color
-        });
-    }
-}
-
-
-function updateParticles(dt) {
-
-    for (
-        let i = particles.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const particle =
-            particles[i];
-
-
-        particle.x +=
-            particle.vx * dt;
-
-        particle.y +=
-            particle.vy * dt;
-
-
-        particle.vx *= 0.95;
-        particle.vy *= 0.95;
-
-
-        particle.life -= dt;
-
-
-        if (particle.life <= 0) {
-            particles.splice(i, 1);
-        }
-    }
-}
-
-
-/* =========================================================
-   DRAW
-   ========================================================= */
+// =========================================================
+// DRAW
+// =========================================================
 
 function draw() {
 
@@ -1226,7 +1103,40 @@ function draw() {
     );
 
 
-    ctx.fillStyle = "#16241b";
+    drawWorld();
+
+    drawGates();
+
+    drawNodes();
+
+    drawShards();
+
+    drawResonators();
+
+    drawCreatures();
+
+    drawEchoes();
+
+    drawPlayer();
+
+    drawParticles();
+
+    drawPulse();
+
+    drawVignette();
+}
+
+
+// =========================================================
+// WORLD
+// =========================================================
+
+function drawWorld() {
+
+    ctx.fillStyle =
+        phase === 0
+            ? "#081217"
+            : "#120b19";
 
     ctx.fillRect(
         0,
@@ -1236,567 +1146,653 @@ function draw() {
     );
 
 
-    ctx.save();
+    const grid = 100;
 
-    ctx.translate(
-        -camera.x,
-        -camera.y
-    );
+    const startX =
+        Math.floor(camera.x / grid) * grid;
 
+    const startY =
+        Math.floor(camera.y / grid) * grid;
 
-    drawGround();
-    drawPlants();
-    drawResources();
-    drawBuildings();
-    drawRocks();
-    drawTrees();
-    drawAliens();
-    drawBullets();
-    drawPlayer();
-    drawParticles();
-
-
-    ctx.restore();
-}
-
-
-/* =========================================================
-   GROUND
-   ========================================================= */
-
-function drawGround() {
-
-    ctx.fillStyle = "#1b2c20";
-
-    ctx.fillRect(
-        0,
-        0,
-        WORLD_WIDTH,
-        WORLD_HEIGHT
-    );
-
-
-    ctx.strokeStyle =
-        "rgba(255,255,255,0.025)";
 
     ctx.lineWidth = 1;
 
 
-    const grid = 100;
-
-
     for (
-        let x = 0;
-        x <= WORLD_WIDTH;
+        let x = startX;
+        x < camera.x + canvas.width + grid;
         x += grid
     ) {
 
-        ctx.beginPath();
+        for (
+            let y = startY;
+            y < camera.y + canvas.height + grid;
+            y += grid
+        ) {
 
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, WORLD_HEIGHT);
+            const sx = x - camera.x;
+            const sy = y - camera.y;
 
-        ctx.stroke();
+            const value =
+                Math.sin(
+                    x * 0.012 +
+                    y * 0.007
+                );
+
+
+            ctx.strokeStyle =
+                phase === 0
+                    ? `rgba(70,130,145,${0.035 + Math.abs(value) * 0.025})`
+                    : `rgba(155,80,160,${0.035 + Math.abs(value) * 0.025})`;
+
+            ctx.strokeRect(
+                sx,
+                sy,
+                grid,
+                grid
+            );
+        }
     }
 
 
+    // Organic terrain marks
     for (
-        let y = 0;
-        y <= WORLD_HEIGHT;
-        y += grid
+        let x = startX;
+        x < camera.x + canvas.width + grid;
+        x += 150
     ) {
 
-        ctx.beginPath();
+        for (
+            let y = startY;
+            y < camera.y + canvas.height + grid;
+            y += 150
+        ) {
 
-        ctx.moveTo(0, y);
-        ctx.lineTo(WORLD_WIDTH, y);
+            const sx =
+                x - camera.x + 35;
 
-        ctx.stroke();
+            const sy =
+                y - camera.y + 50;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                sx,
+                sy,
+                2 + Math.abs(
+                    Math.sin(x * 0.1)
+                ) * 4,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle =
+                phase === 0
+                    ? "rgba(100,160,165,0.16)"
+                    : "rgba(180,100,185,0.14)";
+
+            ctx.fill();
+        }
     }
 }
 
 
-/* =========================================================
-   PLANTS
-   ========================================================= */
+// =========================================================
+// GATES
+// =========================================================
 
-function drawPlants() {
+function drawGates() {
 
-    for (let i = 0; i < 300; i++) {
+    for (const gate of gates) {
+
+        if (gate.phase !== phase) {
+            continue;
+        }
 
         const x =
-            (i * 97) %
-            WORLD_WIDTH;
+            gate.x - camera.x;
 
         const y =
-            (i * 173) %
-            WORLD_HEIGHT;
+            gate.y - camera.y;
 
 
-        ctx.fillStyle = "#315f3c";
+        if (
+            x < -150 ||
+            y < -150 ||
+            x > canvas.width + 150 ||
+            y > canvas.height + 150
+        ) {
+            continue;
+        }
+
+
+        ctx.save();
+
+        ctx.translate(
+            x + gate.width / 2,
+            y + gate.height / 2
+        );
+
+        ctx.rotate(
+            Math.sin(
+                gate.x * 0.01
+            ) * 0.15
+        );
+
+
+        ctx.strokeStyle =
+            phase === 0
+                ? "rgba(75,220,235,0.5)"
+                : "rgba(220,105,240,0.5)";
+
+        ctx.lineWidth = 3;
+
+        ctx.strokeRect(
+            -gate.width / 2,
+            -gate.height / 2,
+            gate.width,
+            gate.height
+        );
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -gate.width / 2,
+            0
+        );
+
+        ctx.lineTo(
+            gate.width / 2,
+            0
+        );
+
+        ctx.strokeStyle =
+            "rgba(255,255,255,0.12)";
+
+        ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+
+// =========================================================
+// NODES
+// =========================================================
+
+function drawNodes() {
+
+    for (const node of nodes) {
+
+        if (node.phase !== phase) {
+            continue;
+        }
+
+        const x =
+            node.x - camera.x;
+
+        const y =
+            node.y - camera.y;
+
+
+        if (
+            x < -100 ||
+            y < -100 ||
+            x > canvas.width + 100 ||
+            y > canvas.height + 100
+        ) {
+            continue;
+        }
+
+
+        const pulse =
+            Math.sin(
+                performance.now() * 0.003 +
+                node.x
+            ) * 5;
+
 
         ctx.beginPath();
 
         ctx.arc(
             x,
             y,
-            5,
+            node.radius + pulse,
             0,
             Math.PI * 2
         );
-
-        ctx.fill();
-    }
-}
-
-
-/* =========================================================
-   TREES
-   ========================================================= */
-
-function drawTrees() {
-
-    for (const tree of trees) {
-
-        /* shadow */
-
-        ctx.fillStyle =
-            "rgba(0,0,0,0.3)";
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-            tree.x,
-            tree.y + 15,
-            tree.size * 0.7,
-            tree.size * 0.4,
-            0,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        /* trunk */
-
-        ctx.fillStyle = "#60432d";
-
-        ctx.fillRect(
-            tree.x - 7,
-            tree.y,
-            14,
-            tree.size
-        );
-
-
-        /* leaves */
-
-        ctx.fillStyle = "#367348";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            tree.x,
-            tree.y,
-            tree.size,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.fillStyle = "#4b915b";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            tree.x - 10,
-            tree.y - 8,
-            tree.size * 0.45,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-    }
-}
-
-
-/* =========================================================
-   ROCKS
-   ========================================================= */
-
-function drawRocks() {
-
-    for (const rock of rocks) {
-
-        ctx.fillStyle = "#68747a";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            rock.x,
-            rock.y,
-            rock.size,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.fillStyle = "#8d999e";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            rock.x - 5,
-            rock.y - 6,
-            rock.size * 0.35,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-    }
-}
-
-
-/* =========================================================
-   BUILDINGS
-   ========================================================= */
-
-function drawBuildings() {
-
-    for (const building of buildings) {
-
-        const left =
-            building.x -
-            building.width / 2;
-
-        const top =
-            building.y -
-            building.height / 2;
-
-
-        /* shadow */
-
-        ctx.fillStyle =
-            "rgba(0,0,0,0.35)";
-
-        ctx.fillRect(
-            left + 10,
-            top + 10,
-            building.width,
-            building.height
-        );
-
-
-        /* building */
-
-        ctx.fillStyle = "#303b42";
-
-        ctx.fillRect(
-            left,
-            top,
-            building.width,
-            building.height
-        );
-
-
-        /* border */
-
-        ctx.strokeStyle = "#68757b";
-
-        ctx.lineWidth = 5;
-
-        ctx.strokeRect(
-            left,
-            top,
-            building.width,
-            building.height
-        );
-
-
-        /* windows */
-
-        ctx.fillStyle = "#152026";
-
-        const windowCount = 3;
-
-
-        for (let i = 0; i < windowCount; i++) {
-
-            ctx.fillRect(
-                left + 30 + i * 70,
-                top + 30,
-                38,
-                28
-            );
-        }
-
-
-        /* door */
-
-        ctx.fillStyle = "#13191c";
-
-        ctx.fillRect(
-            building.x - 25,
-            top + building.height - 70,
-            50,
-            70
-        );
-    }
-}
-
-
-/* =========================================================
-   RESOURCES DRAW
-   ========================================================= */
-
-function drawResources() {
-
-    for (const resource of resources) {
-
-        let color = "#ffffff";
-
-        if (resource.type === "wood") {
-            color = "#b97b43";
-        }
-
-        if (resource.type === "stone") {
-            color = "#a8b1b7";
-        }
-
-        if (resource.type === "crystal") {
-            color = "#9b7cff";
-        }
-
-        if (resource.type === "metal") {
-            color = "#55dce8";
-        }
-
-
-        ctx.fillStyle = color;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            resource.x,
-            resource.y,
-            resource.radius,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
 
         ctx.strokeStyle =
-            "rgba(255,255,255,0.4)";
+            node.activated
+                ? "#6eeeff"
+                : "#52727c";
+
+        ctx.lineWidth = 3;
+
+        ctx.stroke();
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            8,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle =
+            node.activated
+                ? "#d8fbff"
+                : "#36505a";
+
+        ctx.fill();
+
+
+        if (node.activated) {
+
+            ctx.beginPath();
+
+            ctx.moveTo(x, y - 42);
+            ctx.lineTo(x + 10, y - 62);
+            ctx.lineTo(x, y - 82);
+            ctx.lineTo(x - 10, y - 62);
+            ctx.closePath();
+
+            ctx.fillStyle =
+                "rgba(80,225,255,0.25)";
+
+            ctx.fill();
+        }
+    }
+}
+
+
+// =========================================================
+// SHARDS
+// =========================================================
+
+function drawShards() {
+
+    for (const shard of shards) {
+
+        if (shard.collected) {
+            continue;
+        }
+
+        if (shard.phase !== phase) {
+            continue;
+        }
+
+        const x =
+            shard.x - camera.x;
+
+        const y =
+            shard.y - camera.y;
+
+
+        if (
+            x < -30 ||
+            y < -30 ||
+            x > canvas.width + 30 ||
+            y > canvas.height + 30
+        ) {
+            continue;
+        }
+
+
+        const s =
+            1 +
+            Math.sin(
+                shard.angle * 3
+            ) * 0.15;
+
+
+        ctx.save();
+
+        ctx.translate(x, y);
+
+        ctx.rotate(shard.angle);
+
+        ctx.scale(s, s);
+
+        ctx.beginPath();
+
+        ctx.moveTo(0, -10);
+        ctx.lineTo(7, 0);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-7, 0);
+        ctx.closePath();
+
+        ctx.fillStyle =
+            phase === 0
+                ? "#72e6ee"
+                : "#d38ce8";
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "rgba(255,255,255,0.7)";
+
+        ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+
+// =========================================================
+// RESONATORS
+// =========================================================
+
+function drawResonators() {
+
+    for (const r of resonators) {
+
+        const x =
+            r.x - camera.x;
+
+        const y =
+            r.y - camera.y;
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            r.radius,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.strokeStyle =
+            "#69e7ff";
+
+        ctx.lineWidth = 2;
+
+        ctx.stroke();
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            9,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle =
+            "#b9f8ff";
+
+        ctx.fill();
+
+
+        const power =
+            Math.min(
+                100,
+                r.power
+            );
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            35 + power * 0.2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.strokeStyle =
+            `rgba(80,220,255,${0.05 + power / 500})`;
 
         ctx.stroke();
     }
 }
 
 
-/* =========================================================
-   ALIENS DRAW
-   ========================================================= */
+// =========================================================
+// CREATURES
+// =========================================================
 
-function drawAliens() {
+function drawCreatures() {
 
-    for (const alien of aliens) {
+    for (const creature of creatures) {
 
-        let color = "#62d96d";
+        if (creature.health <= 0) {
+            continue;
+        }
+
+        if (creature.phase !== phase) {
+            continue;
+        }
+
+        const x =
+            creature.x - camera.x;
+
+        const y =
+            creature.y - camera.y;
 
 
-        if (alien.type === "stalker") {
-            color = "#52d9d2";
+        if (
+            x < -60 ||
+            y < -60 ||
+            x > canvas.width + 60 ||
+            y > canvas.height + 60
+        ) {
+            continue;
         }
 
 
-        if (alien.type === "guardian") {
-            color = "#b36cf5";
-        }
+        const wobble =
+            Math.sin(
+                creature.wobble * 2
+            ) * 3;
 
 
-        /* body */
+        ctx.save();
 
-        ctx.fillStyle = color;
+        ctx.translate(
+            x,
+            y
+        );
+
+        ctx.rotate(
+            creature.wobble * 0.2
+        );
+
 
         ctx.beginPath();
 
-        ctx.arc(
-            alien.x,
-            alien.y,
-            alien.radius,
+        ctx.moveTo(
             0,
-            Math.PI * 2
+            -creature.radius - wobble
         );
+
+        ctx.lineTo(
+            creature.radius,
+            creature.radius
+        );
+
+        ctx.lineTo(
+            0,
+            creature.radius * 0.55
+        );
+
+        ctx.lineTo(
+            -creature.radius,
+            creature.radius
+        );
+
+        ctx.closePath();
+
+
+        ctx.fillStyle =
+            phase === 0
+                ? "#7d969c"
+                : "#8c668f";
 
         ctx.fill();
 
 
-        /* eyes */
+        ctx.strokeStyle =
+            creature.alert > 0
+                ? "#ffffff"
+                : "#42545a";
 
-        ctx.fillStyle = "#08100b";
+        ctx.lineWidth = 2;
+
+        ctx.stroke();
+
 
         ctx.beginPath();
 
         ctx.arc(
-            alien.x - 7,
-            alien.y - 5,
+            0,
+            -3,
             4,
             0,
             Math.PI * 2
         );
 
-        ctx.arc(
-            alien.x + 7,
-            alien.y - 5,
-            4,
-            0,
-            Math.PI * 2
-        );
+        ctx.fillStyle =
+            creature.alert > 0
+                ? "#ffffff"
+                : "#69dce8";
 
         ctx.fill();
 
 
-        /* health */
-
-        const width =
-            alien.radius * 2;
-
-
-        ctx.fillStyle = "#151515";
-
-        ctx.fillRect(
-            alien.x - width / 2,
-            alien.y - alien.radius - 10,
-            width,
-            5
-        );
-
-
-        ctx.fillStyle = "#65ee76";
-
-        ctx.fillRect(
-            alien.x - width / 2,
-            alien.y - alien.radius - 10,
-            width *
-                (alien.health /
-                alien.maxHealth),
-            5
-        );
+        ctx.restore();
     }
 }
 
 
-/* =========================================================
-   PLAYER DRAW
-   ========================================================= */
+// =========================================================
+// PLAYER
+// =========================================================
 
 function drawPlayer() {
+
+    const x =
+        player.x - camera.x;
+
+    const y =
+        player.y - camera.y;
+
 
     ctx.save();
 
     ctx.translate(
-        player.x,
-        player.y
+        x,
+        y
     );
 
-    ctx.rotate(player.angle);
+
+    if (
+        player.invincible > 0 &&
+        Math.floor(
+            player.invincible * 12
+        ) % 2 === 0
+    ) {
+
+        ctx.globalAlpha = 0.4;
+    }
 
 
-    /* shadow */
+    // Outer resonance ring
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        28,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.strokeStyle =
+        phase === 0
+            ? "rgba(80,225,255,0.25)"
+            : "rgba(220,120,240,0.25)";
+
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+
+
+    // Body
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        player.radius,
+        0,
+        Math.PI * 2
+    );
 
     ctx.fillStyle =
-        "rgba(0,0,0,0.35)";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        0,
-        15,
-        38,
-        20,
-        0,
-        0,
-        Math.PI * 2
-    );
+        "#d7eef2";
 
     ctx.fill();
 
 
-    /* tank body */
+    ctx.strokeStyle =
+        "#65dff2";
 
-    ctx.fillStyle = "#4d5b62";
+    ctx.lineWidth = 3;
 
-    ctx.fillRect(
-        -30,
-        -23,
-        60,
-        46
-    );
+    ctx.stroke();
 
 
-    /* armor */
-
-    ctx.fillStyle = "#718087";
-
-    ctx.fillRect(
-        -22,
-        -17,
-        44,
-        34
-    );
-
-
-    /* turret */
-
-    ctx.fillStyle = "#909da3";
-
+    // Core
     ctx.beginPath();
 
     ctx.arc(
         0,
         0,
-        18,
+        7,
         0,
         Math.PI * 2
     );
+
+    ctx.fillStyle =
+        phase === 0
+            ? "#48d9ef"
+            : "#d58ee9";
 
     ctx.fill();
 
 
-    /* barrel */
-
-    ctx.fillStyle = "#283238";
-
-    ctx.fillRect(
-        5,
-        -5,
-        38,
-        10
-    );
-
-
-    /* core */
-
-    ctx.fillStyle = "#62eaff";
-
+    // Direction marker
     ctx.beginPath();
 
-    ctx.arc(
+    ctx.moveTo(
         0,
-        0,
-        6,
-        0,
-        Math.PI * 2
+        -28
     );
+
+    ctx.lineTo(
+        -7,
+        -15
+    );
+
+    ctx.lineTo(
+        7,
+        -15
+    );
+
+    ctx.closePath();
+
+    ctx.fillStyle =
+        "#efffff";
 
     ctx.fill();
 
@@ -1805,57 +1801,71 @@ function drawPlayer() {
 }
 
 
-/* =========================================================
-   BULLETS DRAW
-   ========================================================= */
+// =========================================================
+// ECHO TRAILS
+// =========================================================
 
-function drawBullets() {
+function drawEchoes() {
 
-    for (const bullet of bullets) {
+    for (const echo of echoes) {
 
-        ctx.fillStyle = "#75eaff";
+        const x =
+            echo.x - camera.x;
+
+        const y =
+            echo.y - camera.y;
 
         ctx.beginPath();
 
         ctx.arc(
-            bullet.x,
-            bullet.y,
-            5,
+            x,
+            y,
+            5 + echo.life * 2,
             0,
             Math.PI * 2
         );
+
+        ctx.fillStyle =
+            `rgba(100,220,235,${echo.life / 10})`;
 
         ctx.fill();
     }
 }
 
 
-/* =========================================================
-   PARTICLES DRAW
-   ========================================================= */
+// =========================================================
+// PARTICLES
+// =========================================================
 
 function drawParticles() {
 
-    for (const particle of particles) {
+    for (const p of particles) {
+
+        const x =
+            p.x - camera.x;
+
+        const y =
+            p.y - camera.y;
+
 
         ctx.globalAlpha =
             Math.max(
                 0,
-                particle.life
+                p.life
             );
-
-        ctx.fillStyle =
-            particle.color;
 
         ctx.beginPath();
 
         ctx.arc(
-            particle.x,
-            particle.y,
-            particle.size,
+            x,
+            y,
+            p.size,
             0,
             Math.PI * 2
         );
+
+        ctx.fillStyle =
+            "#77e7f4";
 
         ctx.fill();
     }
@@ -1864,395 +1874,823 @@ function drawParticles() {
 }
 
 
-/* =========================================================
-   HUD
-   ========================================================= */
+// =========================================================
+// PULSE DRAWING
+// =========================================================
 
-function updateHUD() {
+function drawPulse() {
 
-    const healthBar =
-        document.getElementById("healthBar");
-
-    const energyBar =
-        document.getElementById("energyBar");
-
-    const weaponText =
-        document.getElementById("weaponText");
-
-    const ammoText =
-        document.getElementById("ammoText");
-
-    const killsText =
-        document.getElementById("killsText");
-
-    const creditsText =
-        document.getElementById("creditsText");
-
-    const resourceText =
-        document.getElementById("resourceText");
-
-
-    healthBar.style.width =
-        player.health + "%";
-
-
-    energyBar.style.width =
-        player.energy + "%";
-
-
-    const weapon =
-        weapons[player.weapon];
-
-
-    weaponText.textContent =
-        weapon.name;
-
-
-    ammoText.textContent =
-        player.ammo +
-        " / " +
-        weapon.ammo;
-
-
-    killsText.textContent =
-        "KILLS: " + kills;
-
-
-    creditsText.textContent =
-        "CREDITS: " + credits;
-
-
-    resourceText.textContent =
-        "WOOD " +
-        player.resources.wood +
-        " | STONE " +
-        player.resources.stone +
-        " | CRYSTAL " +
-        player.resources.crystal +
-        " | METAL " +
-        player.resources.metal;
-}
-
-
-/* =========================================================
-   NEAR RESOURCE
-   ========================================================= */
-
-function updateInteraction() {
-
-    let nearby = false;
-
-
-    for (const resource of resources) {
-
-        if (
-            distance(
-                player.x,
-                player.y,
-                resource.x,
-                resource.y
-            ) < 70
-        ) {
-
-            nearby = true;
-            break;
-        }
-    }
-
-
-    const interaction =
-        document.getElementById(
-            "interaction"
-        );
-
-
-    if (nearby) {
-        interaction.classList.add(
-            "visible"
-        );
-    } else {
-        interaction.classList.remove(
-            "visible"
-        );
-    }
-}
-
-
-/* =========================================================
-   PAUSE
-   ========================================================= */
-
-function togglePause() {
-
-    if (!running) {
+    if (!pulseActive) {
         return;
     }
 
 
-    paused = !paused;
+    const x =
+        player.x - camera.x;
+
+    const y =
+        player.y - camera.y;
 
 
-    const screen =
-        document.getElementById(
-            "pauseScreen"
-        );
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y,
+        pulseRadius,
+        0,
+        Math.PI * 2
+    );
 
 
-    if (paused) {
-        screen.classList.remove(
-            "hidden"
-        );
-    } else {
-        screen.classList.add(
-            "hidden"
-        );
-    }
+    ctx.strokeStyle =
+        `rgba(100,230,255,${
+            Math.max(
+                0,
+                1 - pulseRadius / 950
+            )
+        })`;
+
+    ctx.lineWidth = 5;
+
+    ctx.stroke();
 }
 
 
-/* =========================================================
-   GAME OVER
-   ========================================================= */
+// =========================================================
+// VIGNETTE
+// =========================================================
 
-function gameOver() {
+function drawVignette() {
 
-    running = false;
-
-    document.getElementById(
-        "finalScore"
-    ).textContent =
-        "Score: " + score;
-
-
-    document.getElementById(
-        "finalKills"
-    ).textContent =
-        "Kills: " + kills;
+    const gradient =
+        ctx.createRadialGradient(
+            canvas.width / 2,
+            canvas.height / 2,
+            canvas.width * 0.2,
+            canvas.width / 2,
+            canvas.height / 2,
+            canvas.width * 0.75
+        );
 
 
-    document
-        .getElementById("gameOverScreen")
-        .classList.remove("hidden");
+    gradient.addColorStop(
+        0,
+        "rgba(0,0,0,0)"
+    );
+
+    gradient.addColorStop(
+        1,
+        "rgba(0,0,0,0.5)"
+    );
+
+
+    ctx.fillStyle = gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 }
 
 
-/* =========================================================
-   UPDATE
-   ========================================================= */
+// =========================================================
+// HUD
+// =========================================================
 
-function update(dt) {
+function updateHUD() {
 
-    updatePlayer(dt);
-
-    updatePlayerAngle();
-
-    if (mouse.down) {
-        shoot();
-    }
-
-
-    player.cooldown =
-        Math.max(
+    healthBar.style.width =
+        `${Math.max(
             0,
-            player.cooldown - dt
-        );
+            player.health
+        )}%`;
+
+    energyBar.style.width =
+        `${Math.max(
+            0,
+            player.energy
+        )}%`;
 
 
-    if (player.reload > 0) {
-
-        player.reload -= dt;
-
-
-        if (player.reload <= 0) {
-
-            player.reload = 0;
-
-            player.ammo =
-                weapons[player.weapon].ammo;
-        }
-    }
+    phaseText.textContent =
+        phase === 0
+            ? "A"
+            : "B";
 
 
-    updateBullets(dt);
-    updateAliens(dt);
-    updateParticles(dt);
-
-    updateCamera();
-    updateInteraction();
-    updateHUD();
+    shardText.textContent =
+        player.shards;
 
 
-    if (player.health <= 0) {
+    resonatorText.textContent =
+        player.resonators;
 
-        player.health = 0;
 
-        gameOver();
-    }
+    signalText.textContent =
+        `${Math.floor(
+            player.signal
+        )}%`;
 }
 
 
-/* =========================================================
-   GAME LOOP
-   ========================================================= */
+// =========================================================
+// GAME LOOP
+// =========================================================
 
 function gameLoop(time) {
 
     if (!running) {
-        draw();
         return;
     }
 
 
     const dt =
         Math.min(
-            (time - lastTime) / 1000,
-            0.033
+            0.033,
+            (time - lastTime) / 1000
         );
-
 
     lastTime = time;
 
 
-    if (!paused) {
+    if (!paused && !gameOver) {
+
         update(dt);
+
+        draw();
     }
 
 
-    draw();
+    requestAnimationFrame(gameLoop);
+}
 
 
-    requestAnimationFrame(
-        gameLoop
+// =========================================================
+// GAME OVER
+// =========================================================
+
+function endGame() {
+
+    gameOver = true;
+
+    running = false;
+
+    gameOverText.textContent =
+        `Signal score: ${Math.floor(score)} • ` +
+        `Echo Shards: ${player.shards} • ` +
+        `Resonators: ${player.resonators}`;
+
+    gameOverScreen.classList.remove(
+        "hidden"
     );
 }
 
 
-/* =========================================================
-   MENU BUTTONS
-   ========================================================= */
+// =========================================================
+// ACHIEVEMENTS
+// =========================================================
 
-document
-    .getElementById("startButton")
-    .addEventListener(
-        "click",
-        startGame
+const achievementData = {
+
+    firstPulse: {
+        name: "FIRST WAVE",
+        description: "Send your first Pulse.",
+        icon: "◉"
+    },
+
+    collector: {
+        name: "GATHERER",
+        description: "Collect your first Echo Shard.",
+        icon: "◆"
+    },
+
+    node: {
+        name: "LISTENER",
+        description: "Activate a Resonance Node.",
+        icon: "◇"
+    },
+
+    fiveNodes: {
+        name: "THE WORLD ANSWERS",
+        description: "Activate five Resonance Nodes.",
+        icon: "✦"
+    },
+
+    builder: {
+        name: "ARCHITECT OF SOUND",
+        description: "Deploy your first Resonator.",
+        icon: "⌂"
+    }
+};
+
+
+let achievements =
+    JSON.parse(
+        localStorage.getItem(
+            "signalwakeAchievements"
+        ) || "{}"
     );
 
 
-document
-    .getElementById("resumeButton")
-    .addEventListener(
-        "click",
-        function () {
+function unlock(id) {
 
-            paused = false;
+    if (achievements[id]) {
+        return;
+    }
 
-            document
-                .getElementById(
-                    "pauseScreen"
-                )
-                .classList.add("hidden");
+    achievements[id] = true;
+
+    localStorage.setItem(
+        "signalwakeAchievements",
+        JSON.stringify(achievements)
+    );
+}
+
+
+function checkAchievements() {
+
+    if (phase === 1) {
+
+        // Phase shifting counts as exploration.
+        unlock("phaseWalker");
+    }
+}
+
+
+function showAchievements() {
+
+    const list =
+        document.getElementById(
+            "achievementList"
+        );
+
+    list.innerHTML = "";
+
+
+    for (
+        const [id, data]
+        of Object.entries(
+            achievementData
+        )
+    ) {
+
+        const unlocked =
+            achievements[id] === true;
+
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+        item.className =
+            "achievement" +
+            (unlocked
+                ? " unlocked"
+                : "");
+
+
+        item.innerHTML = `
+            <div class="achievement-icon">
+                ${unlocked ? data.icon : "?"}
+            </div>
+
+            <div>
+                <div class="achievement-name">
+                    ${unlocked
+                        ? data.name
+                        : "UNKNOWN SIGNAL"}
+                </div>
+
+                <div class="achievement-description">
+                    ${data.description}
+                </div>
+            </div>
+        `;
+
+
+        list.appendChild(item);
+    }
+
+
+    achievementScreen.classList.remove(
+        "hidden"
+    );
+}
+
+
+// =========================================================
+// SAVE SYSTEM
+// =========================================================
+
+function saveGame(slot) {
+
+    const data = {
+
+        player: {
+            x: player.x,
+            y: player.y,
+            health: player.health,
+            energy: player.energy,
+            shards: player.shards,
+            resonators: player.resonators,
+            signal: player.signal
+        },
+
+        phase,
+
+        score,
+
+        nodes: nodes.map(
+            node => ({
+                x: node.x,
+                y: node.y,
+                radius: node.radius,
+                activated: node.activated,
+                phase: node.phase,
+                power: node.power
+            })
+        ),
+
+        shards: shards.map(
+            shard => ({
+                x: shard.x,
+                y: shard.y,
+                radius: shard.radius,
+                value: shard.value,
+                phase: shard.phase,
+                collected: shard.collected,
+                angle: shard.angle
+            })
+        ),
+
+        resonators: resonators.map(
+            r => ({
+                x: r.x,
+                y: r.y,
+                radius: r.radius,
+                power: r.power,
+                active: r.active
+            })
+        ),
+
+        date:
+            new Date().toLocaleString()
+    };
+
+
+    localStorage.setItem(
+        `signalwakeSave${slot}`,
+        JSON.stringify(data)
+    );
+
+
+    objective.textContent =
+        `Game saved to slot ${slot}.`;
+}
+
+
+function loadGame(slot) {
+
+    const raw =
+        localStorage.getItem(
+            `signalwakeSave${slot}`
+        );
+
+
+    if (!raw) {
+        return false;
+    }
+
+
+    const data =
+        JSON.parse(raw);
+
+
+    player.x =
+        data.player.x;
+
+    player.y =
+        data.player.y;
+
+    player.health =
+        data.player.health;
+
+    player.energy =
+        data.player.energy;
+
+    player.shards =
+        data.player.shards;
+
+    player.resonators =
+        data.player.resonators;
+
+    player.signal =
+        data.player.signal;
+
+
+    phase =
+        data.phase;
+
+    score =
+        data.score;
+
+
+    nodes.length = 0;
+
+    for (const n of data.nodes) {
+
+        nodes.push(n);
+    }
+
+
+    shards.length = 0;
+
+    for (const s of data.shards) {
+
+        shards.push(s);
+    }
+
+
+    resonators.length = 0;
+
+    for (const r of data.resonators) {
+
+        resonators.push(r);
+    }
+
+
+    creatures.length = 0;
+
+    // Creatures are regenerated.
+    for (let i = 0; i < 28; i++) {
+
+        creatures.push({
+
+            x: random(
+                100,
+                WORLD_WIDTH - 100
+            ),
+
+            y: random(
+                100,
+                WORLD_HEIGHT - 100
+            ),
+
+            radius: random(13, 22),
+
+            speed: random(40, 75),
+
+            health: 3,
+
+            alert: 0,
+
+            phase: randomInt(0, 1),
+
+            wobble: random(0, 10)
+        });
+    }
+
+
+    return true;
+}
+
+
+// =========================================================
+// SAVE SCREEN
+// =========================================================
+
+function showSaveSlots() {
+
+    const container =
+        document.getElementById(
+            "saveSlots"
+        );
+
+    container.innerHTML = "";
+
+
+    for (let i = 1; i <= 3; i++) {
+
+        const raw =
+            localStorage.getItem(
+                `signalwakeSave${i}`
+            );
+
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+        div.className =
+            "save-slot";
+
+
+        let info =
+            "EMPTY SLOT";
+
+
+        if (raw) {
+
+            try {
+
+                const data =
+                    JSON.parse(raw);
+
+                info =
+                    `Last saved: ${data.date}<br>` +
+                    `Score: ${Math.floor(
+                        data.score || 0
+                    )}`;
+            }
+
+            catch {
+
+                info =
+                    "SAVE DATA ERROR";
+            }
         }
+
+
+        div.innerHTML = `
+            <div class="save-slot-title">
+                SAVE SLOT ${i}
+            </div>
+
+            <div class="save-slot-info">
+                ${info}
+            </div>
+
+            <button data-load="${i}">
+                LOAD SLOT
+            </button>
+
+            <button data-save="${i}">
+                SAVE HERE
+            </button>
+        `;
+
+
+        container.appendChild(div);
+    }
+
+
+    container
+        .querySelectorAll(
+            "[data-load]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const slot =
+                        Number(
+                            button.dataset.load
+                        );
+
+                    if (loadGame(slot)) {
+
+                        selectedSave = slot;
+
+                        saveScreen.classList.add(
+                            "hidden"
+                        );
+
+                        menu.classList.add(
+                            "hidden"
+                        );
+
+                        game.style.display =
+                            "block";
+
+                        hud.style.display =
+                            "block";
+
+                        running = true;
+
+                        paused = false;
+
+                        gameOver = false;
+
+                        updateCamera();
+
+                        objective.textContent =
+                            `Save slot ${slot} loaded.`;
+
+                        requestAnimationFrame(
+                            gameLoop
+                        );
+                    }
+                }
+            );
+        });
+
+
+    container
+        .querySelectorAll(
+            "[data-save]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const slot =
+                        Number(
+                            button.dataset.save
+                        );
+
+                    if (running) {
+
+                        saveGame(slot);
+
+                    } else {
+
+                        alert(
+                            "Start a journey before saving."
+                        );
+                    }
+
+                    showSaveSlots();
+                }
+            );
+        });
+
+
+    saveScreen.classList.remove(
+        "hidden"
     );
+}
 
 
-document
-    .getElementById("restartButton")
-    .addEventListener(
-        "click",
-        startGame
-    );
+// =========================================================
+// BUTTONS
+// =========================================================
+
+startButton.addEventListener(
+    "click",
+    () => {
+
+        selectedSave = 1;
+
+        startGame();
+    }
+);
 
 
-document
-    .getElementById("pauseMenuButton")
-    .addEventListener(
-        "click",
-        function () {
+continueButton.addEventListener(
+    "click",
+    () => {
 
-            running = false;
-            paused = false;
+        let found = false;
 
-            document
-                .getElementById(
-                    "pauseScreen"
+
+        for (let i = 1; i <= 3; i++) {
+
+            if (
+                localStorage.getItem(
+                    `signalwakeSave${i}`
                 )
-                .classList.add("hidden");
+            ) {
 
-            document
-                .getElementById(
-                    "menu"
-                )
-                .style.display = "flex";
+                if (loadGame(i)) {
+
+                    selectedSave = i;
+
+                    found = true;
+
+                    menu.classList.add(
+                        "hidden"
+                    );
+
+                    game.style.display =
+                        "block";
+
+                    hud.style.display =
+                        "block";
+
+                    running = true;
+
+                    paused = false;
+
+                    gameOver = false;
+
+                    updateCamera();
+
+                    requestAnimationFrame(
+                        gameLoop
+                    );
+
+                    break;
+                }
+            }
         }
-    );
 
 
-document
-    .getElementById("gameOverMenuButton")
-    .addEventListener(
-        "click",
-        function () {
+        if (!found) {
 
-            document
-                .getElementById(
-                    "gameOverScreen"
-                )
-                .classList.add("hidden");
-
-            document
-                .getElementById(
-                    "menu"
-                )
-                .style.display = "flex";
+            objective.textContent =
+                "No saved journey found.";
         }
-    );
+    }
+);
 
 
-/* =========================================================
-   ACHIEVEMENTS
-   ========================================================= */
-
-document
-    .getElementById("achievementsButton")
-    .addEventListener(
-        "click",
-        function () {
-
-            document
-                .getElementById(
-                    "achievementScreen"
-                )
-                .classList.remove(
-                    "hidden"
-                );
-        }
-    );
+saveButton.addEventListener(
+    "click",
+    showSaveSlots
+);
 
 
-document
-    .getElementById("closeAchievements")
-    .addEventListener(
-        "click",
-        function () {
+backSave.addEventListener(
+    "click",
+    () => {
 
-            document
-                .getElementById(
-                    "achievementScreen"
-                )
-                .classList.add(
-                    "hidden"
-                );
-        }
-    );
+        saveScreen.classList.add(
+            "hidden"
+        );
+    }
+);
 
 
-/* =========================================================
-   INITIAL
-   ========================================================= */
+achievementButton.addEventListener(
+    "click",
+    showAchievements
+);
+
+
+closeAchievements.addEventListener(
+    "click",
+    () => {
+
+        achievementScreen.classList.add(
+            "hidden"
+        );
+    }
+);
+
+
+resumeButton.addEventListener(
+    "click",
+    () => {
+
+        paused = false;
+
+        pauseScreen.classList.add(
+            "hidden"
+        );
+    }
+);
+
+
+pauseSaveButton.addEventListener(
+    "click",
+    () => {
+
+        saveGame(
+            selectedSave || 1
+        );
+    }
+);
+
+
+pauseMenuButton.addEventListener(
+    "click",
+    returnToMenu
+);
+
+
+restartButton.addEventListener(
+    "click",
+    startGame
+);
+
+
+gameOverMenuButton.addEventListener(
+    "click",
+    returnToMenu
+);
+
+
+// =========================================================
+// STARTUP
+// =========================================================
+
+game.style.display = "none";
+
+hud.style.display = "none";
+
+menu.classList.remove("hidden");
 
 updateHUD();
 
 console.log(
-    "EchoBound 2D is ready."
+    "SIGNALWAKE initialized."
 );
