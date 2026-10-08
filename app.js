@@ -1,75 +1,56 @@
-```javascript
-/* ============================================================
-   ECHOBOUND — THE LOST SIGNAL
-   2D VERSION
-   ============================================================ */
-
 "use strict";
 
-/* ============================================================
+/* =========================================================
+   ECHOBOUND — THE LOST SIGNAL
+   SIMPLE 2D VERSION
+   ========================================================= */
+
+
+/* =========================================================
    CANVAS
-   ============================================================ */
+   ========================================================= */
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-window.addEventListener("resize", () => {
+function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-});
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 
-/* ============================================================
-   WORLD
-   ============================================================ */
+/* =========================================================
+   GAME
+   ========================================================= */
 
-const WORLD_W = 7000;
-const WORLD_H = 7000;
+let running = false;
+let paused = false;
+let lastTime = 0;
 
-const world = {
-    trees: [],
-    rocks: [],
-    plants: [],
-    buildings: [],
-    aliens: [],
-    bullets: [],
-    particles: [],
-    resources: []
+const WORLD_WIDTH = 5000;
+const WORLD_HEIGHT = 5000;
+
+const camera = {
+    x: 0,
+    y: 0
 };
 
 
-/* ============================================================
-   GAME STATE
-   ============================================================ */
-
-let gameRunning = false;
-let paused = false;
-let gameOver = false;
-
-let lastTime = 0;
-
-let score = 0;
-let credits = 100;
-let kills = 0;
-
-let wave = 1;
-
-
-/* ============================================================
+/* =========================================================
    PLAYER
-   ============================================================ */
+   ========================================================= */
 
 const player = {
-    x: WORLD_W / 2,
-    y: WORLD_H / 2,
+    x: WORLD_WIDTH / 2,
+    y: WORLD_HEIGHT / 2,
 
-    radius: 28,
+    radius: 25,
 
-    speed: 250,
-    sprintSpeed: 360,
+    speed: 220,
+    sprintSpeed: 340,
 
     health: 100,
     maxHealth: 100,
@@ -82,11 +63,9 @@ const player = {
     weapon: 0,
 
     ammo: 12,
-    maxAmmo: 12,
 
-    reloadTime: 0,
-
-    shootCooldown: 0,
+    cooldown: 0,
+    reload: 0,
 
     resources: {
         wood: 0,
@@ -97,18 +76,18 @@ const player = {
 };
 
 
-/* ============================================================
+/* =========================================================
    WEAPONS
-   ============================================================ */
+   ========================================================= */
 
 const weapons = [
+
     {
         name: "PULSE",
-        damage: 20,
+        damage: 25,
         speed: 800,
-        cooldown: 0.22,
-        maxAmmo: 12,
-        color: "#64eaff"
+        cooldown: 0.25,
+        ammo: 12
     },
 
     {
@@ -116,28 +95,34 @@ const weapons = [
         damage: 12,
         speed: 900,
         cooldown: 0.10,
-        maxAmmo: 24,
-        color: "#ffffff"
+        ammo: 24
     },
 
     {
         name: "CANNON",
-        damage: 55,
-        speed: 650,
-        cooldown: 0.75,
-        maxAmmo: 5,
-        color: "#ffb347"
+        damage: 65,
+        speed: 600,
+        cooldown: 0.8,
+        ammo: 5
     }
+
 ];
 
 
-/* ============================================================
+/* =========================================================
    INPUT
-   ============================================================ */
+   ========================================================= */
 
 const keys = {};
 
-window.addEventListener("keydown", (event) => {
+const mouse = {
+    x: 0,
+    y: 0,
+    down: false
+};
+
+
+window.addEventListener("keydown", function (event) {
 
     keys[event.key.toLowerCase()] = true;
 
@@ -146,77 +131,76 @@ window.addEventListener("keydown", (event) => {
     }
 
     if (event.key === "1") {
-        selectWeapon(0);
+        changeWeapon(0);
     }
 
     if (event.key === "2") {
-        selectWeapon(1);
+        changeWeapon(1);
     }
 
     if (event.key === "3") {
-        selectWeapon(2);
+        changeWeapon(2);
     }
 
     if (event.key.toLowerCase() === "r") {
-        reload();
+        startReload();
     }
 
     if (event.key.toLowerCase() === "e") {
-        collectNearbyResource();
+        collectResource();
     }
 });
 
-window.addEventListener("keyup", (event) => {
+
+window.addEventListener("keyup", function (event) {
     keys[event.key.toLowerCase()] = false;
 });
 
 
-/* ============================================================
-   MOUSE
-   ============================================================ */
-
-const mouse = {
-    x: 0,
-    y: 0,
-    down: false
-};
-
-canvas.addEventListener("mousemove", (event) => {
+canvas.addEventListener("mousemove", function (event) {
 
     const rect = canvas.getBoundingClientRect();
 
     mouse.x = event.clientX - rect.left;
     mouse.y = event.clientY - rect.top;
-
-    updatePlayerAngle();
 });
 
-canvas.addEventListener("mousedown", () => {
+
+canvas.addEventListener("mousedown", function () {
     mouse.down = true;
 });
 
-canvas.addEventListener("mouseup", () => {
+
+window.addEventListener("mouseup", function () {
     mouse.down = false;
 });
 
-canvas.addEventListener("mouseleave", () => {
-    mouse.down = false;
-});
+
+/* =========================================================
+   WORLD OBJECTS
+   ========================================================= */
+
+const trees = [];
+const rocks = [];
+const buildings = [];
+const resources = [];
+const aliens = [];
+const bullets = [];
+const particles = [];
 
 
-/* ============================================================
-   CAMERA
-   ============================================================ */
+/* =========================================================
+   GAME DATA
+   ========================================================= */
 
-const camera = {
-    x: 0,
-    y: 0
-};
+let kills = 0;
+let credits = 100;
+let score = 0;
 
 
-/* ============================================================
-   RANDOM HELPERS
-   ============================================================ */
+/* =========================================================
+   RANDOM
+   ========================================================= */
 
 function random(min, max) {
     return Math.random() * (max - min) + min;
@@ -226,138 +210,185 @@ function randomInt(min, max) {
     return Math.floor(random(min, max + 1));
 }
 
-function distance(a, b) {
 
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
+/* =========================================================
+   DISTANCE
+   ========================================================= */
 
-    return Math.sqrt(dx * dx + dy * dy);
+function distance(x1, y1, x2, y2) {
+
+    return Math.hypot(
+        x2 - x1,
+        y2 - y1
+    );
 }
 
 
-/* ============================================================
-   WORLD GENERATION
-   ============================================================ */
+/* =========================================================
+   START
+   ========================================================= */
 
-function generateWorld() {
+function startGame() {
 
-    world.trees = [];
-    world.rocks = [];
-    world.plants = [];
-    world.buildings = [];
-    world.aliens = [];
-    world.resources = [];
+    running = true;
+    paused = false;
+
+    player.x = WORLD_WIDTH / 2;
+    player.y = WORLD_HEIGHT / 2;
+
+    player.health = 100;
+    player.energy = 100;
+
+    player.weapon = 0;
+    player.ammo = weapons[0].ammo;
+
+    player.resources.wood = 0;
+    player.resources.stone = 0;
+    player.resources.crystal = 0;
+    player.resources.metal = 0;
+
+    kills = 0;
+    credits = 100;
+    score = 0;
+
+    bullets.length = 0;
+    aliens.length = 0;
+    particles.length = 0;
+
+    createWorld();
+    createAliens();
+
+    document.getElementById("menu").style.display = "none";
+
+    document
+        .getElementById("gameOverScreen")
+        .classList.add("hidden");
+
+    updateHUD();
+
+    lastTime = performance.now();
+
+    requestAnimationFrame(gameLoop);
+}
+
+
+/* =========================================================
+   CREATE WORLD
+   ========================================================= */
+
+function createWorld() {
+
+    trees.length = 0;
+    rocks.length = 0;
+    buildings.length = 0;
+    resources.length = 0;
+
 
     /* TREES */
 
-    for (let i = 0; i < 280; i++) {
+    for (let i = 0; i < 180; i++) {
 
-        const tree = {
-            x: random(100, WORLD_W - 100),
-            y: random(100, WORLD_H - 100),
-            radius: random(25, 42)
-        };
-
-        if (distance(tree, player) > 250) {
-            world.trees.push(tree);
-        }
+        trees.push({
+            x: random(50, WORLD_WIDTH - 50),
+            y: random(50, WORLD_HEIGHT - 50),
+            size: random(22, 38)
+        });
     }
 
 
     /* ROCKS */
 
-    for (let i = 0; i < 190; i++) {
+    for (let i = 0; i < 100; i++) {
 
-        world.rocks.push({
-            x: random(100, WORLD_W - 100),
-            y: random(100, WORLD_H - 100),
-            radius: random(18, 35)
-        });
-    }
-
-
-    /* PLANTS */
-
-    for (let i = 0; i < 500; i++) {
-
-        world.plants.push({
-            x: random(50, WORLD_W - 50),
-            y: random(50, WORLD_H - 50),
-            size: random(4, 10)
+        rocks.push({
+            x: random(50, WORLD_WIDTH - 50),
+            y: random(50, WORLD_HEIGHT - 50),
+            size: random(15, 28)
         });
     }
 
 
     /* BUILDINGS */
 
-    const positions = [
-        [900, 800],
-        [1700, 1200],
-        [2600, 850],
-        [3500, 1300],
-        [4700, 900],
-        [5600, 1500],
+    const buildingPositions = [
 
-        [800, 2500],
-        [1800, 3000],
-        [2900, 2500],
-        [4100, 2900],
-        [5300, 2600],
+        [700, 700],
+        [1450, 850],
+        [2250, 650],
+        [3100, 900],
+        [4100, 700],
 
-        [1000, 4200],
-        [2200, 4600],
-        [3400, 4100],
-        [4600, 4500],
-        [5700, 4200],
+        [800, 1800],
+        [1800, 1600],
+        [2800, 1850],
+        [3900, 1700],
 
-        [1500, 5700],
-        [3000, 5500],
-        [4500, 5800]
+        [650, 3000],
+        [1550, 3300],
+        [2600, 3000],
+        [3800, 3200],
+        [4500, 2800],
+
+        [1200, 4300],
+        [2400, 4200],
+        [3600, 4300]
     ];
 
-    for (const [x, y] of positions) {
 
-        world.buildings.push({
-            x,
-            y,
-            width: randomInt(260, 420),
-            height: randomInt(220, 340)
+    for (const position of buildingPositions) {
+
+        buildings.push({
+
+            x: position[0],
+            y: position[1],
+
+            width: randomInt(230, 360),
+            height: randomInt(180, 280)
+
         });
     }
 
 
     /* RESOURCES */
 
-    for (let i = 0; i < 250; i++) {
+    const types = [
+        "wood",
+        "stone",
+        "crystal",
+        "metal"
+    ];
 
-        const types = [
-            "wood",
-            "stone",
-            "crystal",
-            "metal"
-        ];
 
-        world.resources.push({
-            x: random(100, WORLD_W - 100),
-            y: random(100, WORLD_H - 100),
-            type: types[randomInt(0, types.length - 1)],
-            amount: randomInt(1, 4),
-            radius: 18
+    for (let i = 0; i < 150; i++) {
+
+        resources.push({
+
+            x: random(80, WORLD_WIDTH - 80),
+            y: random(80, WORLD_HEIGHT - 80),
+
+            type: types[
+                randomInt(0, types.length - 1)
+            ],
+
+            amount: randomInt(1, 3),
+
+            radius: 15
         });
-    }
-
-
-    /* ALIENS */
-
-    for (let i = 0; i < 9; i++) {
-        spawnAlien();
     }
 }
 
 
-/* ============================================================
-   ALIEN SPAWNING
-   ============================================================ */
+/* =========================================================
+   ALIENS
+   ========================================================= */
+
+function createAliens() {
+
+    for (let i = 0; i < 10; i++) {
+        spawnAlien();
+    }
+}
+
 
 function spawnAlien() {
 
@@ -366,756 +397,70 @@ function spawnAlien() {
 
     do {
 
-        x = random(200, WORLD_W - 200);
-        y = random(200, WORLD_H - 200);
+        x = random(100, WORLD_WIDTH - 100);
+        y = random(100, WORLD_HEIGHT - 100);
 
     } while (
-        Math.hypot(
-            x - player.x,
-            y - player.y
-        ) < 800
+        distance(
+            x,
+            y,
+            player.x,
+            player.y
+        ) < 700
     );
 
 
     const types = [
         "crawler",
-        "guardian",
-        "stalker"
+        "stalker",
+        "guardian"
     ];
 
-    const type = types[randomInt(0, types.length - 1)];
+    const type =
+        types[randomInt(0, 2)];
 
 
-    world.aliens.push({
+    let health = 45;
+    let speed = 60;
+    let size = 22;
+
+
+    if (type === "stalker") {
+        health = 60;
+        speed = 90;
+        size = 25;
+    }
+
+
+    if (type === "guardian") {
+        health = 110;
+        speed = 40;
+        size = 35;
+    }
+
+
+    aliens.push({
 
         x,
         y,
 
-        radius: type === "guardian" ? 34 : 25,
-
         type,
 
-        health:
-            type === "guardian"
-                ? 100
-                : type === "stalker"
-                    ? 60
-                    : 45,
+        health,
+        maxHealth: health,
 
-        maxHealth:
-            type === "guardian"
-                ? 100
-                : type === "stalker"
-                    ? 60
-                    : 45,
+        speed,
+        radius: size,
 
-        speed:
-            type === "guardian"
-                ? 45
-                : type === "stalker"
-                    ? 95
-                    : 70,
+        attackCooldown: 0
 
-        damage:
-            type === "guardian"
-                ? 18
-                : type === "stalker"
-                    ? 10
-                    : 7,
-
-        attackCooldown: random(0, 1),
-
-        wanderAngle: random(0, Math.PI * 2)
     });
 }
 
 
-/* ============================================================
-   START GAME
-   ============================================================ */
-
-function startGame() {
-
-    gameRunning = true;
-    paused = false;
-    gameOver = false;
-
-    player.x = WORLD_W / 2;
-    player.y = WORLD_H / 2;
-
-    player.health = player.maxHealth;
-    player.energy = player.maxEnergy;
-
-    player.weapon = 0;
-    player.ammo = weapons[0].maxAmmo;
-
-    score = 0;
-    credits = 100;
-    kills = 0;
-    wave = 1;
-
-    world.bullets = [];
-    world.particles = [];
-
-    generateWorld();
-
-    updateMenu();
-
-    lastTime = performance.now();
-
-    requestAnimationFrame(gameLoop);
-}
-
-
-/* ============================================================
-   MENU
-   ============================================================ */
-
-function updateMenu() {
-
-    const menu = document.getElementById("menu");
-
-    if (!menu) return;
-
-    menu.style.display = gameRunning ? "none" : "flex";
-}
-
-
-/* ============================================================
-   PAUSE
-   ============================================================ */
-
-function togglePause() {
-
-    if (!gameRunning || gameOver) return;
-
-    paused = !paused;
-
-    const pauseMenu = document.getElementById("pause");
-
-    if (pauseMenu) {
-        pauseMenu.style.display = paused ? "flex" : "none";
-    }
-}
-
-
-/* ============================================================
-   WEAPON
-   ============================================================ */
-
-function selectWeapon(index) {
-
-    if (!weapons[index]) return;
-
-    player.weapon = index;
-
-    player.ammo = Math.min(
-        player.ammo,
-        weapons[index].maxAmmo
-    );
-}
-
-
-/* ============================================================
-   RELOAD
-   ============================================================ */
-
-function reload() {
-
-    if (player.reloadTime > 0) return;
-
-    const weapon = weapons[player.weapon];
-
-    if (player.ammo >= weapon.maxAmmo) return;
-
-    player.reloadTime = 1.2;
-}
-
-
-/* ============================================================
-   PLAYER AIM
-   ============================================================ */
-
-function updatePlayerAngle() {
-
-    const worldMouseX = mouse.x + camera.x;
-    const worldMouseY = mouse.y + camera.y;
-
-    player.angle = Math.atan2(
-        worldMouseY - player.y,
-        worldMouseX - player.x
-    );
-}
-
-
-/* ============================================================
-   SHOOT
-   ============================================================ */
-
-function shoot() {
-
-    if (!gameRunning || paused || gameOver) return;
-
-    if (player.reloadTime > 0) return;
-
-    if (player.shootCooldown > 0) return;
-
-    if (player.ammo <= 0) {
-
-        reload();
-
-        return;
-    }
-
-    const weapon = weapons[player.weapon];
-
-    player.ammo--;
-
-    player.shootCooldown = weapon.cooldown;
-
-
-    const muzzleDistance = 38;
-
-    const startX =
-        player.x +
-        Math.cos(player.angle) *
-        muzzleDistance;
-
-    const startY =
-        player.y +
-        Math.sin(player.angle) *
-        muzzleDistance;
-
-
-    world.bullets.push({
-
-        x: startX,
-        y: startY,
-
-        vx:
-            Math.cos(player.angle) *
-            weapon.speed,
-
-        vy:
-            Math.sin(player.angle) *
-            weapon.speed,
-
-        damage: weapon.damage,
-
-        life: 1.5,
-
-        color: weapon.color
-    });
-
-
-    createParticles(
-        startX,
-        startY,
-        weapon.color,
-        5
-    );
-}
-
-
-/* ============================================================
-   PLAYER MOVEMENT
-   ============================================================ */
-
-function movePlayer(dt) {
-
-    let dx = 0;
-    let dy = 0;
-
-    if (keys["w"] || keys["arrowup"]) {
-        dy -= 1;
-    }
-
-    if (keys["s"] || keys["arrowdown"]) {
-        dy += 1;
-    }
-
-    if (keys["a"] || keys["arrowleft"]) {
-        dx -= 1;
-    }
-
-    if (keys["d"] || keys["arrowright"]) {
-        dx += 1;
-    }
-
-
-    if (dx !== 0 || dy !== 0) {
-
-        const length = Math.hypot(dx, dy);
-
-        dx /= length;
-        dy /= length;
-
-        let speed = player.speed;
-
-        if (
-            keys["shift"] &&
-            player.energy > 0
-        ) {
-
-            speed = player.sprintSpeed;
-
-            player.energy -= 25 * dt;
-
-        } else {
-
-            player.energy += 12 * dt;
-        }
-
-        player.energy = Math.max(
-            0,
-            Math.min(
-                player.maxEnergy,
-                player.energy
-            )
-        );
-
-
-        const newX =
-            player.x +
-            dx * speed * dt;
-
-        const newY =
-            player.y +
-            dy * speed * dt;
-
-
-        if (!collidesWithBuilding(newX, player.y)) {
-            player.x = newX;
-        }
-
-        if (!collidesWithBuilding(player.x, newY)) {
-            player.y = newY;
-        }
-    }
-
-
-    player.x = Math.max(
-        player.radius,
-        Math.min(
-            WORLD_W - player.radius,
-            player.x
-        )
-    );
-
-    player.y = Math.max(
-        player.radius,
-        Math.min(
-            WORLD_H - player.radius,
-            player.y
-        )
-    );
-}
-
-
-/* ============================================================
-   BUILDING COLLISION
-   ============================================================ */
-
-function collidesWithBuilding(x, y) {
-
-    for (const building of world.buildings) {
-
-        const closestX = Math.max(
-            building.x - building.width / 2,
-            Math.min(
-                x,
-                building.x + building.width / 2
-            )
-        );
-
-        const closestY = Math.max(
-            building.y - building.height / 2,
-            Math.min(
-                y,
-                building.y + building.height / 2
-            )
-        );
-
-        const dx = x - closestX;
-        const dy = y - closestY;
-
-        if (
-            dx * dx +
-            dy * dy <
-            player.radius *
-            player.radius
-        ) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-/* ============================================================
-   ALIEN UPDATE
-   ============================================================ */
-
-function updateAliens(dt) {
-
-    for (const alien of world.aliens) {
-
-        alien.attackCooldown -= dt;
-
-        const dx = player.x - alien.x;
-        const dy = player.y - alien.y;
-
-        const dist = Math.hypot(dx, dy);
-
-
-        if (dist < 650) {
-
-            const nx = dx / dist;
-            const ny = dy / dist;
-
-            const nextX =
-                alien.x +
-                nx *
-                alien.speed *
-                dt;
-
-            const nextY =
-                alien.y +
-                ny *
-                alien.speed *
-                dt;
-
-
-            if (
-                !collidesWithBuilding(
-                    nextX,
-                    alien.y
-                )
-            ) {
-                alien.x = nextX;
-            }
-
-            if (
-                !collidesWithBuilding(
-                    alien.x,
-                    nextY
-                )
-            ) {
-                alien.y = nextY;
-            }
-
-
-            if (
-                dist <
-                alien.radius +
-                player.radius +
-                8
-            ) {
-
-                if (
-                    alien.attackCooldown <= 0
-                ) {
-
-                    player.health -= alien.damage;
-
-                    alien.attackCooldown = 1;
-
-                    createParticles(
-                        player.x,
-                        player.y,
-                        "#ff5c5c",
-                        8
-                    );
-                }
-            }
-
-        } else {
-
-            alien.wanderAngle +=
-                random(-1, 1) *
-                dt;
-
-            alien.x +=
-                Math.cos(alien.wanderAngle) *
-                alien.speed *
-                0.15 *
-                dt;
-
-            alien.y +=
-                Math.sin(alien.wanderAngle) *
-                alien.speed *
-                0.15 *
-                dt;
-        }
-
-
-        alien.x = Math.max(
-            40,
-            Math.min(
-                WORLD_W - 40,
-                alien.x
-            )
-        );
-
-        alien.y = Math.max(
-            40,
-            Math.min(
-                WORLD_H - 40,
-                alien.y
-            )
-        );
-    }
-}
-
-
-/* ============================================================
-   BULLETS
-   ============================================================ */
-
-function updateBullets(dt) {
-
-    for (
-        let i = world.bullets.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const bullet = world.bullets[i];
-
-        bullet.x += bullet.vx * dt;
-        bullet.y += bullet.vy * dt;
-
-        bullet.life -= dt;
-
-
-        if (
-            bullet.life <= 0 ||
-            bullet.x < 0 ||
-            bullet.y < 0 ||
-            bullet.x > WORLD_W ||
-            bullet.y > WORLD_H
-        ) {
-
-            world.bullets.splice(i, 1);
-
-            continue;
-        }
-
-
-        if (
-            bulletHitsBuilding(bullet)
-        ) {
-
-            createParticles(
-                bullet.x,
-                bullet.y,
-                bullet.color,
-                4
-            );
-
-            world.bullets.splice(i, 1);
-
-            continue;
-        }
-
-
-        for (
-            let j = world.aliens.length - 1;
-            j >= 0;
-            j--
-        ) {
-
-            const alien = world.aliens[j];
-
-            const d = Math.hypot(
-                bullet.x - alien.x,
-                bullet.y - alien.y
-            );
-
-
-            if (d < alien.radius + 7) {
-
-                alien.health -= bullet.damage;
-
-                createParticles(
-                    bullet.x,
-                    bullet.y,
-                    bullet.color,
-                    6
-                );
-
-                world.bullets.splice(i, 1);
-
-
-                if (alien.health <= 0) {
-
-                    kills++;
-                    score += 100;
-                    credits += 20;
-
-                    createParticles(
-                        alien.x,
-                        alien.y,
-                        "#8cff66",
-                        20
-                    );
-
-                    world.aliens.splice(j, 1);
-                }
-
-                break;
-            }
-        }
-    }
-}
-
-
-/* ============================================================
-   BUILDING BULLET COLLISION
-   ============================================================ */
-
-function bulletHitsBuilding(bullet) {
-
-    for (const building of world.buildings) {
-
-        if (
-            bullet.x >
-                building.x -
-                building.width / 2 &&
-            bullet.x <
-                building.x +
-                building.width / 2 &&
-            bullet.y >
-                building.y -
-                building.height / 2 &&
-            bullet.y <
-                building.y +
-                building.height / 2
-        ) {
-
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-/* ============================================================
-   RESOURCES
-   ============================================================ */
-
-function collectNearbyResource() {
-
-    for (
-        let i = world.resources.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const resource = world.resources[i];
-
-        if (
-            distance(player, resource) < 70
-        ) {
-
-            player.resources[
-                resource.type
-            ] += resource.amount;
-
-            createParticles(
-                resource.x,
-                resource.y,
-                "#ffe66d",
-                10
-            );
-
-            world.resources.splice(i, 1);
-
-            return;
-        }
-    }
-}
-
-
-/* ============================================================
-   PARTICLES
-   ============================================================ */
-
-function createParticles(
-    x,
-    y,
-    color,
-    amount
-) {
-
-    for (let i = 0; i < amount; i++) {
-
-        const angle =
-            random(0, Math.PI * 2);
-
-        const speed =
-            random(30, 150);
-
-        world.particles.push({
-
-            x,
-            y,
-
-            vx:
-                Math.cos(angle) *
-                speed,
-
-            vy:
-                Math.sin(angle) *
-                speed,
-
-            life: random(0.25, 0.7),
-
-            maxLife: 0.7,
-
-            size: random(2, 5),
-
-            color
-        });
-    }
-}
-
-
-/* ============================================================
-   PARTICLE UPDATE
-   ============================================================ */
-
-function updateParticles(dt) {
-
-    for (
-        let i = world.particles.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const p = world.particles[i];
-
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-
-        p.vx *= 0.96;
-        p.vy *= 0.96;
-
-        p.life -= dt;
-
-
-        if (p.life <= 0) {
-            world.particles.splice(i, 1);
-        }
-    }
-}
-
-
-/* ============================================================
-   CAMERA UPDATE
-   ============================================================ */
+/* =========================================================
+   CAMERA
+   ========================================================= */
 
 function updateCamera() {
 
@@ -1131,28 +476,757 @@ function updateCamera() {
     camera.x = Math.max(
         0,
         Math.min(
-            WORLD_W - canvas.width,
+            WORLD_WIDTH - canvas.width,
             camera.x
         )
     );
 
+
     camera.y = Math.max(
         0,
         Math.min(
-            WORLD_H - canvas.height,
+            WORLD_HEIGHT - canvas.height,
             camera.y
         )
     );
 }
 
 
-/* ============================================================
-   DRAW WORLD
-   ============================================================ */
+/* =========================================================
+   PLAYER ANGLE
+   ========================================================= */
 
-function drawWorld() {
+function updatePlayerAngle() {
 
-    ctx.fillStyle = "#16221b";
+    const worldMouseX =
+        mouse.x + camera.x;
+
+    const worldMouseY =
+        mouse.y + camera.y;
+
+
+    player.angle = Math.atan2(
+        worldMouseY - player.y,
+        worldMouseX - player.x
+    );
+}
+
+
+/* =========================================================
+   PLAYER MOVEMENT
+   ========================================================= */
+
+function updatePlayer(dt) {
+
+    let x = 0;
+    let y = 0;
+
+
+    if (keys["w"] || keys["arrowup"]) {
+        y -= 1;
+    }
+
+    if (keys["s"] || keys["arrowdown"]) {
+        y += 1;
+    }
+
+    if (keys["a"] || keys["arrowleft"]) {
+        x -= 1;
+    }
+
+    if (keys["d"] || keys["arrowright"]) {
+        x += 1;
+    }
+
+
+    if (x === 0 && y === 0) {
+
+        player.energy += 15 * dt;
+
+        player.energy = Math.min(
+            player.maxEnergy,
+            player.energy
+        );
+
+        return;
+    }
+
+
+    const length = Math.hypot(x, y);
+
+    x /= length;
+    y /= length;
+
+
+    let speed = player.speed;
+
+
+    if (
+        keys["shift"] &&
+        player.energy > 0
+    ) {
+
+        speed = player.sprintSpeed;
+
+        player.energy -= 30 * dt;
+
+    } else {
+
+        player.energy += 15 * dt;
+    }
+
+
+    player.energy = Math.max(
+        0,
+        Math.min(
+            player.maxEnergy,
+            player.energy
+        )
+    );
+
+
+    const newX =
+        player.x +
+        x * speed * dt;
+
+    const newY =
+        player.y +
+        y * speed * dt;
+
+
+    if (!collidesWithBuilding(
+        newX,
+        player.y,
+        player.radius
+    )) {
+        player.x = newX;
+    }
+
+
+    if (!collidesWithBuilding(
+        player.x,
+        newY,
+        player.radius
+    )) {
+        player.y = newY;
+    }
+
+
+    player.x = Math.max(
+        player.radius,
+        Math.min(
+            WORLD_WIDTH - player.radius,
+            player.x
+        )
+    );
+
+
+    player.y = Math.max(
+        player.radius,
+        Math.min(
+            WORLD_HEIGHT - player.radius,
+            player.y
+        )
+    );
+}
+
+
+/* =========================================================
+   BUILDING COLLISION
+   ========================================================= */
+
+function collidesWithBuilding(x, y, radius) {
+
+    for (const building of buildings) {
+
+        const left =
+            building.x -
+            building.width / 2;
+
+        const right =
+            building.x +
+            building.width / 2;
+
+        const top =
+            building.y -
+            building.height / 2;
+
+        const bottom =
+            building.y +
+            building.height / 2;
+
+
+        const closestX =
+            Math.max(
+                left,
+                Math.min(x, right)
+            );
+
+        const closestY =
+            Math.max(
+                top,
+                Math.min(y, bottom)
+            );
+
+
+        const dx = x - closestX;
+        const dy = y - closestY;
+
+
+        if (
+            dx * dx +
+            dy * dy <
+            radius * radius
+        ) {
+            return true;
+        }
+    }
+
+
+    return false;
+}
+
+
+/* =========================================================
+   SHOOTING
+   ========================================================= */
+
+function shoot() {
+
+    if (!running || paused) {
+        return;
+    }
+
+    if (player.reload > 0) {
+        return;
+    }
+
+    if (player.cooldown > 0) {
+        return;
+    }
+
+
+    if (player.ammo <= 0) {
+
+        startReload();
+
+        return;
+    }
+
+
+    const weapon =
+        weapons[player.weapon];
+
+
+    player.ammo--;
+
+    player.cooldown =
+        weapon.cooldown;
+
+
+    const startDistance = 38;
+
+
+    const startX =
+        player.x +
+        Math.cos(player.angle) *
+        startDistance;
+
+
+    const startY =
+        player.y +
+        Math.sin(player.angle) *
+        startDistance;
+
+
+    bullets.push({
+
+        x: startX,
+        y: startY,
+
+        vx:
+            Math.cos(player.angle) *
+            weapon.speed,
+
+        vy:
+            Math.sin(player.angle) *
+            weapon.speed,
+
+        damage: weapon.damage,
+
+        life: 1.5
+
+    });
+
+
+    createParticles(
+        startX,
+        startY,
+        "#72eaff",
+        5
+    );
+}
+
+
+/* =========================================================
+   RELOAD
+   ========================================================= */
+
+function startReload() {
+
+    if (player.reload > 0) {
+        return;
+    }
+
+
+    const weapon =
+        weapons[player.weapon];
+
+
+    if (player.ammo >= weapon.ammo) {
+        return;
+    }
+
+
+    player.reload = 1.1;
+}
+
+
+/* =========================================================
+   CHANGE WEAPON
+   ========================================================= */
+
+function changeWeapon(index) {
+
+    if (!weapons[index]) {
+        return;
+    }
+
+
+    player.weapon = index;
+
+    player.ammo =
+        weapons[index].ammo;
+
+
+    updateHUD();
+}
+
+
+/* =========================================================
+   BULLETS
+   ========================================================= */
+
+function updateBullets(dt) {
+
+    for (
+        let i = bullets.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const bullet = bullets[i];
+
+
+        bullet.x +=
+            bullet.vx * dt;
+
+        bullet.y +=
+            bullet.vy * dt;
+
+
+        bullet.life -= dt;
+
+
+        if (
+            bullet.life <= 0 ||
+            bullet.x < 0 ||
+            bullet.y < 0 ||
+            bullet.x > WORLD_WIDTH ||
+            bullet.y > WORLD_HEIGHT
+        ) {
+
+            bullets.splice(i, 1);
+
+            continue;
+        }
+
+
+        /* BUILDING HIT */
+
+        if (
+            bulletHitsBuilding(bullet)
+        ) {
+
+            createParticles(
+                bullet.x,
+                bullet.y,
+                "#ffffff",
+                5
+            );
+
+            bullets.splice(i, 1);
+
+            continue;
+        }
+
+
+        /* ALIEN HIT */
+
+        for (
+            let j = aliens.length - 1;
+            j >= 0;
+            j--
+        ) {
+
+            const alien = aliens[j];
+
+
+            const d =
+                distance(
+                    bullet.x,
+                    bullet.y,
+                    alien.x,
+                    alien.y
+                );
+
+
+            if (
+                d <
+                alien.radius + 5
+            ) {
+
+                alien.health -=
+                    bullet.damage;
+
+
+                createParticles(
+                    bullet.x,
+                    bullet.y,
+                    "#8cff8c",
+                    8
+                );
+
+
+                bullets.splice(i, 1);
+
+
+                if (alien.health <= 0) {
+
+                    kills++;
+                    score += 100;
+                    credits += 20;
+
+
+                    createParticles(
+                        alien.x,
+                        alien.y,
+                        "#72ff88",
+                        20
+                    );
+
+
+                    aliens.splice(j, 1);
+
+
+                    if (kills % 5 === 0) {
+                        spawnAlien();
+                    }
+                }
+
+
+                break;
+            }
+        }
+    }
+}
+
+
+/* =========================================================
+   BULLET / BUILDING
+   ========================================================= */
+
+function bulletHitsBuilding(bullet) {
+
+    for (const building of buildings) {
+
+        const left =
+            building.x -
+            building.width / 2;
+
+        const right =
+            building.x +
+            building.width / 2;
+
+        const top =
+            building.y -
+            building.height / 2;
+
+        const bottom =
+            building.y +
+            building.height / 2;
+
+
+        if (
+            bullet.x >= left &&
+            bullet.x <= right &&
+            bullet.y >= top &&
+            bullet.y <= bottom
+        ) {
+            return true;
+        }
+    }
+
+
+    return false;
+}
+
+
+/* =========================================================
+   ALIENS
+   ========================================================= */
+
+function updateAliens(dt) {
+
+    for (const alien of aliens) {
+
+        alien.attackCooldown -= dt;
+
+
+        const dx =
+            player.x - alien.x;
+
+        const dy =
+            player.y - alien.y;
+
+        const d =
+            Math.hypot(dx, dy);
+
+
+        if (d > 5 && d < 850) {
+
+            const nx = dx / d;
+            const ny = dy / d;
+
+
+            const nextX =
+                alien.x +
+                nx *
+                alien.speed *
+                dt;
+
+
+            const nextY =
+                alien.y +
+                ny *
+                alien.speed *
+                dt;
+
+
+            if (
+                !collidesWithBuilding(
+                    nextX,
+                    alien.y,
+                    alien.radius
+                )
+            ) {
+                alien.x = nextX;
+            }
+
+
+            if (
+                !collidesWithBuilding(
+                    alien.x,
+                    nextY,
+                    alien.radius
+                )
+            ) {
+                alien.y = nextY;
+            }
+        }
+
+
+        if (
+            d <
+            player.radius +
+            alien.radius +
+            8
+        ) {
+
+            if (
+                alien.attackCooldown <= 0
+            ) {
+
+                player.health -=
+                    alien.type === "guardian"
+                        ? 15
+                        : 7;
+
+                alien.attackCooldown = 1;
+
+                createParticles(
+                    player.x,
+                    player.y,
+                    "#ff5555",
+                    8
+                );
+            }
+        }
+    }
+}
+
+
+/* =========================================================
+   RESOURCES
+   ========================================================= */
+
+function collectResource() {
+
+    let closest = null;
+    let closestDistance = 70;
+
+
+    for (const resource of resources) {
+
+        const d =
+            distance(
+                player.x,
+                player.y,
+                resource.x,
+                resource.y
+            );
+
+
+        if (d < closestDistance) {
+
+            closest = resource;
+            closestDistance = d;
+        }
+    }
+
+
+    if (!closest) {
+        return;
+    }
+
+
+    player.resources[
+        closest.type
+    ] += closest.amount;
+
+
+    createParticles(
+        closest.x,
+        closest.y,
+        "#ffe66d",
+        10
+    );
+
+
+    const index =
+        resources.indexOf(closest);
+
+
+    if (index !== -1) {
+        resources.splice(index, 1);
+    }
+
+
+    updateHUD();
+}
+
+
+/* =========================================================
+   PARTICLES
+   ========================================================= */
+
+function createParticles(
+    x,
+    y,
+    color,
+    amount
+) {
+
+    for (let i = 0; i < amount; i++) {
+
+        const angle =
+            random(0, Math.PI * 2);
+
+        const speed =
+            random(30, 130);
+
+
+        particles.push({
+
+            x,
+            y,
+
+            vx:
+                Math.cos(angle) *
+                speed,
+
+            vy:
+                Math.sin(angle) *
+                speed,
+
+            life: random(0.2, 0.6),
+
+            size: random(2, 5),
+
+            color
+        });
+    }
+}
+
+
+function updateParticles(dt) {
+
+    for (
+        let i = particles.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const particle =
+            particles[i];
+
+
+        particle.x +=
+            particle.vx * dt;
+
+        particle.y +=
+            particle.vy * dt;
+
+
+        particle.vx *= 0.95;
+        particle.vy *= 0.95;
+
+
+        particle.life -= dt;
+
+
+        if (particle.life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+
+/* =========================================================
+   DRAW
+   ========================================================= */
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    ctx.fillStyle = "#16241b";
 
     ctx.fillRect(
         0,
@@ -1186,13 +1260,21 @@ function drawWorld() {
 }
 
 
-/* ============================================================
+/* =========================================================
    GROUND
-   ============================================================ */
+   ========================================================= */
 
 function drawGround() {
 
-    const grid = 100;
+    ctx.fillStyle = "#1b2c20";
+
+    ctx.fillRect(
+        0,
+        0,
+        WORLD_WIDTH,
+        WORLD_HEIGHT
+    );
+
 
     ctx.strokeStyle =
         "rgba(255,255,255,0.025)";
@@ -1200,16 +1282,19 @@ function drawGround() {
     ctx.lineWidth = 1;
 
 
+    const grid = 100;
+
+
     for (
         let x = 0;
-        x <= WORLD_W;
+        x <= WORLD_WIDTH;
         x += grid
     ) {
 
         ctx.beginPath();
 
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, WORLD_H);
+        ctx.lineTo(x, WORLD_HEIGHT);
 
         ctx.stroke();
     }
@@ -1217,36 +1302,45 @@ function drawGround() {
 
     for (
         let y = 0;
-        y <= WORLD_H;
+        y <= WORLD_HEIGHT;
         y += grid
     ) {
 
         ctx.beginPath();
 
         ctx.moveTo(0, y);
-        ctx.lineTo(WORLD_W, y);
+        ctx.lineTo(WORLD_WIDTH, y);
 
         ctx.stroke();
     }
 }
 
 
-/* ============================================================
+/* =========================================================
    PLANTS
-   ============================================================ */
+   ========================================================= */
 
 function drawPlants() {
 
-    for (const plant of world.plants) {
+    for (let i = 0; i < 300; i++) {
 
-        ctx.fillStyle = "#3e7d45";
+        const x =
+            (i * 97) %
+            WORLD_WIDTH;
+
+        const y =
+            (i * 173) %
+            WORLD_HEIGHT;
+
+
+        ctx.fillStyle = "#315f3c";
 
         ctx.beginPath();
 
         ctx.arc(
-            plant.x,
-            plant.y,
-            plant.size,
+            x,
+            y,
+            5,
             0,
             Math.PI * 2
         );
@@ -1256,22 +1350,27 @@ function drawPlants() {
 }
 
 
-/* ============================================================
+/* =========================================================
    TREES
-   ============================================================ */
+   ========================================================= */
 
 function drawTrees() {
 
-    for (const tree of world.trees) {
+    for (const tree of trees) {
 
-        ctx.fillStyle = "#263d29";
+        /* shadow */
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.3)";
 
         ctx.beginPath();
 
-        ctx.arc(
+        ctx.ellipse(
             tree.x,
-            tree.y + 12,
-            tree.radius * 0.55,
+            tree.y + 15,
+            tree.size * 0.7,
+            tree.size * 0.4,
+            0,
             0,
             Math.PI * 2
         );
@@ -1279,14 +1378,28 @@ function drawTrees() {
         ctx.fill();
 
 
-        ctx.fillStyle = "#397447";
+        /* trunk */
+
+        ctx.fillStyle = "#60432d";
+
+        ctx.fillRect(
+            tree.x - 7,
+            tree.y,
+            14,
+            tree.size
+        );
+
+
+        /* leaves */
+
+        ctx.fillStyle = "#367348";
 
         ctx.beginPath();
 
         ctx.arc(
             tree.x,
             tree.y,
-            tree.radius,
+            tree.size,
             0,
             Math.PI * 2
         );
@@ -1294,14 +1407,14 @@ function drawTrees() {
         ctx.fill();
 
 
-        ctx.fillStyle = "#4e9257";
+        ctx.fillStyle = "#4b915b";
 
         ctx.beginPath();
 
         ctx.arc(
-            tree.x - tree.radius * 0.25,
-            tree.y - tree.radius * 0.2,
-            tree.radius * 0.42,
+            tree.x - 10,
+            tree.y - 8,
+            tree.size * 0.45,
             0,
             Math.PI * 2
         );
@@ -1311,22 +1424,22 @@ function drawTrees() {
 }
 
 
-/* ============================================================
+/* =========================================================
    ROCKS
-   ============================================================ */
+   ========================================================= */
 
 function drawRocks() {
 
-    for (const rock of world.rocks) {
+    for (const rock of rocks) {
 
-        ctx.fillStyle = "#69747b";
+        ctx.fillStyle = "#68747a";
 
         ctx.beginPath();
 
         ctx.arc(
             rock.x,
             rock.y,
-            rock.radius,
+            rock.size,
             0,
             Math.PI * 2
         );
@@ -1334,14 +1447,14 @@ function drawRocks() {
         ctx.fill();
 
 
-        ctx.fillStyle = "#8b969d";
+        ctx.fillStyle = "#8d999e";
 
         ctx.beginPath();
 
         ctx.arc(
-            rock.x - 6,
-            rock.y - 7,
-            rock.radius * 0.35,
+            rock.x - 5,
+            rock.y - 6,
+            rock.size * 0.35,
             0,
             Math.PI * 2
         );
@@ -1351,30 +1464,118 @@ function drawRocks() {
 }
 
 
-/* ============================================================
-   RESOURCES
-   ============================================================ */
+/* =========================================================
+   BUILDINGS
+   ========================================================= */
+
+function drawBuildings() {
+
+    for (const building of buildings) {
+
+        const left =
+            building.x -
+            building.width / 2;
+
+        const top =
+            building.y -
+            building.height / 2;
+
+
+        /* shadow */
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.35)";
+
+        ctx.fillRect(
+            left + 10,
+            top + 10,
+            building.width,
+            building.height
+        );
+
+
+        /* building */
+
+        ctx.fillStyle = "#303b42";
+
+        ctx.fillRect(
+            left,
+            top,
+            building.width,
+            building.height
+        );
+
+
+        /* border */
+
+        ctx.strokeStyle = "#68757b";
+
+        ctx.lineWidth = 5;
+
+        ctx.strokeRect(
+            left,
+            top,
+            building.width,
+            building.height
+        );
+
+
+        /* windows */
+
+        ctx.fillStyle = "#152026";
+
+        const windowCount = 3;
+
+
+        for (let i = 0; i < windowCount; i++) {
+
+            ctx.fillRect(
+                left + 30 + i * 70,
+                top + 30,
+                38,
+                28
+            );
+        }
+
+
+        /* door */
+
+        ctx.fillStyle = "#13191c";
+
+        ctx.fillRect(
+            building.x - 25,
+            top + building.height - 70,
+            50,
+            70
+        );
+    }
+}
+
+
+/* =========================================================
+   RESOURCES DRAW
+   ========================================================= */
 
 function drawResources() {
 
-    for (const resource of world.resources) {
+    for (const resource of resources) {
 
         let color = "#ffffff";
 
         if (resource.type === "wood") {
-            color = "#b4773e";
+            color = "#b97b43";
         }
 
         if (resource.type === "stone") {
-            color = "#a7b0b7";
+            color = "#a8b1b7";
         }
 
         if (resource.type === "crystal") {
-            color = "#8d7cff";
+            color = "#9b7cff";
         }
 
         if (resource.type === "metal") {
-            color = "#5ee7ff";
+            color = "#55dce8";
         }
 
 
@@ -1401,87 +1602,30 @@ function drawResources() {
 }
 
 
-/* ============================================================
-   BUILDINGS
-   ============================================================ */
-
-function drawBuildings() {
-
-    for (const building of world.buildings) {
-
-        const left =
-            building.x -
-            building.width / 2;
-
-        const top =
-            building.y -
-            building.height / 2;
-
-
-        ctx.fillStyle = "#242d35";
-
-        ctx.fillRect(
-            left,
-            top,
-            building.width,
-            building.height
-        );
-
-
-        ctx.strokeStyle = "#65717a";
-
-        ctx.lineWidth = 5;
-
-        ctx.strokeRect(
-            left,
-            top,
-            building.width,
-            building.height
-        );
-
-
-        ctx.fillStyle = "#11171c";
-
-        ctx.fillRect(
-            building.x - 35,
-            top + 20,
-            70,
-            35
-        );
-
-
-        ctx.fillStyle = "#0d1216";
-
-        ctx.fillRect(
-            building.x - 28,
-            building.y + 15,
-            56,
-            60
-        );
-    }
-}
-
-
-/* ============================================================
-   ALIENS
-   ============================================================ */
+/* =========================================================
+   ALIENS DRAW
+   ========================================================= */
 
 function drawAliens() {
 
-    for (const alien of world.aliens) {
+    for (const alien of aliens) {
 
-        let bodyColor = "#62d96b";
+        let color = "#62d96d";
 
-        if (alien.type === "guardian") {
-            bodyColor = "#c56cff";
-        }
 
         if (alien.type === "stalker") {
-            bodyColor = "#55e0dc";
+            color = "#52d9d2";
         }
 
 
-        ctx.fillStyle = bodyColor;
+        if (alien.type === "guardian") {
+            color = "#b36cf5";
+        }
+
+
+        /* body */
+
+        ctx.fillStyle = color;
 
         ctx.beginPath();
 
@@ -1496,14 +1640,14 @@ function drawAliens() {
         ctx.fill();
 
 
-        /* EYES */
+        /* eyes */
 
-        ctx.fillStyle = "#07100a";
+        ctx.fillStyle = "#08100b";
 
         ctx.beginPath();
 
         ctx.arc(
-            alien.x - 8,
+            alien.x - 7,
             alien.y - 5,
             4,
             0,
@@ -1511,7 +1655,7 @@ function drawAliens() {
         );
 
         ctx.arc(
-            alien.x + 8,
+            alien.x + 7,
             alien.y - 5,
             4,
             0,
@@ -1521,36 +1665,39 @@ function drawAliens() {
         ctx.fill();
 
 
-        /* HEALTH BAR */
+        /* health */
 
-        const barWidth = alien.radius * 2;
+        const width =
+            alien.radius * 2;
+
 
         ctx.fillStyle = "#151515";
 
         ctx.fillRect(
-            alien.x - barWidth / 2,
-            alien.y - alien.radius - 12,
-            barWidth,
+            alien.x - width / 2,
+            alien.y - alien.radius - 10,
+            width,
             5
         );
 
 
-        ctx.fillStyle = "#72ff72";
+        ctx.fillStyle = "#65ee76";
 
         ctx.fillRect(
-            alien.x - barWidth / 2,
-            alien.y - alien.radius - 12,
-            barWidth *
-                (alien.health / alien.maxHealth),
+            alien.x - width / 2,
+            alien.y - alien.radius - 10,
+            width *
+                (alien.health /
+                alien.maxHealth),
             5
         );
     }
 }
 
 
-/* ============================================================
-   PLAYER
-   ============================================================ */
+/* =========================================================
+   PLAYER DRAW
+   ========================================================= */
 
 function drawPlayer() {
 
@@ -1564,7 +1711,7 @@ function drawPlayer() {
     ctx.rotate(player.angle);
 
 
-    /* SHADOW */
+    /* shadow */
 
     ctx.fillStyle =
         "rgba(0,0,0,0.35)";
@@ -1573,9 +1720,9 @@ function drawPlayer() {
 
     ctx.ellipse(
         0,
-        12,
-        34,
-        18,
+        15,
+        38,
+        20,
         0,
         0,
         Math.PI * 2
@@ -1584,33 +1731,33 @@ function drawPlayer() {
     ctx.fill();
 
 
-    /* TANK BODY */
+    /* tank body */
 
-    ctx.fillStyle = "#53616a";
+    ctx.fillStyle = "#4d5b62";
 
     ctx.fillRect(
-        -28,
-        -22,
-        56,
-        44
+        -30,
+        -23,
+        60,
+        46
     );
 
 
-    /* ARMOR */
+    /* armor */
 
-    ctx.fillStyle = "#75858e";
+    ctx.fillStyle = "#718087";
 
     ctx.fillRect(
-        -21,
+        -22,
         -17,
-        42,
+        44,
         34
     );
 
 
-    /* TURRET */
+    /* turret */
 
-    ctx.fillStyle = "#8e9ca3";
+    ctx.fillStyle = "#909da3";
 
     ctx.beginPath();
 
@@ -1625,21 +1772,21 @@ function drawPlayer() {
     ctx.fill();
 
 
-    /* BARREL */
+    /* barrel */
 
-    ctx.fillStyle = "#313a40";
+    ctx.fillStyle = "#283238";
 
     ctx.fillRect(
-        8,
+        5,
         -5,
-        34,
+        38,
         10
     );
 
 
-    /* ENERGY CORE */
+    /* core */
 
-    ctx.fillStyle = "#61eaff";
+    ctx.fillStyle = "#62eaff";
 
     ctx.beginPath();
 
@@ -1658,15 +1805,15 @@ function drawPlayer() {
 }
 
 
-/* ============================================================
+/* =========================================================
    BULLETS DRAW
-   ============================================================ */
+   ========================================================= */
 
 function drawBullets() {
 
-    for (const bullet of world.bullets) {
+    for (const bullet of bullets) {
 
-        ctx.fillStyle = bullet.color;
+        ctx.fillStyle = "#75eaff";
 
         ctx.beginPath();
 
@@ -1683,28 +1830,29 @@ function drawBullets() {
 }
 
 
-/* ============================================================
+/* =========================================================
    PARTICLES DRAW
-   ============================================================ */
+   ========================================================= */
 
 function drawParticles() {
 
-    for (const p of world.particles) {
+    for (const particle of particles) {
 
         ctx.globalAlpha =
             Math.max(
                 0,
-                p.life / p.maxLife
+                particle.life
             );
 
-        ctx.fillStyle = p.color;
+        ctx.fillStyle =
+            particle.color;
 
         ctx.beginPath();
 
         ctx.arc(
-            p.x,
-            p.y,
-            p.size,
+            particle.x,
+            particle.y,
+            particle.size,
             0,
             Math.PI * 2
         );
@@ -1716,316 +1864,395 @@ function drawParticles() {
 }
 
 
-/* ============================================================
+/* =========================================================
    HUD
-   ============================================================ */
+   ========================================================= */
 
-function drawHUD() {
+function updateHUD() {
 
-    const health =
-        Math.max(
-            0,
-            player.health
-        );
+    const healthBar =
+        document.getElementById("healthBar");
 
-    const energy =
-        Math.max(
-            0,
-            player.energy
-        );
+    const energyBar =
+        document.getElementById("energyBar");
 
+    const weaponText =
+        document.getElementById("weaponText");
 
-    ctx.fillStyle =
-        "rgba(8,12,16,0.88)";
+    const ammoText =
+        document.getElementById("ammoText");
 
-    ctx.fillRect(
-        20,
-        20,
-        280,
-        125
-    );
+    const killsText =
+        document.getElementById("killsText");
+
+    const creditsText =
+        document.getElementById("creditsText");
+
+    const resourceText =
+        document.getElementById("resourceText");
 
 
-    /* HEALTH */
-
-    ctx.fillStyle = "#222";
-
-    ctx.fillRect(
-        35,
-        40,
-        230,
-        18
-    );
-
-    ctx.fillStyle = "#ff5656";
-
-    ctx.fillRect(
-        35,
-        40,
-        230 *
-            (health / player.maxHealth),
-        18
-    );
+    healthBar.style.width =
+        player.health + "%";
 
 
-    /* ENERGY */
-
-    ctx.fillStyle = "#222";
-
-    ctx.fillRect(
-        35,
-        70,
-        230,
-        14
-    );
-
-    ctx.fillStyle = "#4fdcff";
-
-    ctx.fillRect(
-        35,
-        70,
-        230 *
-            (energy / player.maxEnergy),
-        14
-    );
-
-
-    ctx.fillStyle = "#ffffff";
-
-    ctx.font = "16px Arial";
-
-    ctx.fillText(
-        `HP ${Math.ceil(health)}`,
-        35,
-        34
-    );
-
-    ctx.fillText(
-        `ENERGY ${Math.ceil(energy)}`,
-        35,
-        101
-    );
+    energyBar.style.width =
+        player.energy + "%";
 
 
     const weapon =
         weapons[player.weapon];
 
-    ctx.fillText(
-        `${weapon.name}  ${player.ammo}/${weapon.maxAmmo}`,
-        35,
-        128
-    );
+
+    weaponText.textContent =
+        weapon.name;
 
 
-    ctx.fillText(
-        `KILLS ${kills}`,
-        canvas.width - 180,
-        35
-    );
+    ammoText.textContent =
+        player.ammo +
+        " / " +
+        weapon.ammo;
 
-    ctx.fillText(
-        `CREDITS ${credits}`,
-        canvas.width - 180,
-        60
-    );
 
-    ctx.fillText(
-        `WAVE ${wave}`,
-        canvas.width - 180,
-        85
-    );
+    killsText.textContent =
+        "KILLS: " + kills;
+
+
+    creditsText.textContent =
+        "CREDITS: " + credits;
+
+
+    resourceText.textContent =
+        "WOOD " +
+        player.resources.wood +
+        " | STONE " +
+        player.resources.stone +
+        " | CRYSTAL " +
+        player.resources.crystal +
+        " | METAL " +
+        player.resources.metal;
 }
 
 
-/* ============================================================
-   GAME OVER
-   ============================================================ */
+/* =========================================================
+   NEAR RESOURCE
+   ========================================================= */
 
-function checkGameOver() {
+function updateInteraction() {
 
-    if (player.health > 0) return;
-
-    player.health = 0;
-
-    gameOver = true;
-    gameRunning = false;
+    let nearby = false;
 
 
-    const menu =
-        document.getElementById("menu");
+    for (const resource of resources) {
 
-    if (menu) {
+        if (
+            distance(
+                player.x,
+                player.y,
+                resource.x,
+                resource.y
+            ) < 70
+        ) {
 
-        menu.style.display = "flex";
-
-        const title =
-            menu.querySelector("h1");
-
-        if (title) {
-            title.textContent =
-                "ECHObOUND — GAME OVER";
+            nearby = true;
+            break;
         }
     }
-}
 
 
-/* ============================================================
-   MAIN GAME LOOP
-   ============================================================ */
-
-function gameLoop(timestamp) {
-
-    if (!gameRunning) return;
-
-    const dt =
-        Math.min(
-            (timestamp - lastTime) / 1000,
-            0.033
+    const interaction =
+        document.getElementById(
+            "interaction"
         );
 
-    lastTime = timestamp;
+
+    if (nearby) {
+        interaction.classList.add(
+            "visible"
+        );
+    } else {
+        interaction.classList.remove(
+            "visible"
+        );
+    }
+}
 
 
-    if (!paused && !gameOver) {
+/* =========================================================
+   PAUSE
+   ========================================================= */
 
-        player.shootCooldown =
-            Math.max(
-                0,
-                player.shootCooldown - dt
-            );
+function togglePause() {
 
-
-        if (player.reloadTime > 0) {
-
-            player.reloadTime -= dt;
-
-            if (player.reloadTime <= 0) {
-
-                player.reloadTime = 0;
-
-                player.ammo =
-                    weapons[player.weapon]
-                        .maxAmmo;
-            }
-        }
-
-
-        movePlayer(dt);
-
-
-        if (mouse.down) {
-            shoot();
-        }
-
-
-        updateAliens(dt);
-        updateBullets(dt);
-        updateParticles(dt);
-
-        updateCamera();
-
-        checkGameOver();
+    if (!running) {
+        return;
     }
 
 
-    drawWorld();
-    drawHUD();
+    paused = !paused;
+
+
+    const screen =
+        document.getElementById(
+            "pauseScreen"
+        );
 
 
     if (paused) {
-
-        ctx.fillStyle =
-            "rgba(0,0,0,0.55)";
-
-        ctx.fillRect(
-            0,
-            0,
-            canvas.width,
-            canvas.height
+        screen.classList.remove(
+            "hidden"
         );
-
-        ctx.fillStyle = "#ffffff";
-
-        ctx.font = "48px Arial";
-
-        ctx.textAlign = "center";
-
-        ctx.fillText(
-            "PAUSED",
-            canvas.width / 2,
-            canvas.height / 2
+    } else {
+        screen.classList.add(
+            "hidden"
         );
+    }
+}
 
-        ctx.textAlign = "left";
+
+/* =========================================================
+   GAME OVER
+   ========================================================= */
+
+function gameOver() {
+
+    running = false;
+
+    document.getElementById(
+        "finalScore"
+    ).textContent =
+        "Score: " + score;
+
+
+    document.getElementById(
+        "finalKills"
+    ).textContent =
+        "Kills: " + kills;
+
+
+    document
+        .getElementById("gameOverScreen")
+        .classList.remove("hidden");
+}
+
+
+/* =========================================================
+   UPDATE
+   ========================================================= */
+
+function update(dt) {
+
+    updatePlayer(dt);
+
+    updatePlayerAngle();
+
+    if (mouse.down) {
+        shoot();
     }
 
 
-    requestAnimationFrame(gameLoop);
+    player.cooldown =
+        Math.max(
+            0,
+            player.cooldown - dt
+        );
+
+
+    if (player.reload > 0) {
+
+        player.reload -= dt;
+
+
+        if (player.reload <= 0) {
+
+            player.reload = 0;
+
+            player.ammo =
+                weapons[player.weapon].ammo;
+        }
+    }
+
+
+    updateBullets(dt);
+    updateAliens(dt);
+    updateParticles(dt);
+
+    updateCamera();
+    updateInteraction();
+    updateHUD();
+
+
+    if (player.health <= 0) {
+
+        player.health = 0;
+
+        gameOver();
+    }
 }
 
 
-/* ============================================================
-   START BUTTON
-   ============================================================ */
+/* =========================================================
+   GAME LOOP
+   ========================================================= */
 
-const startButton =
-    document.getElementById("startButton");
+function gameLoop(time) {
 
-if (startButton) {
+    if (!running) {
+        draw();
+        return;
+    }
 
-    startButton.addEventListener(
-        "click",
-        () => {
-            startGame();
-        }
+
+    const dt =
+        Math.min(
+            (time - lastTime) / 1000,
+            0.033
+        );
+
+
+    lastTime = time;
+
+
+    if (!paused) {
+        update(dt);
+    }
+
+
+    draw();
+
+
+    requestAnimationFrame(
+        gameLoop
     );
 }
 
 
-/* ============================================================
-   OPTIONAL MENU BUTTONS
-   ============================================================ */
+/* =========================================================
+   MENU BUTTONS
+   ========================================================= */
 
-const resumeButton =
-    document.getElementById("resumeButton");
-
-if (resumeButton) {
-
-    resumeButton.addEventListener(
+document
+    .getElementById("startButton")
+    .addEventListener(
         "click",
-        () => {
+        startGame
+    );
+
+
+document
+    .getElementById("resumeButton")
+    .addEventListener(
+        "click",
+        function () {
+
             paused = false;
 
-            const pauseMenu =
-                document.getElementById("pause");
-
-            if (pauseMenu) {
-                pauseMenu.style.display = "none";
-            }
+            document
+                .getElementById(
+                    "pauseScreen"
+                )
+                .classList.add("hidden");
         }
     );
-}
 
 
-/* ============================================================
-   INITIAL MENU
-   ============================================================ */
-
-updateMenu();
-
-
-/* ============================================================
-   INITIAL CAMERA
-   ============================================================ */
-
-updateCamera();
+document
+    .getElementById("restartButton")
+    .addEventListener(
+        "click",
+        startGame
+    );
 
 
-/* ============================================================
-   DEBUG
-   ============================================================ */
+document
+    .getElementById("pauseMenuButton")
+    .addEventListener(
+        "click",
+        function () {
+
+            running = false;
+            paused = false;
+
+            document
+                .getElementById(
+                    "pauseScreen"
+                )
+                .classList.add("hidden");
+
+            document
+                .getElementById(
+                    "menu"
+                )
+                .style.display = "flex";
+        }
+    );
+
+
+document
+    .getElementById("gameOverMenuButton")
+    .addEventListener(
+        "click",
+        function () {
+
+            document
+                .getElementById(
+                    "gameOverScreen"
+                )
+                .classList.add("hidden");
+
+            document
+                .getElementById(
+                    "menu"
+                )
+                .style.display = "flex";
+        }
+    );
+
+
+/* =========================================================
+   ACHIEVEMENTS
+   ========================================================= */
+
+document
+    .getElementById("achievementsButton")
+    .addEventListener(
+        "click",
+        function () {
+
+            document
+                .getElementById(
+                    "achievementScreen"
+                )
+                .classList.remove(
+                    "hidden"
+                );
+        }
+    );
+
+
+document
+    .getElementById("closeAchievements")
+    .addEventListener(
+        "click",
+        function () {
+
+            document
+                .getElementById(
+                    "achievementScreen"
+                )
+                .classList.add(
+                    "hidden"
+                );
+        }
+    );
+
+
+/* =========================================================
+   INITIAL
+   ========================================================= */
+
+updateHUD();
 
 console.log(
-    "EchoBound 2D JavaScript loaded successfully."
+    "EchoBound 2D is ready."
 );
-```
