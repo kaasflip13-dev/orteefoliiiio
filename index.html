@@ -3,120 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EchoBound — The Lost Signal</title>
+
+    <title>SIGNALWAKE</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <div id="menu" class="menu">
-        <div class="menu-box">
-            <div class="logo">ECHOBOUND</div>
-            <div class="subtitle">THE LOST SIGNAL</div>
+<div id="menu" class="screen">
 
-            <button id="startButton">START GAME</button>
-            <button id="achievementsButton">ACHIEVEMENTS</button>
+    <div class="menu-panel">
 
-            <div class="controls">
-                <p><b>WASD</b> — bewegen</p>
-                <p><b>MUIS</b> — richten</p>
-                <p><b>LINKERMUIS</b> — schieten</p>
-                <p><b>SHIFT</b> — sprinten</p>
-                <p><b>R</b> — herladen</p>
-                <p><b>1 / 2 / 3</b> — wapen kiezen</p>
-                <p><b>E</b> — grondstof pakken</p>
-                <p><b>ESC</b> — pauze</p>
-            </div>
+        <div class="logo">
+            SIGNAL<span>WAKE</span>
         </div>
+
+        <div class="subtitle">
+            THE WORLD HEARS YOU
+        </div>
+
+        <p class="intro">
+            A world built from forgotten signals.
+            Your pulse changes what is real.
+        </p>
+
+        <button id="startButton">START JOURNEY</button>
+        <button id="continueButton">CONTINUE</button>
+        <button id="saveButton">SAVE SLOTS</button>
+        <button id="achievementButton">ACHIEVEMENTS</button>
+
+        <div class="controls">
+            <div><b>WASD</b> Move</div>
+            <div><b>SHIFT</b> Sprint</div>
+            <div><b>SPACE</b> Pulse</div>
+            <div><b>Q</b> Phase Shift</div>
+            <div><b>E</b> Build Resonator</div>
+        </div>
+
     </div>
 
+</div>
 
-    <div id="achievementScreen" class="overlay hidden">
-        <div class="panel">
-            <h2>ACHIEVEMENTS</h2>
 
-            <div class="achievement">
-                <span>FIRST SIGNAL</span>
-                <small>Start je eerste game</small>
-            </div>
+<div id="saveScreen" class="screen hidden">
 
-            <div class="achievement">
-                <span>HUNTER</span>
-                <small>Versla 10 aliens</small>
-            </div>
+    <div class="panel">
 
-            <div class="achievement">
-                <span>SCAVENGER</span>
-                <small>Verzamel 10 grondstoffen</small>
-            </div>
+        <h1>SAVE SLOTS</h1>
 
-            <button id="closeAchievements">TERUG</button>
-        </div>
+        <div id="saveSlots"></div>
+
+        <button id="backSave">BACK</button>
+
     </div>
 
+</div>
 
-    <div id="pauseScreen" class="overlay hidden">
-        <div class="panel">
-            <h2>PAUSED</h2>
-            <button id="resumeButton">VERDER</button>
-            <button id="pauseMenuButton">MENU</button>
-        </div>
+
+<div id="achievementScreen" class="screen hidden">
+
+    <div class="panel">
+
+        <h1>ACHIEVEMENTS</h1>
+
+        <div id="achievementList"></div>
+
+        <button id="closeAchievements">BACK</button>
+
     </div>
 
+</div>
 
-    <div id="gameOverScreen" class="overlay hidden">
-        <div class="panel">
-            <h2>GAME OVER</h2>
 
-            <p id="finalScore">Score: 0</p>
-            <p id="finalKills">Kills: 0</p>
+<div id="pauseScreen" class="screen hidden">
 
-            <button id="restartButton">OPNIEUW</button>
-            <button id="gameOverMenuButton">MENU</button>
-        </div>
+    <div class="panel">
+
+        <h1>PAUSED</h1>
+
+        <button id="resumeButton">RESUME</button>
+        <button id="pauseSaveButton">SAVE</button>
+        <button id="pauseMenuButton">MAIN MENU</button>
+
     </div>
 
+</div>
 
-    <canvas id="game"></canvas>
 
+<div id="gameOverScreen" class="screen hidden">
+
+    <div class="panel danger">
+
+        <h1>SIGNAL LOST</h1>
+
+        <p id="gameOverText"></p>
+
+        <button id="restartButton">TRY AGAIN</button>
+        <button id="gameOverMenuButton">MAIN MENU</button>
+
+    </div>
+
+</div>
+
+
+<div id="game">
+
+    <canvas id="canvas"></canvas>
 
     <div id="hud">
 
-        <div class="hud-left">
+        <div class="hud-top">
 
-            <div class="bar-title">HEALTH</div>
-            <div class="bar">
-                <div id="healthBar" class="health"></div>
+            <div class="stat">
+                <span>VITALITY</span>
+                <div class="bar">
+                    <div id="healthBar"></div>
+                </div>
             </div>
 
-            <div class="bar-title">ENERGY</div>
-            <div class="bar">
-                <div id="energyBar" class="energy"></div>
+            <div class="stat">
+                <span>RESONANCE</span>
+                <div class="bar">
+                    <div id="energyBar"></div>
+                </div>
             </div>
 
-            <div id="weaponText">PULSE</div>
-            <div id="ammoText">12 / 12</div>
+            <div class="phase">
+                PHASE
+                <strong id="phaseText">A</strong>
+            </div>
 
         </div>
 
 
-        <div class="hud-right">
-            <div id="killsText">KILLS: 0</div>
-            <div id="creditsText">CREDITS: 100</div>
-            <div id="resourceText">
-                WOOD 0 | STONE 0 | CRYSTAL 0 | METAL 0
+        <div class="hud-bottom">
+
+            <div>
+                SHARDS:
+                <strong id="shardText">0</strong>
             </div>
+
+            <div>
+                RESONATORS:
+                <strong id="resonatorText">0</strong>
+            </div>
+
+            <div>
+                SIGNAL:
+                <strong id="signalText">0%</strong>
+            </div>
+
+        </div>
+
+
+        <div id="objective">
+            Find the first Resonance Node.
         </div>
 
     </div>
 
+</div>
 
-    <div id="interaction">
-        Druk <b>E</b> om een grondstof te verzamelen
-    </div>
-
-
-    <script src="app.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
