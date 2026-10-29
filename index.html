@@ -3,889 +3,422 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RoboClicker</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROBOCLICKER — Future Factory</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Nunito:wght@500;600;700;800;900&display=swap');
 
-:root {
-  --bg: #071a20;
-  --panel: #102b37;
-  --panel2: #18394b;
-  --blue: #38c9ff;
-  --orange: #ffad28;
-  --green: #b3ed50;
-  --white: #f3f7ff;
-  --muted: #a9bfd2;
+:root{
+  --bg:#050a13;--panel:#0b1526;--panel2:#101f35;
+  --blue:#42d9ff;--gold:#ffbd43;--purple:#a77bff;
+  --green:#a8ff73;--text:#eff8ff;--muted:#91a7c2;
 }
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  color: var(--white);
-  font-family: 'Nunito', sans-serif;
-  background:
-    radial-gradient(ellipse at 50% 35%, #285778 0%, transparent 48%),
-    linear-gradient(180deg, #102c45, #071a20 90%);
-  overflow-x: hidden;
-}
-
-button { font: inherit; }
-
-.factory {
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-}
-
-.factory::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: .28;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 115px, #071725 116px 125px),
-    linear-gradient(180deg, transparent 0 60%, #07121d 60% 62%, transparent 62%);
-}
-
-.factory::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 100px;
-  background: repeating-linear-gradient(120deg, #152b35 0 45px, #263b40 46px 90px);
-  border-top: 5px solid #344957;
-  opacity: .65;
-  pointer-events: none;
-}
-
-.topbar {
-  position: relative;
-  z-index: 2;
-  max-width: 1400px;
-  margin: auto;
-  padding: 22px 30px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.brand {
-  font-weight: 900;
-  font-size: clamp(22px, 4vw, 38px);
-  letter-spacing: -1px;
-  text-shadow: 0 4px #071725;
-}
-
-.brand span { color: var(--orange); }
-
-.brand-icon {
-  display: inline-block;
-  margin-right: 8px;
-  filter: drop-shadow(0 0 8px #38c9ff);
-}
-
-.top-actions { display: flex; gap: 10px; }
-
-.small-button {
-  border: 2px solid #42627a;
-  background: #122e43;
-  color: white;
-  padding: 10px 17px;
-  border-radius: 13px;
-  cursor: pointer;
-  font-weight: 900;
-}
-
-.small-button:hover { border-color: var(--blue); }
-
-.layout {
-  position: relative;
-  z-index: 1;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 8px 30px 50px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(390px, .94fr);
-  gap: 35px;
-}
-
-.left-column {
-  text-align: center;
-  padding: 10px 0 25px;
-}
-
-.score-card {
-  max-width: 500px;
-  margin: 0 auto 10px;
-  padding: 16px;
-  border: 3px solid #365a7b;
-  border-radius: 25px;
-  background: linear-gradient(145deg, #132d49, #0b2038);
-  box-shadow: 0 9px 0 #071725, inset 0 0 25px #1b4260;
-}
-
-.score-label {
-  color: var(--muted);
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.score {
-  color: var(--orange);
-  font-size: clamp(48px, 7vw, 78px);
-  font-weight: 900;
-  line-height: 1.1;
-  overflow-wrap: anywhere;
-  text-shadow: 0 4px #9a5410;
-}
-
-.per-second {
-  color: #b9cee2;
-  font-size: 19px;
-  margin-top: 4px;
-}
-
-.robot-area {
-  min-height: 330px;
-  display: flex;
-  justify-content: center;
-  align-items: end;
-  position: relative;
-  padding-top: 8px;
-}
-
-.robot-glow {
-  position: absolute;
-  width: 260px;
-  height: 180px;
-  bottom: 0;
-  background: #38c9ff;
-  opacity: .12;
-  filter: blur(55px);
-  border-radius: 50%;
-}
-
-.robot {
-  position: relative;
-  z-index: 1;
-  font-size: clamp(135px, 20vw, 220px);
-  line-height: 1.25;
-  cursor: pointer;
-  user-select: none;
-  filter: drop-shadow(0 14px 0 #091a28) drop-shadow(0 0 16px #38c9ff55);
-  transform-origin: center bottom;
-  transition: transform .12s, filter .12s;
-  animation: robotFloat 2.8s ease-in-out infinite;
-}
-
-.robot:hover {
-  filter: drop-shadow(0 14px 0 #091a28) drop-shadow(0 0 25px #38c9ff);
-}
-
-.robot:active { transform: scale(.91); }
-
-@keyframes robotFloat {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -10px; }
-}
-
-.click-button {
-  display: block;
-  position: relative;
-  z-index: 2;
-  width: min(100%, 440px);
-  margin: -2px auto 20px;
-  padding: 22px 12px;
-  border: 4px solid #ffcf60;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #ffd34e, #ff9d18);
-  color: #182333;
-  font-size: clamp(24px, 3vw, 34px);
-  font-weight: 900;
-  box-shadow: 0 9px 0 #9a5a13, inset 0 3px #fff4a7;
-  cursor: pointer;
-  transition: transform .1s, box-shadow .1s;
-}
-
-.click-button:hover { filter: brightness(1.08); }
-
-.click-button:active {
-  transform: translateY(6px);
-  box-shadow: 0 3px 0 #9a5a13, inset 0 3px #fff4a7;
-}
-
-.click-hint {
-  color: #b7ccdc;
-  font-size: 14px;
-  margin-top: 9px;
-}
-
-.menu-button {
-  width: min(100%, 440px);
-  padding: 15px;
-  border: 3px solid #486982;
-  border-radius: 20px;
-  color: white;
-  background: #122e48;
-  font-weight: 900;
-  font-size: 20px;
-  cursor: pointer;
-  box-shadow: 0 5px 0 #071725;
-}
-
-.menu-button:hover { border-color: var(--blue); }
-
-.right-column {
-  background: linear-gradient(160deg, #10283b, #0a202d);
-  border: 3px solid #274b66;
-  border-radius: 30px;
-  padding: 22px;
-  box-shadow: 0 15px 40px #0003;
-  align-self: start;
-}
-
-.panel-title {
-  margin: 0 0 18px;
-  font-size: 29px;
-  font-weight: 900;
-}
-
-.upgrade-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.upgrade {
-  display: grid;
-  grid-template-columns: 65px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  text-align: left;
-  padding: 12px;
-  min-height: 88px;
-  border: 2px solid #3d6380;
-  border-radius: 21px;
-  background: linear-gradient(110deg, #183750, #102b40);
-  color: white;
-  cursor: pointer;
-  transition: border-color .15s, transform .15s, background .15s;
-}
-
-.upgrade:hover:not(:disabled) {
-  border-color: var(--orange);
-  transform: translateX(-3px);
-  background: linear-gradient(110deg, #21465d, #16354b);
-}
-
-.upgrade:disabled {
-  opacity: .42;
-  cursor: not-allowed;
-  filter: grayscale(.5);
-}
-
-.upgrade-icon {
-  display: grid;
-  place-items: center;
-  width: 62px;
-  height: 62px;
-  border-radius: 16px;
-  background: #0b2034;
-  font-size: 39px;
-}
-
-.upgrade-name {
-  font-size: 17px;
-  font-weight: 900;
-}
-
-.upgrade-description {
-  color: #b2c9dd;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.upgrade-cost {
-  text-align: center;
-  min-width: 57px;
-  color: var(--orange);
-  font-size: 22px;
-  font-weight: 900;
-  background: #0b2037;
-  border-radius: 13px;
-  padding: 8px 7px;
-}
-
-.upgrade-cost small {
-  display: block;
-  color: #a5c6df;
-  font-size: 10px;
-}
-
-.stats {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 9px;
-}
-
-.stat {
-  background: #0b2030;
-  border: 1px solid #29475e;
-  padding: 12px 5px;
-  border-radius: 14px;
-  text-align: center;
-}
-
-.stat-label {
-  color: #a8c1d3;
-  font-size: 12px;
-}
-
-.stat-value {
-  color: var(--green);
-  font-size: 19px;
-  font-weight: 900;
-}
-
-.notice {
-  min-height: 23px;
-  color: var(--green);
-  font-weight: 800;
-  margin: 12px 0 0;
-}
-
-.float-text {
-  position: absolute;
-  z-index: 5;
-  pointer-events: none;
-  font-size: 27px;
-  font-weight: 900;
-  color: #ffe16a;
-  text-shadow: 0 2px #663a00, 0 0 10px #ffac00;
-  animation: floatUp .8s ease-out forwards;
-}
-
-@keyframes floatUp {
-  from { opacity: 1; transform: translateY(0) scale(.8); }
-  to { opacity: 0; transform: translateY(-95px) scale(1.2); }
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: #020b12d9;
-  backdrop-filter: blur(8px);
-}
-
-.overlay.show { display: flex; }
-
-.modal {
-  width: min(100%, 480px);
-  max-height: 85vh;
-  overflow-y: auto;
-  padding: 25px;
-  background: linear-gradient(145deg, #183b52, #0c2234);
-  border: 3px solid #416987;
-  border-radius: 25px;
-  box-shadow: 0 20px 70px #0008;
-}
-
-.modal h2 { margin-top: 0; }
-
-.modal p { color: #c0d2e1; }
-
-.modal-button {
-  display: block;
-  width: 100%;
-  padding: 13px;
-  margin-top: 10px;
-  border-radius: 13px;
-  border: 2px solid #3c617a;
-  background: #15334b;
-  color: white;
-  cursor: pointer;
-  font-weight: 900;
-}
-
-.modal-button:hover { border-color: var(--orange); }
-
-.modal-button.primary {
-  background: var(--orange);
-  border-color: #ffda78;
-  color: #172231;
-}
-
-.achievement {
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 13px;
-  background: #0b2030;
-  border: 1px solid #36546b;
-}
-
-.achievement.locked { opacity: .4; }
-
-.achievement strong { display: block; }
-.achievement span { font-size: 13px; color: #b3c8d8; }
-
-.toast {
-  position: fixed;
-  z-index: 30;
-  left: 50%;
-  bottom: 25px;
-  transform: translate(-50%, 20px);
-  opacity: 0;
-  pointer-events: none;
-  background: #b3ed50;
-  color: #11251c;
-  font-weight: 900;
-  padding: 12px 20px;
-  border-radius: 15px;
-  transition: .2s;
-  text-align: center;
-  width: max-content;
-  max-width: 90vw;
-}
-
-.toast.show {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
-
-@media (max-width: 850px) {
-  .layout {
-    grid-template-columns: 1fr;
-    padding: 0 16px 35px;
-    gap: 24px;
-  }
-
-  .topbar { padding: 17px 16px; }
-  .right-column { padding: 16px; }
-  .robot-area { min-height: 260px; }
-  .robot { font-size: 160px; }
-}
-
-@media (max-width: 430px) {
-  .brand { font-size: 22px; }
-  .small-button { padding: 8px 10px; }
-  .upgrade { grid-template-columns: 48px minmax(0,1fr) auto; gap: 8px; padding: 9px; }
-  .upgrade-icon { width: 46px; height: 46px; font-size: 29px; }
-  .upgrade-name { font-size: 15px; }
-  .upgrade-description { font-size: 11px; }
-  .upgrade-cost { min-width: 45px; font-size: 18px; }
-}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Nunito,sans-serif;min-height:100vh}
+button{font:inherit}
+button:focus-visible{outline:3px solid white;outline-offset:3px}
+button:disabled{opacity:.42;cursor:not-allowed!important}
+.app{min-height:100vh;position:relative;overflow:hidden;background:
+radial-gradient(ellipse at 20% 20%,#123b6044,transparent 38%),
+radial-gradient(ellipse at 80% 60%,#4b258333,transparent 38%),
+linear-gradient(135deg,#07111f,#050a13 65%,#101329)}
+.grid-bg{position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:
+linear-gradient(#4bcfff20 1px,transparent 1px),
+linear-gradient(90deg,#4bcfff20 1px,transparent 1px);
+background-size:48px 48px;mask-image:linear-gradient(to bottom,black,transparent 90%)}
+.scanline{position:fixed;top:-40%;left:0;right:0;height:25%;pointer-events:none;
+background:linear-gradient(transparent,#45d9ff09,transparent);animation:scan 9s linear infinite}
+@keyframes scan{to{top:120%}}
+header{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;
+gap:15px;padding:19px clamp(15px,4vw,48px);border-bottom:1px solid #29415d88;
+background:#07101ed9;backdrop-filter:blur(16px)}
+.logo{display:flex;align-items:center;gap:12px;font-family:Orbitron,sans-serif;
+font-weight:900;font-size:clamp(18px,3vw,29px);letter-spacing:1px}
+.logo-bot{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;
+background:linear-gradient(145deg,#183e5d,#0a1c30);border:1px solid #47d7ff77;
+box-shadow:0 0 25px #37cfff22;font-size:27px}
+.logo span{color:var(--blue)}
+.header-right{display:flex;align-items:center;gap:9px}
+.pill{border:1px solid #29425e;background:#0c192b;padding:9px 13px;
+border-radius:12px;color:#c9dcf4;font-size:12px;font-weight:900}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);
+box-shadow:0 0 10px var(--green);margin-right:7px}
+.icon-btn{background:#11233a;border:1px solid #344e70;color:white;border-radius:12px;
+padding:10px 13px;cursor:pointer}
+.icon-btn:hover{border-color:var(--blue);color:var(--blue)}
+main{position:relative;z-index:1;max-width:1450px;margin:auto;padding:25px clamp(14px,3vw,38px) 45px}
+.section-tag{color:var(--blue);font:700 10px Orbitron,sans-serif;letter-spacing:2.3px}
+.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(380px,.9fr);gap:22px}
+.left{display:flex;flex-direction:column;gap:18px;min-width:0}
+.hero{position:relative;border:1px solid #2a4868;border-radius:25px;padding:24px;
+background:linear-gradient(145deg,#101f35f5,#091323f5);overflow:hidden;
+box-shadow:0 18px 60px #0004,inset 0 1px #ffffff08}
+.hero:after{content:"";position:absolute;width:260px;height:260px;right:-100px;top:-130px;
+border-radius:50%;border:1px solid #43d9ff18;box-shadow:0 0 0 30px #43d9ff05,0 0 0 60px #43d9ff04}
+.hero-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.level{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:1px}
+h1{font:900 clamp(20px,3vw,30px) Orbitron,sans-serif;margin:10px 0 5px}
+.subtitle{color:var(--muted);font-size:14px}
+.scorebox{margin-top:23px;padding:19px;border-radius:18px;border:1px solid #31547a;
+background:linear-gradient(120deg,#102641,#0b182b);position:relative}
+.scorelabel{font-size:11px;letter-spacing:2px;color:var(--muted);font-weight:900}
+.score{font:900 clamp(38px,6vw,64px) Orbitron,sans-serif;color:var(--gold);
+letter-spacing:-2px;overflow-wrap:anywhere;text-shadow:0 0 30px #ffb52c20}
+.scorefoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#b8cbe0;font-size:13px}
+.cps{color:var(--green);font-weight:900}
+.robot-stage{min-height:285px;position:relative;display:flex;align-items:center;justify-content:center;
+overflow:hidden;border:1px solid #223c58;border-radius:25px;
+background:radial-gradient(ellipse at 50% 78%,#1a78a744,transparent 44%),
+linear-gradient(180deg,#0c1b2c,#08111f)}
+.stage-label{position:absolute;left:18px;top:17px;color:#819cb8;font:700 10px Orbitron,sans-serif;letter-spacing:2px}
+.stage-status{position:absolute;right:16px;top:15px;display:flex;align-items:center;gap:7px;
+font-size:10px;font-weight:900;color:var(--green);letter-spacing:1px}
+.orbit{position:absolute;width:245px;height:245px;border:1px solid #45d7ff3b;border-radius:50%;
+animation:spin 15s linear infinite}
+.orbit:before,.orbit:after{content:"";position:absolute;border:1px dashed #45d7ff44;border-radius:50%}
+.orbit:before{inset:20px}.orbit:after{inset:45px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orbit-dot{position:absolute;width:10px;height:10px;background:var(--gold);border-radius:50%;
+box-shadow:0 0 16px var(--gold);top:24px;left:42px}
+.platform{position:absolute;bottom:29px;width:240px;height:48px;border-radius:50%;
+border:2px solid #39d5ff77;background:radial-gradient(ellipse,#2bbde333,#0c2138 70%);
+box-shadow:0 0 30px #29cfff22}
+.platform:after{content:"";position:absolute;inset:9px 25px;border:1px solid #45d9ff44;border-radius:50%}
+.robot{position:relative;z-index:2;font-size:clamp(110px,17vw,170px);cursor:pointer;
+user-select:none;filter:drop-shadow(0 0 18px #44cfff50);transform-origin:center bottom;
+animation:float 3s ease-in-out infinite;transition:filter .15s}
+.robot:hover{filter:drop-shadow(0 0 28px #44dfff)}
+.robot:active{transform:scale(.88)!important}
+@keyframes float{0%,100%{translate:0 0}50%{translate:0 -9px}}
+.robot.hit{animation:hit .22s ease}
+@keyframes hit{50%{transform:scale(1.13) rotate(-4deg)}}
+.click-btn{position:relative;width:100%;border:1px solid #ffe08c;border-radius:17px;
+padding:19px;background:linear-gradient(110deg,#ffad27,#ffda63,#ffad27);
+background-size:200% 100%;color:#211609;font:900 17px Orbitron,sans-serif;letter-spacing:1px;
+cursor:pointer;box-shadow:0 5px 0 #9c5713,0 0 25px #ffb52c12;transition:.15s}
+.click-btn:hover{background-position:100% 0;box-shadow:0 5px 0 #9c5713,0 0 32px #ffb52c40}
+.click-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #9c5713}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{border:1px solid #253d5b;border-radius:17px;padding:15px;background:#0b1728}
+.stat-icon{font-size:20px}.stat-name{color:var(--muted);font-size:11px;margin-top:8px}
+.stat-number{font:800 19px Orbitron,sans-serif;margin-top:6px}
+.right{border:1px solid #29435f;border-radius:25px;padding:22px;background:#0a1423dd;
+box-shadow:0 18px 60px #0003;min-width:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.panel-head h2{font:800 20px Orbitron,sans-serif;margin:7px 0 0}
+.counter{background:#12253c;border:1px solid #2e4c6d;border-radius:10px;padding:8px 11px;
+font-size:12px;font-weight:900;color:var(--blue)}
+.tabs{display:flex;gap:7px;margin-bottom:17px}
+.tab{flex:1;border:1px solid #263e5b;background:#0b192b;color:#8da7c5;padding:10px 5px;
+border-radius:10px;cursor:pointer;font-size:11px;font-weight:900}
+.tab.active{background:#15344d;border-color:#43cfff;color:#fff;box-shadow:inset 0 0 14px #42d9ff0b}
+.upgrade-list{display:flex;flex-direction:column;gap:11px}
+.upgrade{width:100%;display:grid;grid-template-columns:55px minmax(0,1fr) auto;align-items:center;
+gap:12px;text-align:left;padding:12px;border:1px solid #2a4565;border-radius:16px;
+background:linear-gradient(110deg,#11243a,#0d1b2d);color:white;cursor:pointer;transition:.17s}
+.upgrade:hover:not(:disabled){transform:translateY(-2px);border-color:var(--blue);
+background:linear-gradient(110deg,#173550,#10243a);box-shadow:0 8px 25px #0003}
+.upgrade:disabled{cursor:not-allowed}
+.up-icon{width:54px;height:54px;display:grid;place-items:center;font-size:31px;
+border-radius:14px;background:linear-gradient(145deg,#1c3653,#0a1829);border:1px solid #2d4d6d}
+.up-name{font-weight:900;font-size:14px}
+.up-desc{font-size:11px;color:#90a9c5;line-height:1.5;margin-top:4px}
+.up-right{text-align:right;min-width:63px}
+.up-count{font:900 21px Orbitron,sans-serif;color:var(--green)}
+.up-cost{color:var(--gold);font-size:11px;font-weight:900;margin-top:5px}
+.up-cost small{color:#829cb9;display:block;font-size:9px;margin-top:3px}
+.progress-wrap{margin-top:20px;border:1px solid #263f5b;background:#0b1728;padding:15px;border-radius:15px}
+.progress-title{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:900}
+.progress-title span:last-child{color:var(--blue)}
+.progress{height:7px;background:#1c3049;border-radius:20px;margin-top:11px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#36baff,#a77bff);
+border-radius:20px;transition:width .3s;box-shadow:0 0 12px #42d9ff66}
+.bottom-note{text-align:center;color:#526b87;font-size:10px;margin-top:24px;letter-spacing:1px}
+.float-text{position:absolute;z-index:5;pointer-events:none;color:#ffe16a;
+font:900 20px Orbitron,sans-serif;text-shadow:0 0 15px #ffae00;animation:rise .85s forwards}
+@keyframes rise{to{opacity:0;transform:translateY(-85px) scale(1.3)}}
+.toast{position:fixed;z-index:20;bottom:25px;left:50%;transform:translate(-50%,20px);
+opacity:0;pointer-events:none;background:#132c42;border:1px solid var(--blue);
+border-radius:13px;padding:13px 20px;font-weight:900;box-shadow:0 0 35px #0008;
+transition:.2s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
+padding:20px;background:#020710dd;backdrop-filter:blur(12px)}
+.overlay.show{display:flex}
+.modal{width:min(100%,450px);max-height:85vh;overflow:auto;background:linear-gradient(145deg,#142b44,#091423);
+border:1px solid #456688;border-radius:24px;padding:25px;box-shadow:0 25px 90px #0009}
+.modal h2{font:800 22px Orbitron,sans-serif}
+.modal p{color:var(--muted);line-height:1.6}
+.modal button{display:block;width:100%;margin-top:10px;padding:13px;border-radius:12px;
+border:1px solid #355371;background:#10243a;color:white;font-weight:900;cursor:pointer}
+.modal button.primary{background:linear-gradient(100deg,#ffad27,#ffda63);color:#211609;border:0}
+.achievement{padding:13px;margin:9px 0;border-radius:13px;background:#0b192b;border:1px solid #29415e}
+.achievement span{display:block;font-size:12px;color:#8ea8c2;margin-top:4px}
+.achievement.locked{opacity:.4}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.right{padding:17px}.robot{font-size:145px}.robot-stage{min-height:255px}}
+@media(max-width:480px){header{padding:13px}.logo{font-size:16px;gap:7px}.logo-bot{width:35px;height:35px;font-size:22px}
+.pill{display:none}main{padding:16px 11px 30px}.hero{padding:16px}.right{padding:13px}
+.upgrade{grid-template-columns:44px minmax(0,1fr) auto;gap:8px;padding:9px}
+.up-icon{width:43px;height:43px;font-size:25px}.up-name{font-size:12px}.up-desc{font-size:10px}
+.up-right{min-width:48px}.up-count{font-size:16px}.up-cost{font-size:10px}.stats{gap:7px}
+.stat{padding:10px 5px}.stat-number{font-size:15px}.score{font-size:38px}}
 </style>
 </head>
 
 <body>
-<div class="factory">
+<div class="app">
+<div class="grid-bg"></div><div class="scanline"></div>
 
-  <header class="topbar">
-    <div class="brand"><span class="brand-icon">🤖</span>ROBO<span>CLICKER</span></div>
-    <div class="top-actions">
-      <button class="small-button" id="saveButton">💾 Opslaan</button>
-      <button class="small-button" id="menuTopButton">☰ Menu</button>
+<header>
+  <div class="logo"><div class="logo-bot">🤖</div><div>ROBO<span>CLICKER</span></div></div>
+  <div class="header-right">
+    <div class="pill"><span class="live-dot"></span>FABRIEK ONLINE</div>
+    <button class="icon-btn" id="saveBtn" title="Opslaan">💾</button>
+    <button class="icon-btn" id="menuBtn" title="Menu">☰</button>
+  </div>
+</header>
+
+<main>
+<div class="layout">
+<section class="left">
+  <div class="hero">
+    <div class="hero-head">
+      <div><div class="section-tag">COMMAND CENTER / 001</div><h1>ROBOT CONTROL</h1>
+      <div class="subtitle">Bouw je eigen robotimperium.</div></div>
+      <div class="level" id="level">LVL 01</div>
     </div>
-  </header>
-
-  <main class="layout">
-    <section class="left-column">
-      <div class="score-card">
-        <div class="score-label">Punten:</div>
-        <div class="score" id="score">0</div>
-        <div class="per-second"><span id="perSecond">0</span> per seconde</div>
-      </div>
-
-      <div class="robot-area" id="robotArea">
-        <div class="robot-glow"></div>
-        <div class="robot" id="robot" title="Klik op de robot!">🤖</div>
-      </div>
-
-      <button class="click-button" id="clickButton">⚡ Klik op mij!</button>
-      <div class="click-hint">Klik op de robot of de knop om punten te verdienen.</div>
-      <p class="notice" id="notice"></p>
-
-      <button class="menu-button" id="menuButton">⌂ Menu</button>
-
-      <div class="stats">
-        <div class="stat">
-          <div class="stat-label">Totaal geklikt</div>
-          <div class="stat-value" id="totalClicks">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Klikkracht</div>
-          <div class="stat-value" id="clickPower">1</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Upgrades</div>
-          <div class="stat-value" id="totalUpgrades">0</div>
-        </div>
-      </div>
-    </section>
-
-    <aside class="right-column">
-      <h2 class="panel-title">⚙️ Robot-upgrades</h2>
-      <div class="upgrade-list" id="upgradeList"></div>
-    </aside>
-  </main>
-</div>
-
-<div class="overlay" id="menuOverlay">
-  <div class="modal">
-    <h2>🤖 Robotmenu</h2>
-    <p>Welkom in de robotfabriek! Bouw je eigen leger robots en verdien steeds meer punten.</p>
-    <button class="modal-button primary" id="continueButton">▶ Verder spelen</button>
-    <button class="modal-button" id="achievementsButton">🏆 Prestaties</button>
-    <button class="modal-button" id="saveMenuButton">💾 Spel opslaan</button>
-    <button class="modal-button" id="resetButton">🔄 Opnieuw beginnen</button>
-    <button class="modal-button" id="closeMenuButton">Sluiten</button>
+    <div class="scorebox">
+      <div class="scorelabel">TOTALE ENERGIEPUNTEN</div>
+      <div class="score" id="score">0</div>
+      <div class="scorefoot"><span>⚡ Productie</span><span class="cps" id="cps">+0 / seconde</span></div>
+    </div>
   </div>
-</div>
 
-<div class="overlay" id="achievementsOverlay">
-  <div class="modal">
-    <h2>🏆 Prestaties</h2>
-    <div id="achievementList"></div>
-    <button class="modal-button primary" id="closeAchievementsButton">Terug naar het spel</button>
+  <div class="robot-stage" id="robotStage">
+    <div class="stage-label">UNIT-01 / ACTIVE</div>
+    <div class="stage-status"><span class="live-dot"></span>ONLINE</div>
+    <div class="orbit"><div class="orbit-dot"></div></div>
+    <div class="platform"></div>
+    <div class="robot" id="robot" title="Klik op de robot">🤖</div>
   </div>
-</div>
 
-<div class="overlay" id="resetOverlay">
-  <div class="modal">
-    <h2>Opnieuw beginnen?</h2>
-    <p>Je punten en upgrades worden opnieuw ingesteld. Weet je het zeker?</p>
-    <button class="modal-button primary" id="confirmResetButton">Ja, opnieuw beginnen</button>
-    <button class="modal-button" id="cancelResetButton">Nee, terug</button>
+  <button class="click-btn" id="clickBtn">⚡ &nbsp; ENERGIE VERZAMELEN</button>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-icon">👆</div><div class="stat-name">KLIK-KRACHT</div><div class="stat-number" id="power">1</div></div>
+    <div class="stat"><div class="stat-icon">🦾</div><div class="stat-name">ROBOTLEGER</div><div class="stat-number" id="owned">0</div></div>
+    <div class="stat"><div class="stat-icon">🏆</div><div class="stat-name">PRESTATIES</div><div class="stat-number" id="achievementCount">0/6</div></div>
   </div>
+
+  <div class="progress-wrap">
+    <div class="progress-title"><span>VOLGENDE LEVEL</span><span id="progressText">0 / 100</span></div>
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <div class="bottom-note">ROBOCLICKER INDUSTRIES © 2026 · BUILD THE FUTURE</div>
+</section>
+
+<aside class="right">
+  <div class="panel-head">
+    <div><div class="section-tag">FABRIEK MANAGEMENT</div><h2>Upgrades</h2></div>
+    <div class="counter" id="upgradeCount">0 GEKOCHT</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="all">ALLE</button>
+    <button class="tab" data-tab="owned">GEKOCHT</button>
+    <button class="tab" data-tab="affordable">BETAALBAAR</button>
+  </div>
+  <div class="upgrade-list" id="upgradeList"></div>
+</aside>
+</div>
+</main>
 </div>
 
+<div class="overlay" id="menuOverlay"><div class="modal">
+  <div class="section-tag">SYSTEM MENU</div><h2>🤖 Controlekamer</h2>
+  <p>Welkom terug, fabrieksdirecteur. Wat wil je doen?</p>
+  <button class="primary" id="continueBtn">▶ Verder spelen</button>
+  <button id="achievementsBtn">🏆 Prestaties bekijken</button>
+  <button id="saveMenuBtn">💾 Spel opslaan</button>
+  <button id="resetBtn">🔄 Nieuw spel starten</button>
+  <button id="closeMenuBtn">Sluiten</button>
+</div></div>
+
+<div class="overlay" id="achievementOverlay"><div class="modal">
+  <div class="section-tag">MILESTONE DATABASE</div><h2>🏆 Prestaties</h2><div id="achievementList"></div>
+  <button class="primary" id="closeAchievements">Terug naar de fabriek</button>
+</div></div>
+
+<div class="overlay" id="resetOverlay"><div class="modal">
+  <h2>Nieuwe start?</h2><p>Je huidige punten en upgrades worden gewist. Dit kan niet ongedaan worden gemaakt.</p>
+  <button class="primary" id="confirmReset">Ja, opnieuw beginnen</button>
+  <button id="cancelReset">Annuleren</button>
+</div></div>
 <div class="toast" id="toast"></div>
 
 <script>
 (() => {
-  "use strict";
+"use strict";
+const $ = id => document.getElementById(id);
 
-  const $ = id => document.getElementById(id);
+const products = [
+ {id:"bot",icon:"🧑‍🍳",name:"Robotmonteur",desc:"Een kleine robot die helpt bouwen.",cost:15,cps:1,growth:1.16},
+ {id:"battery",icon:"🔋",name:"Energiecel",desc:"Produceert stroom voor de fabriek.",cost:100,cps:5,growth:1.17},
+ {id:"belt",icon:"📦",name:"Transportband",desc:"Automatiseert de onderdelenlijn.",cost:500,cps:20,growth:1.18},
+ {id:"drone",icon:"🚁",name:"Bouwdrone",desc:"Bouwt robots vanuit de lucht.",cost:2500,cps:80,growth:1.19},
+ {id:"factory",icon:"🏭",name:"Mega-fabriek",desc:"Een complete geautomatiseerde fabriek.",cost:10000,cps:350,growth:1.20},
+ {id:"computer",icon:"🖥️",name:"Supercomputer",desc:"Stuurt een gigantisch robotleger aan.",cost:40000,cps:1500,growth:1.21},
+ {id:"portal",icon:"🌀",name:"Ruimteportaal",desc:"Haalt technologie uit een andere dimensie.",cost:200000,cps:8000,growth:1.22},
+ {id:"moon",icon:"🌕",name:"Maanbasis",desc:"Bouw robots op een andere planeet.",cost:1000000,cps:45000,growth:1.23}
+];
 
-  const upgrades = [
-    { id: "helper", name: "Robot Chef", icon: "👨‍🍳", description: "Maakt automatisch onderdelen.", baseCost: 15, cps: 1, growth: 1.16 },
-    { id: "charger", name: "Oplaadstation", icon: "🔋", description: "Laadt robots sneller op.", baseCost: 100, cps: 5, growth: 1.17 },
-    { id: "conveyor", name: "Transportband", icon: "📦", description: "Verplaatst onderdelen vanzelf.", baseCost: 500, cps: 20, growth: 1.18 },
-    { id: "drone", name: "Robotdrone", icon: "🚁", description: "Bouwt nieuwe robots in de lucht.", baseCost: 2500, cps: 80, growth: 1.19 },
-    { id: "factory", name: "Robotfabriek", icon: "🏭", description: "Een complete robotfabriek.", baseCost: 10000, cps: 350, growth: 1.20 },
-    { id: "super", name: "Supercomputer", icon: "🖥️", description: "Regelt duizenden robots tegelijk.", baseCost: 40000, cps: 1500, growth: 1.21 },
-    { id: "portal", name: "Robotportaal", icon: "🌀", description: "Haalt robots uit een andere wereld.", baseCost: 200000, cps: 8000, growth: 1.22 },
-    { id: "moon", name: "Maanbasis", icon: "🌕", description: "Een robotstad in de ruimte.", baseCost: 1000000, cps: 45000, growth: 1.23 }
-  ];
+const achievements = [
+ {name:"Eerste contact",desc:"Klik voor de eerste keer.",test:s=>s.clicks>=1},
+ {name:"Eerste honderd",desc:"Verzamel 100 punten in totaal.",test:s=>s.lifetime>=100},
+ {name:"Robotbouwer",desc:"Verzamel 1.000 punten in totaal.",test:s=>s.lifetime>=1000},
+ {name:"Fabrieksdirecteur",desc:"Verzamel 10.000 punten in totaal.",test:s=>s.lifetime>=10000},
+ {name:"Robotleger",desc:"Koop 10 upgrades.",test:s=>ownedTotal(s)>=10},
+ {name:"Klikkampioen",desc:"Bereik 100 punten per klik.",test:s=>s.power>=100}
+];
 
-  const achievements = [
-    { id: "first", title: "Eerste klik", description: "Verdien je eerste punt.", check: s => s.totalClicks >= 1 },
-    { id: "hundred", title: "Beginnende bouwer", description: "Verdien 100 punten.", check: s => s.lifetime >= 100 },
-    { id: "thousand", title: "Robotexpert", description: "Verdien 1.000 punten in totaal.", check: s => s.lifetime >= 1000 },
-    { id: "tenk", title: "Fabrieksbaas", description: "Verdien 10.000 punten in totaal.", check: s => s.lifetime >= 10000 },
-    { id: "million", title: "Robotmiljonair", description: "Verdien 1.000.000 punten in totaal.", check: s => s.lifetime >= 1000000 },
-    { id: "five", title: "Robotleger", description: "Koop 5 upgrades.", check: s => totalOwned(s) >= 5 },
-    { id: "twenty", title: "Robots overal", description: "Koop 20 upgrades.", check: s => totalOwned(s) >= 20 },
-    { id: "power", title: "Superklik", description: "Bereik een klikwaarde van 100.", check: s => s.clickPower >= 100 }
-  ];
-
-  function freshState() {
-    return {
-      points: 0,
-      lifetime: 0,
-      totalClicks: 0,
-      clickPower: 1,
-      owned: {},
-      unlocked: [],
-      lastSaved: Date.now()
-    };
-  }
-
-  let state = freshState();
-  let toastTimer;
-
-  function totalOwned(s = state) {
-    return upgrades.reduce((sum, u) => sum + (s.owned[u.id] || 0), 0);
-  }
-
-  function cps() {
-    return upgrades.reduce((sum, u) => sum + u.cps * (state.owned[u.id] || 0), 0);
-  }
-
-  function cost(u) {
-    return Math.floor(u.baseCost * Math.pow(u.growth, state.owned[u.id] || 0));
-  }
-
-  function format(n) {
-    if (!Number.isFinite(n)) return "0";
-    if (n < 1000) return Math.floor(n).toLocaleString("nl-NL");
-    const units = ["K", "M", "B", "T", "Qa", "Qi"];
-    let value = n;
-    let index = -1;
-    while (value >= 1000 && index < units.length - 1) {
-      value /= 1000;
-      index++;
-    }
-    return value.toLocaleString("nl-NL", {
-      maximumFractionDigits: value < 10 ? 2 : 1
-    }) + " " + units[index];
-  }
-
-  function showToast(message) {
-    const el = $("toast");
-    el.textContent = message;
-    el.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
-  }
-
-  function saveGame(silent = false) {
-    state.lastSaved = Date.now();
-    try {
-      localStorage.setItem("roboclicker_save_v1", JSON.stringify(state));
-      if (!silent) showToast("💾 Spel opgeslagen!");
-      $("notice").textContent = "Opgeslagen op dit apparaat.";
-    } catch (error) {
-      showToast("Opslaan is niet gelukt in deze browser.");
-    }
-  }
-
-  function loadGame() {
-    try {
-      const raw = localStorage.getItem("roboclicker_save_v1");
-      if (!raw) return;
-
-      const saved = JSON.parse(raw);
-      if (!saved || typeof saved !== "object") return;
-
-      state.points = Math.max(0, Number(saved.points) || 0);
-      state.lifetime = Math.max(state.points, Number(saved.lifetime) || 0);
-      state.totalClicks = Math.max(0, Number(saved.totalClicks) || 0);
-      state.clickPower = Math.max(1, Number(saved.clickPower) || 1);
-      state.owned = {};
-
-      upgrades.forEach(u => {
-        state.owned[u.id] = Math.max(0, Math.floor(Number(saved.owned?.[u.id]) || 0));
-      });
-
-      state.unlocked = Array.isArray(saved.unlocked) ? saved.unlocked : [];
-      state.lastSaved = Number(saved.lastSaved) || Date.now();
-
-      // Een klein beetje punten voor de tijd dat je weg was, maximaal 8 uur.
-      const awaySeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - state.lastSaved) / 1000));
-      const awayPoints = cps() * awaySeconds * 0.25;
-
-      if (awayPoints > 0) {
-        state.points += awayPoints;
-        state.lifetime += awayPoints;
-        setTimeout(() => showToast("🌙 Welkom terug! +" + format(awayPoints) + " punten verdiend."), 500);
-      }
-    } catch (error) {
-      console.warn("Savebestand kon niet worden geladen.", error);
-    }
-  }
-
-  function renderUpgrades() {
-    const list = $("upgradeList");
-    list.innerHTML = "";
-
-    upgrades.forEach(u => {
-      const amount = state.owned[u.id] || 0;
-      const price = cost(u);
-      const button = document.createElement("button");
-
-      button.className = "upgrade";
-      button.disabled = state.points < price;
-      button.setAttribute("aria-label", "Koop " + u.name + " voor " + format(price) + " punten");
-
-      button.innerHTML = `
-        <span class="upgrade-icon">${u.icon}</span>
-        <span>
-          <span class="upgrade-name">${u.name}</span>
-          <span class="upgrade-description">${u.description}<br>
-          ${format(price)} punten · +${format(u.cps)}/s</span>
-        </span>
-        <span class="upgrade-cost">${amount}<small>GEKOCHT</small></span>
-      `;
-
-      button.addEventListener("click", () => buyUpgrade(u.id));
-      list.appendChild(button);
-    });
-  }
-
-  function render() {
-    $("score").textContent = format(state.points);
-    $("perSecond").textContent = format(cps());
-    $("totalClicks").textContent = format(state.totalClicks);
-    $("clickPower").textContent = format(state.clickPower);
-    $("totalUpgrades").textContent = format(totalOwned());
-    renderUpgrades();
-  }
-
-  function checkAchievements() {
-    achievements.forEach(a => {
-      if (!state.unlocked.includes(a.id) && a.check(state)) {
-        state.unlocked.push(a.id);
-        showToast("🏆 Prestatie behaald: " + a.title);
-      }
-    });
-  }
-
-  function clickRobot(event) {
-    state.points += state.clickPower;
-    state.lifetime += state.clickPower;
-    state.totalClicks++;
-
-    const area = $("robotArea");
-    const rect = area.getBoundingClientRect();
-    const x = event && typeof event.clientX === "number"
-      ? event.clientX - rect.left
-      : rect.width / 2;
-    const y = event && typeof event.clientY === "number"
-      ? event.clientY - rect.top
-      : rect.height / 2;
-
-    const floater = document.createElement("div");
-    floater.className = "float-text";
-    floater.textContent = "+" + format(state.clickPower);
-    floater.style.left = Math.max(0, Math.min(rect.width - 75, x)) + "px";
-    floater.style.top = Math.max(0, Math.min(rect.height - 35, y)) + "px";
-    area.appendChild(floater);
-    setTimeout(() => floater.remove(), 850);
-
-    checkAchievements();
-    render();
-  }
-
-  function buyUpgrade(id) {
-    const u = upgrades.find(item => item.id === id);
-    if (!u) return;
-
-    const price = cost(u);
-
-    if (state.points < price) {
-      showToast("Je hebt nog niet genoeg punten!");
-      return;
-    }
-
-    state.points -= price;
-    state.owned[id] = (state.owned[id] || 0) + 1;
-
-    checkAchievements();
-    render();
-    showToast("✅ " + u.name + " gekocht!");
-    saveGame(true);
-  }
-
-  function openOverlay(id) {
-    $(id).classList.add("show");
-  }
-
-  function closeOverlay(id) {
-    $(id).classList.remove("show");
-  }
-
-  function renderAchievements() {
-    const list = $("achievementList");
-    list.innerHTML = "";
-
-    achievements.forEach(a => {
-      const unlocked = state.unlocked.includes(a.id);
-      const div = document.createElement("div");
-      div.className = "achievement" + (unlocked ? "" : " locked");
-      div.innerHTML = `
-        <strong>${unlocked ? "🏆" : "🔒"} ${a.title}</strong>
-        <span>${a.description}</span>
-      `;
-      list.appendChild(div);
-    });
-  }
-
-  $("clickButton").addEventListener("click", clickRobot);
-  $("robot").addEventListener("click", clickRobot);
-
-  $("saveButton").addEventListener("click", () => saveGame());
-  $("saveMenuButton").addEventListener("click", () => saveGame());
-
-  $("menuButton").addEventListener("click", () => openOverlay("menuOverlay"));
-  $("menuTopButton").addEventListener("click", () => openOverlay("menuOverlay"));
-  $("continueButton").addEventListener("click", () => closeOverlay("menuOverlay"));
-  $("closeMenuButton").addEventListener("click", () => closeOverlay("menuOverlay"));
-
-  $("achievementsButton").addEventListener("click", () => {
-    renderAchievements();
-    closeOverlay("menuOverlay");
-    openOverlay("achievementsOverlay");
-  });
-
-  $("closeAchievementsButton").addEventListener("click", () => {
-    closeOverlay("achievementsOverlay");
-  });
-
-  $("resetButton").addEventListener("click", () => {
-    closeOverlay("menuOverlay");
-    openOverlay("resetOverlay");
-  });
-
-  $("cancelResetButton").addEventListener("click", () => {
-    closeOverlay("resetOverlay");
-    openOverlay("menuOverlay");
-  });
-
-  $("confirmResetButton").addEventListener("click", () => {
-    state = freshState();
-    try { localStorage.removeItem("roboclicker_save_v1"); } catch (error) {}
-    closeOverlay("resetOverlay");
-    render();
-    showToast("🔄 Een nieuw robotavontuur begint!");
-  });
-
-  document.querySelectorAll(".overlay").forEach(overlay => {
-    overlay.addEventListener("click", event => {
-      if (event.target === overlay) overlay.classList.remove("show");
-    });
-  });
-
-  // Automatische puntenproductie.
-  let lastTick = Date.now();
-
-  setInterval(() => {
-    const now = Date.now();
-    const elapsed = Math.min((now - lastTick) / 1000, 2);
-    lastTick = now;
-
-    const earned = cps() * elapsed;
-
-    if (earned > 0) {
-      state.points += earned;
-      state.lifetime += earned;
-    }
-
-    checkAchievements();
-    render();
-  }, 250);
-
-  // Automatisch opslaan, ook als je vergeet op Opslaan te klikken.
-  setInterval(() => saveGame(true), 15000);
-
-  loadGame();
-  render();
+function fresh(){return {points:0,lifetime:0,clicks:0,power:1,owned:{},unlocked:[],last:Date.now()};}
+let s=fresh(), tab="all", toastTimer;
+function ownedTotal(){return products.reduce((n,p)=>n+(s.owned[p.id]||0),0);}
+function cps(){return products.reduce((n,p)=>n+p.cps*(s.owned[p.id]||0),0);}
+function cost(p){return Math.floor(p.cost*Math.pow(p.growth,s.owned[p.id]||0));}
+function fmt(n){
+ if(!Number.isFinite(n))return "0";
+ if(n<1000)return Math.floor(n).toLocaleString("nl-NL");
+ const units=["K","M","B","T","Qa","Qi","Sx"];
+ let i=-1;while(n>=1000&&i<units.length-1){n/=1000;i++;}
+ return n.toLocaleString("nl-NL",{maximumFractionDigits:n<10?2:1})+" "+units[i];
+}
+function toast(msg){
+ $("toast").textContent=msg;$("toast").classList.add("show");
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2300);
+}
+function save(silent=false){
+ try{
+ s.last=Date.now();localStorage.setItem("roboclicker_future_save",JSON.stringify(s));
+ if(!silent)toast("💾 Voortgang veilig opgeslagen!");
+ }catch(e){if(!silent)toast("Opslaan is niet beschikbaar in deze browser.");}
+}
+function load(){
+ try{
+ const raw=localStorage.getItem("roboclicker_future_save");if(!raw)return;
+ const d=JSON.parse(raw);if(!d||typeof d!=="object")return;
+ s.points=Math.max(0,Number(d.points)||0);
+ s.lifetime=Math.max(s.points,Number(d.lifetime)||0);
+ s.clicks=Math.max(0,Number(d.clicks)||0);
+ s.power=Math.max(1,Number(d.power)||1);
+ s.owned={};products.forEach(p=>s.owned[p.id]=Math.max(0,Math.floor(Number(d.owned?.[p.id])||0)));
+ s.unlocked=Array.isArray(d.unlocked)?d.unlocked:[];
+ const away=Math.min(28800,Math.max(0,(Date.now()-(Number(d.last)||Date.now()))/1000));
+ const bonus=cps()*away*.25;
+ if(bonus>0){s.points+=bonus;s.lifetime+=bonus;setTimeout(()=>toast("🌙 Welkom terug! +"+fmt(bonus)+" punten."),600);}
+ }catch(e){console.warn("Savebestand kon niet geladen worden.",e);}
+}
+function unlockAchievements(){
+ achievements.forEach((a,i)=>{
+ if(!s.unlocked.includes(i)&&a.test(s)){
+ s.unlocked.push(i);toast("🏆 Prestatie: "+a.name);
+ }});
+}
+function renderProducts(){
+ const list=$("upgradeList");list.innerHTML="";
+ let shown=0;
+ products.forEach(p=>{
+ const count=s.owned[p.id]||0,price=cost(p),can=s.points>=price;
+ if(tab==="owned"&&count===0)return;
+ if(tab==="affordable"&&!can)return;
+ shown++;
+ const b=document.createElement("button");b.className="upgrade";b.disabled=!can;
+ b.innerHTML=`<span class="up-icon">${p.icon}</span>
+ <span><span class="up-name">${p.name}</span>
+ <span class="up-desc">${p.desc}<br>+${fmt(p.cps)} punten/sec</span></span>
+ <span class="up-right"><span class="up-count">${count}</span>
+ <span class="up-cost">${fmt(price)}<small>⚡ PUNTEN</small></span></span>`;
+ b.addEventListener("click",()=>buy(p.id));list.appendChild(b);
+ });
+ if(!shown){
+ const empty=document.createElement("div");empty.style.cssText="padding:25px;text-align:center;color:#91a7c2";
+ empty.textContent=tab==="owned"?"Je hebt nog geen upgrades gekocht.":"Nog geen upgrades betaalbaar. Blijf klikken!";
+ list.appendChild(empty);
+ }
+}
+function render(){
+ $("score").textContent=fmt(s.points);
+ $("cps").textContent="+"+fmt(cps())+" / seconde";
+ $("power").textContent=fmt(s.power);
+ $("owned").textContent=fmt(ownedTotal());
+ $("upgradeCount").textContent=ownedTotal()+" GEKOCHT";
+ $("achievementCount").textContent=s.unlocked.length+"/"+achievements.length;
+ const level=Math.floor(Math.sqrt(s.lifetime/100))+1;
+ $("level").textContent="LVL "+String(level).padStart(2,"0");
+ const goal=level*level*100,previous=(level-1)*(level-1)*100;
+ const pct=Math.min(100,Math.max(0,(s.lifetime-previous)/(goal-previous)*100));
+ $("progressFill").style.width=pct+"%";
+ $("progressText").textContent=fmt(s.lifetime)+" / "+fmt(goal);
+ renderProducts();
+}
+function clickRobot(event){
+ s.points+=s.power;s.lifetime+=s.power;s.clicks++;
+ const r=$("robotStage").getBoundingClientRect();
+ const x=event&&event.clientX?r.clientX-event.clientX:0;
+ const el=document.createElement("div");el.className="float-text";
+ el.textContent="+"+fmt(s.power);
+ const left=event&&event.clientX?event.clientX-r.left:r.width/2;
+ const top=event&&event.clientY?event.clientY-r.top:r.height/2;
+ el.style.left=Math.max(10,Math.min(r.width-70,left))+"px";
+ el.style.top=Math.max(10,Math.min(r.height-35,top))+"px";
+ $("robotStage").appendChild(el);setTimeout(()=>el.remove(),900);
+ const bot=$("robot");bot.classList.remove("hit");void bot.offsetWidth;bot.classList.add("hit");
+ unlockAchievements();render();
+}
+function buy(id){
+ const p=products.find(x=>x.id===id);if(!p)return;
+ const price=cost(p);if(s.points<price){toast("Niet genoeg energiepunten!");return;}
+ s.points-=price;s.owned[id]=(s.owned[id]||0)+1;
+ unlockAchievements();render();save(true);toast("⚙️ "+p.name+" gebouwd!");
+}
+function open(id){$(id).classList.add("show");}
+function close(id){$(id).classList.remove("show");}
+function renderAchievements(){
+ const list=$("achievementList");list.innerHTML="";
+ achievements.forEach((a,i)=>{
+ const done=s.unlocked.includes(i),el=document.createElement("div");
+ el.className="achievement"+(done?"":" locked");
+ el.innerHTML=`<strong>${done?"🏆":"🔒"} ${a.name}</strong><span>${a.desc}</span>`;
+ list.appendChild(el);
+ });
+}
+$("robot").addEventListener("click",clickRobot);
+$("clickBtn").addEventListener("click",clickRobot);
+$("saveBtn").addEventListener("click",()=>save());
+$("saveMenuBtn").addEventListener("click",()=>save());
+$("menuBtn").addEventListener("click",()=>open("menuOverlay"));
+$("continueBtn").addEventListener("click",()=>close("menuOverlay"));
+$("closeMenuBtn").addEventListener("click",()=>close("menuOverlay"));
+$("achievementsBtn").addEventListener("click",()=>{renderAchievements();close("menuOverlay");open("achievementOverlay");});
+$("closeAchievements").addEventListener("click",()=>close("achievementOverlay"));
+$("resetBtn").addEventListener("click",()=>{close("menuOverlay");open("resetOverlay");});
+$("cancelReset").addEventListener("click",()=>{close("resetOverlay");open("menuOverlay");});
+$("confirmReset").addEventListener("click",()=>{
+ s=fresh();try{localStorage.removeItem("roboclicker_future_save");}catch(e){}
+ close("resetOverlay");render();toast("✨ Je nieuwe robotavontuur begint!");
+});
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
+ tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));renderProducts();
+}));
+document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)close(o.id);}));
+let last=Date.now();
+setInterval(()=>{
+ const now=Date.now(),dt=Math.min(2,(now-last)/1000);last=now;
+ const earned=cps()*dt;s.points+=earned;s.lifetime+=earned;
+ unlockAchievements();render();
+},250);
+setInterval(()=>save(true),15000);
+load();render();
 })();
 </script>
 </body>
 </html>
-
