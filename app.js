@@ -1,203 +1,211 @@
 
 'use strict';
 
-// ============================================================
-// FACTORY TYCOON — complete factory simulation
-// Machines create / process goods. Belts carry real items.
-// Press R or use ROTATE to change the direction of new belts.
-// ============================================================
+// ======================================================
+// FACTORY TYCOON
+// Real moving products + real sell destination
+// ======================================================
 
 const canvas = document.getElementById('factoryCanvas');
 const ctx = canvas.getContext('2d');
 
 const COLS = 16;
 const ROWS = 10;
-const SAVE_KEY = 'factoryTycoon_v2_save';
-const BELT_STEP = 0.58;
+const BELT_TIME = 0.8;
+const SAVE_KEY = 'factoryTycoon_clear_v1';
 
 const DIRS = [
-  { x: 1, y: 0, arrow: '→', name: 'Naar rechts →' },
-  { x: 0, y: 1, arrow: '↓', name: 'Naar beneden ↓' },
-  { x: -1, y: 0, arrow: '←', name: 'Naar links ←' },
-  { x: 0, y: -1, arrow: '↑', name: 'Naar boven ↑' }
+  { x: 1, y: 0, name: 'Right →', arrow: '→' },
+  { x: 0, y: 1, name: 'Down ↓', arrow: '↓' },
+  { x: -1, y: 0, name: 'Left ←', arrow: '←' },
+  { x: 0, y: -1, name: 'Up ↑', arrow: '↑' }
 ];
 
-const DEFINITIONS = {
+const MACHINES = {
   miner: {
-    name: 'Mijnmachine',
+    name: 'Ore Miner',
     icon: '⛏',
-    cost: 100,
-    color: '#9a7047',
-    description: 'Wint erts uit de grond en stuurt het over een transportband.',
-    makes: 'ORE',
-    interval: 2.4,
-    input: null,
-    output: 'ore'
+    price: 100,
+    color: '#a57a4c',
+    time: 2.4,
+    output: 'ore',
+    description: 'Creates ore automatically. Connect a conveyor to its output.'
   },
+
   smelter: {
-    name: 'Smelterij',
-    icon: '♨',
-    cost: 220,
-    color: '#b65e42',
-    description: 'Smelt aangevoerd erts om tot stevig metaal.',
-    makes: 'METAL',
-    interval: 3.0,
+    name: 'Smelter',
+    icon: '🔥',
+    price: 220,
+    color: '#b96143',
+    time: 3,
     input: 'ore',
-    output: 'metal'
+    output: 'metal',
+    description: 'Takes ore from a conveyor and melts it into metal.'
   },
+
   assembler: {
     name: 'Assembler',
     icon: '⚙',
-    cost: 320,
-    color: '#467ca5',
-    description: 'Bouwt tandwielen van aangevoerd metaal.',
-    makes: 'GEARS',
-    interval: 3.4,
+    price: 320,
+    color: '#477da4',
+    time: 3.4,
     input: 'metal',
-    output: 'gear'
+    output: 'gear',
+    description: 'Uses metal to make gears for your Sell Station.'
   },
-  seller: {
-    name: 'Verzendstation',
-    icon: '▣',
-    cost: 180,
-    color: '#43866a',
-    description: 'Verpakt en verkoopt tandwielen zodra ze binnenkomen.',
-    makes: 'CASH',
-    interval: 0,
-    input: 'gear',
-    output: null
-  },
+
   belt: {
-    name: 'Transportband',
+    name: 'Conveyor Belt',
     icon: '➜',
-    cost: 20,
-    color: '#697b89',
-    description: 'Verplaatst één product per keer in de ingestelde richting.',
-    makes: 'TRANSPORT',
-    interval: 0,
-    input: null,
-    output: null
+    price: 20,
+    color: '#667d8c',
+    description: 'Moves individual products in the direction of its arrow.'
+  },
+
+  seller: {
+    name: 'Sell Station',
+    icon: '💰',
+    price: 180,
+    color: '#428665',
+    description: 'FINAL DESTINATION. Each gear delivered here earns $50.'
   }
 };
 
+// ======================================================
+// GAME STATE
+// ======================================================
+
 let money = 1200;
+let goal = 1500;
+
 let machines = [];
 let selectedTool = 'select';
-let selectedMachineId = null;
+let selectedId = null;
+
 let beltDirection = 0;
 let gameSpeed = 1;
 let paused = false;
+
 let animationTime = 0;
-let totalPlayTime = 0;
-let lastFrame = 0;
+let playTime = 0;
+let lastTime = 0;
 let uiTimer = 0;
 let rateTimer = 0;
+let saveTimer = 0;
 
-let productionCounts = {
-  ore: 0,
-  metal: 0,
-  gear: 0,
-  income: 0
-};
-
-let rates = {
-  ore: 0,
-  metal: 0,
-  gear: 0,
-  income: 0
-};
-
-let goal = 1500;
-let pointerCell = null;
 let cellSize = 40;
 let offsetX = 0;
 let offsetY = 0;
-let toastTimeout = null;
-let lastSaveLabel = 'Automatisch';
+
+let pointerCell = null;
 let particles = [];
-let autosaveElapsed = 0;
+let toastTimer = null;
 
-const moneyEl = document.getElementById('money');
-const oreEl = document.getElementById('ore');
-const metalEl = document.getElementById('metal');
-const gearsEl = document.getElementById('gears');
-const toolButtons = [...document.querySelectorAll('.tool-button')];
+const production = {
+  ore: 0,
+  metal: 0,
+  gear: 0,
+  cash: 0
+};
 
-// ============================================================
-// MACHINE DATA
-// ============================================================
+const rates = {
+  ore: 0,
+  metal: 0,
+  gear: 0,
+  cash: 0
+};
 
-function makeMachine(type, x, y, dir = 0) {
+const $ = id => document.getElementById(id);
+
+const clamp = (v, min, max) =>
+  Math.max(min, Math.min(max, v));
+
+const number = v =>
+  Math.floor(v).toLocaleString('en-US');
+
+// ======================================================
+// CREATE BUILDING
+// ======================================================
+
+function createMachine(type, x, y, direction = 0) {
   return {
-    id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    id: `${Date.now()}_${Math.random()}`,
     type,
     x,
     y,
-    dir,
+    dir: direction,
     level: 1,
+
     timer: 0,
     output: 0,
+
     input: {
       ore: 0,
-      metal: 0,
-      gear: 0
+      metal: 0
     },
+
+    item: null,
+
     produced: 0,
     received: 0,
     sold: 0
   };
 }
 
-function getMachineAt(x, y) {
-  return machines.find(m => m.x === x && m.y === y) || null;
+function machineAt(x, y) {
+  return machines.find(
+    m => m.x === x && m.y === y
+  ) || null;
 }
 
-function getSelectedMachine() {
-  return machines.find(m => m.id === selectedMachineId) || null;
+function selectedMachine() {
+  return machines.find(
+    m => m.id === selectedId
+  ) || null;
 }
 
-function formatNumber(value) {
-  return Math.floor(value).toLocaleString('nl-NL');
+function direction(machine) {
+  return DIRS[machine.dir];
 }
 
-// ============================================================
-// NOTIFICATIONS
-// ============================================================
+// ======================================================
+// MESSAGE
+// ======================================================
 
 function showToast(message) {
-  const toast = document.getElementById('toast');
+  const el = $('toast');
 
-  toast.textContent = message;
-  toast.classList.add('show');
+  el.textContent = message;
+  el.classList.add('show');
 
-  clearTimeout(toastTimeout);
+  clearTimeout(toastTimer);
 
-  toastTimeout = setTimeout(() => {
-    toast.classList.remove('show');
-  }, 2100);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('show');
+  }, 2200);
 }
 
-// ============================================================
+// ======================================================
 // BUILD MENU
-// ============================================================
+// ======================================================
 
 function setTool(type) {
-  if (!DEFINITIONS[type] && type !== 'select') return;
+  if (type !== 'select' && !MACHINES[type]) return;
 
   selectedTool = type;
-  selectedMachineId = null;
+  selectedId = null;
 
-  toolButtons.forEach(button => {
+  document.querySelectorAll('.tool-button').forEach(button => {
     button.classList.toggle(
       'active',
       button.dataset.type === type
     );
   });
 
-  document.getElementById('selectedInfo').textContent =
+  $('selectedInfo').textContent =
     type === 'select'
-      ? 'Selecteren — klik op een machine om details te bekijken'
-      : `${DEFINITIONS[type].name} geselecteerd — klik op een leeg vakje`;
+      ? 'SELECT: Click on a building to inspect it'
+      : `BUILD: ${MACHINES[type].name} — click an empty tile`;
 
   canvas.style.cursor =
     type === 'select' ? 'default' : 'crosshair';
@@ -206,54 +214,66 @@ function setTool(type) {
   draw();
 }
 
-toolButtons.forEach(button => {
+document.querySelectorAll('.tool-button').forEach(button => {
   button.addEventListener('click', () => {
     setTool(button.dataset.type);
   });
 });
 
-// ============================================================
+// ======================================================
 // BELT DIRECTION
-// ============================================================
+// ======================================================
 
-function rotateBelt() {
+function rotateDirection() {
   beltDirection = (beltDirection + 1) % 4;
 
-  document.getElementById('directionLabel').textContent =
+  $('directionLabel').textContent =
     DIRS[beltDirection].name;
-
-  showToast(
-    `Transportband draait ${DIRS[beltDirection].name.toLowerCase()}`
-  );
 
   draw();
 }
 
-document.getElementById('rotateBtn').addEventListener(
+function rotateSelectedBelt() {
+  const machine = selectedMachine();
+
+  if (machine && machine.type === 'belt') {
+    machine.dir = (machine.dir + 1) % 4;
+
+    updateInspector();
+    draw();
+
+    showToast('Conveyor direction changed!');
+  } else {
+    rotateDirection();
+    showToast('New conveyor direction: ' + DIRS[beltDirection].name);
+  }
+}
+
+$('rotateBtn').addEventListener(
   'click',
-  rotateBelt
+  rotateSelectedBelt
 );
 
-// ============================================================
-// PLACE MACHINES
-// ============================================================
+// ======================================================
+// PLACE BUILDING
+// ======================================================
 
-function place(type, x, y) {
-  if (getMachineAt(x, y)) {
-    showToast('Dit vakje is al bezet.');
+function placeMachine(type, x, y) {
+  if (machineAt(x, y)) {
+    showToast('This tile is already occupied!');
     return;
   }
 
-  const cost = DEFINITIONS[type].cost;
+  const price = MACHINES[type].price;
 
-  if (money < cost) {
-    showToast(`Niet genoeg geld. Je hebt $${cost} nodig.`);
+  if (money < price) {
+    showToast(`Not enough cash! You need $${price}.`);
     return;
   }
 
-  money -= cost;
+  money -= price;
 
-  const machine = makeMachine(
+  const machine = createMachine(
     type,
     x,
     y,
@@ -261,21 +281,21 @@ function place(type, x, y) {
   );
 
   machines.push(machine);
-  selectedMachineId = machine.id;
+  selectedId = machine.id;
 
-  updateAllUI();
-  updateInspector();
+  updateUI();
+  updateRouteGuide();
 
-  showToast(`${DEFINITIONS[type].name} geplaatst!`);
+  showToast(MACHINES[type].name + ' placed!');
 
   saveGame(false);
 }
 
-// ============================================================
-// CANVAS INPUT
-// ============================================================
+// ======================================================
+// GRID INPUT
+// ======================================================
 
-function canvasToCell(event) {
+function getCell(event) {
   const rect = canvas.getBoundingClientRect();
 
   const px = event.clientX - rect.left;
@@ -285,10 +305,8 @@ function canvasToCell(event) {
   const y = Math.floor((py - offsetY) / cellSize);
 
   if (
-    x < 0 ||
-    y < 0 ||
-    x >= COLS ||
-    y >= ROWS
+    x < 0 || x >= COLS ||
+    y < 0 || y >= ROWS
   ) {
     return null;
   }
@@ -297,439 +315,255 @@ function canvasToCell(event) {
 }
 
 canvas.addEventListener('pointermove', event => {
-  pointerCell = canvasToCell(event);
+  pointerCell = getCell(event);
 
   if (pointerCell) {
-    document.getElementById('coordsInfo').textContent =
-      `X: ${String(pointerCell.x + 1).padStart(2, '0')}   Y: ${String(pointerCell.y + 1).padStart(2, '0')}`;
+    $('coordsInfo').textContent =
+      `X: ${pointerCell.x + 1} · Y: ${pointerCell.y + 1}`;
   } else {
-    document.getElementById('coordsInfo').textContent =
-      'X: --   Y: --';
+    $('coordsInfo').textContent = 'X: -- · Y: --';
   }
 });
 
 canvas.addEventListener('pointerleave', () => {
   pointerCell = null;
-
-  document.getElementById('coordsInfo').textContent =
-    'X: --   Y: --';
+  $('coordsInfo').textContent = 'X: -- · Y: --';
 });
 
 canvas.addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
 
-  const cell = canvasToCell(event);
+  const cell = getCell(event);
   if (!cell) return;
 
-  const existing = getMachineAt(cell.x, cell.y);
+  const existing = machineAt(cell.x, cell.y);
 
   if (selectedTool === 'select') {
-    selectedMachineId = existing ? existing.id : null;
+    selectedId = existing ? existing.id : null;
+
+    $('selectedInfo').textContent = existing
+      ? `${MACHINES[existing.type].name} selected`
+      : 'No building on this tile';
 
     updateInspector();
-
-    document.getElementById('selectedInfo').textContent =
-      existing
-        ? `${DEFINITIONS[existing.type].name} geselecteerd op X ${existing.x + 1}, Y ${existing.y + 1}`
-        : 'Geen machine op dit vakje';
-
     draw();
     return;
   }
 
   if (existing) {
-    selectedMachineId = existing.id;
-
+    selectedId = existing.id;
     updateInspector();
-
-    showToast('Vakje bezet — machine geselecteerd.');
-
     draw();
+
+    showToast('Tile occupied. Building selected.');
     return;
   }
 
-  place(selectedTool, cell.x, cell.y);
+  placeMachine(selectedTool, cell.x, cell.y);
 });
 
-// ============================================================
-// SELECTED MACHINE ACTIONS
-// ============================================================
+// ======================================================
+// ADJACENT BELTS
+// ======================================================
 
-function rotateSelectedBelt() {
-  const selected = getSelectedMachine();
-
-  if (selected && selected.type === 'belt') {
-    selected.dir = (selected.dir + 1) % 4;
-
-    updateInspector();
-    draw();
-
-    showToast('Deze transportband is gedraaid.');
-  } else {
-    rotateBelt();
-  }
+function getAdjacentBelts(machine) {
+  return DIRS.map(d =>
+    machineAt(
+      machine.x + d.x,
+      machine.y + d.y
+    )
+  ).filter(m => m && m.type === 'belt');
 }
 
-function upgradeSelected() {
-  const machine = getSelectedMachine();
+// ======================================================
+// MACHINE OUTPUT -> BELT
+// ======================================================
 
-  if (!machine || machine.type === 'belt') return;
-
-  const cost = Math.round(
-    DEFINITIONS[machine.type].cost *
-    machine.level *
-    0.72
-  );
-
-  if (money < cost) {
-    showToast(
-      `Upgrade kost $${cost}. Je hebt niet genoeg geld.`
-    );
-    return;
-  }
-
-  money -= cost;
-  machine.level += 1;
-
-  updateAllUI();
-  updateInspector();
-
-  showToast(
-    `${DEFINITIONS[machine.type].name} is nu level ${machine.level}!`
-  );
-
-  saveGame(false);
-}
-
-function removeSelected() {
-  const machine = getSelectedMachine();
-
-  if (!machine) return;
-
-  const refund = Math.floor(
-    DEFINITIONS[machine.type].cost * 0.45
-  );
-
-  machines = machines.filter(
-    item => item.id !== machine.id
-  );
-
-  money += refund;
-  selectedMachineId = null;
-
-  updateAllUI();
-  updateInspector();
-
-  showToast(
-    `Gebouw verwijderd. $${refund} teruggekregen.`
-  );
-
-  saveGame(false);
-}
-
-// ============================================================
-// MACHINE INSPECTOR
-// ============================================================
-
-function updateInspector() {
-  const info = document.getElementById('machineInfo');
-  const actions = document.getElementById('machineActions');
-  const machine = getSelectedMachine();
-
-  if (!machine) {
-    info.className = 'machine-inspector empty-inspector';
-
-    info.innerHTML = `
-      <div class="empty-machine-icon"><span>＋</span></div>
-      <h3>Niets geselecteerd</h3>
-      <p>Klik op een machine op de productievloer om de instellingen en productie te bekijken.</p>
-    `;
-
-    actions.innerHTML = '';
-    return;
-  }
-
-  const def = DEFINITIONS[machine.type];
-
-  const speed = machine.type === 'belt'
-    ? 'Doorvoerband'
-    : `${(1 / (def.interval / machine.level)).toFixed(2)} / sec`;
-
-  let stockLabel = 'BUFFER';
-
-  let stockValue =
-    machine.type === 'seller'
-      ? machine.sold
-      : machine.type === 'belt'
-        ? (machine.item ? 1 : 0)
-        : machine.output;
-
-  let inputLabel = 'INPUT';
-
-  let inputValue =
-    machine.type === 'smelter'
-      ? machine.input.ore
-      : machine.type === 'assembler'
-        ? machine.input.metal
-        : machine.type === 'seller'
-          ? 'Direct'
-          : machine.type === 'miner'
-            ? 'Geen'
-            : DIRS[machine.dir].arrow;
-
-  info.className = 'machine-inspector filled';
-
-  info.innerHTML = `
-    <div class="machine-hero">
-      <div class="machine-hero-icon" style="color:${def.color}">${def.icon}</div>
-      <div class="machine-hero-copy">
-        <h3>${def.name}</h3>
-        <small>${machine.type.toUpperCase()} · LVL ${machine.level}</small>
-      </div>
-    </div>
-    <p class="machine-description">${def.description}</p>
-    <div class="machine-metrics">
-      <div class="machine-metric">
-        <small>PRODUCTIE</small>
-        <b>${speed}</b>
-      </div>
-      <div class="machine-metric">
-        <small>${inputLabel}</small>
-        <b>${inputValue}</b>
-      </div>
-      <div class="machine-metric">
-        <small>${stockLabel}</small>
-        <b>${stockValue}</b>
-      </div>
-      <div class="machine-metric">
-        <small>GEPRODUCEERD</small>
-        <b>${machine.produced}</b>
-      </div>
-    </div>
-  `;
-
-  if (machine.type === 'belt') {
-    actions.innerHTML = `
-      <button class="action-button" id="rotateSelectedBtn">
-        ↻ DRAAI BAND
-      </button>
-      <button class="action-button danger" id="removeSelectedBtn">
-        VERWIJDER
-      </button>
-    `;
-
-    document
-      .getElementById('rotateSelectedBtn')
-      .addEventListener('click', rotateSelectedBelt);
-
-  } else {
-    const upgradeCost = Math.round(
-      def.cost * machine.level * 0.72
-    );
-
-    actions.innerHTML = `
-      <button class="action-button" id="upgradeSelectedBtn">
-        ⬆ UPGRADE $${formatNumber(upgradeCost)}
-      </button>
-      <button class="action-button danger" id="removeSelectedBtn">
-        VERWIJDER
-      </button>
-    `;
-
-    document
-      .getElementById('upgradeSelectedBtn')
-      .addEventListener('click', upgradeSelected);
-  }
-
-  document
-    .getElementById('removeSelectedBtn')
-    .addEventListener('click', removeSelected);
-}
-
-// ============================================================
-// REAL CONVEYOR LOGIC
-// ============================================================
-
-function itemColor(kind) {
-  return kind === 'ore'
-    ? '#d49a5a'
-    : kind === 'metal'
-      ? '#b5c9d8'
-      : '#ffbd54';
-}
-
-function acceptedItem(machine, kind) {
-  if (machine.type === 'smelter' && kind === 'ore') {
-    return 'ore';
-  }
-
-  if (machine.type === 'assembler' && kind === 'metal') {
-    return 'metal';
-  }
-
-  if (machine.type === 'seller' && kind === 'gear') {
-    return 'gear';
-  }
-
-  return null;
-}
-
-function deliverToMachine(machine, kind) {
-  const accepted = acceptedItem(machine, kind);
-
-  if (!accepted) return false;
-
-  if (machine.type === 'seller') {
-    const earnings = 45 * machine.level;
-
-    money += earnings;
-    machine.sold += 1;
-    machine.received += 1;
-
-    productionCounts.income += earnings;
-
-    spawnParticles(
-      machine.x,
-      machine.y,
-      '#77dfab',
-      '+$' + earnings
-    );
-
-  } else {
-    machine.input[accepted] += 1;
-    machine.received += 1;
-
-    spawnParticles(
-      machine.x,
-      machine.y,
-      itemColor(kind),
-      '+1'
-    );
-  }
-
-  return true;
-}
-
-function adjacentBelts(machine) {
-  const preferred = [0, 1, 2, 3];
-
-  return preferred
-    .map(index => {
-      const d = DIRS[index];
-
-      return getMachineAt(
-        machine.x + d.x,
-        machine.y + d.y
-      );
-    })
-    .filter(candidate => candidate && candidate.type === 'belt');
-}
-
-function canBeltCarryAway(belt, sourceMachine) {
-  const d = DIRS[belt.dir];
-
-  const targetX = belt.x + d.x;
-  const targetY = belt.y + d.y;
-
-  return !(
-    targetX === sourceMachine.x &&
-    targetY === sourceMachine.y
-  );
-}
-
-function pushMachineOutputs() {
+function sendOutputsToBelts() {
   for (const machine of machines) {
     if (
-      !machine.output ||
+      machine.type === 'belt' ||
       machine.type === 'seller' ||
-      machine.type === 'belt'
+      machine.output <= 0
     ) {
       continue;
     }
 
-    if (machine.output <= 0) continue;
-
-    const belts = adjacentBelts(machine);
+    const belts = getAdjacentBelts(machine);
 
     for (const belt of belts) {
-      if (belt.item || !canBeltCarryAway(belt, machine)) {
+      if (belt.item) continue;
+
+      const d = direction(belt);
+
+      const nextX = belt.x + d.x;
+      const nextY = belt.y + d.y;
+
+      // Do not send a product onto a belt
+      // that points straight back into its machine.
+      if (
+        nextX === machine.x &&
+        nextY === machine.y
+      ) {
         continue;
       }
 
+      // Put one real product onto the belt.
       belt.item = {
-        kind: DEFINITIONS[machine.type].output,
+        type: MACHINES[machine.type].output,
         progress: 0
       };
 
-      machine.output -= 1;
+      machine.output--;
+
       break;
     }
   }
 }
 
-function moveConveyors(dt) {
-  // Each belt holds one visible item.
-  // Items move one grid tile at a time.
+// ======================================================
+// WHAT EACH MACHINE ACCEPTS
+// ======================================================
 
-  const beltList = machines.filter(
+function acceptProduct(machine, product) {
+  if (
+    machine.type === 'smelter' &&
+    product === 'ore'
+  ) {
+    // Maximum input buffer: 10 ore.
+    if (machine.input.ore >= 10) {
+      return false;
+    }
+
+    machine.input.ore++;
+    machine.received++;
+
+    createEffect(machine.x, machine.y, '#d49a5a', '+ORE');
+
+    return true;
+  }
+
+  if (
+    machine.type === 'assembler' &&
+    product === 'metal'
+  ) {
+    // Maximum input buffer: 10 metal.
+    if (machine.input.metal >= 10) {
+      return false;
+    }
+
+    machine.input.metal++;
+    machine.received++;
+
+    createEffect(machine.x, machine.y, '#b5c9d8', '+METAL');
+
+    return true;
+  }
+
+  if (
+    machine.type === 'seller' &&
+    product === 'gear'
+  ) {
+    // MONEY IS ONLY AWARDED HERE!
+    const earnings = 50 * machine.level;
+
+    money += earnings;
+    machine.sold++;
+    machine.received++;
+
+    production.cash += earnings;
+
+    createEffect(machine.x, machine.y, '#77dfab', '+$' + earnings);
+
+    showToast('SOLD! +$' + earnings);
+
+    return true;
+  }
+
+  // Wrong product or wrong destination.
+  // Keep the product on the conveyor.
+  return false;
+}
+
+// ======================================================
+// PRODUCTS MOVING BETWEEN BELTS
+// ======================================================
+
+function moveProducts(dt) {
+  const belts = machines.filter(
     m => m.type === 'belt'
   );
 
-  for (const belt of beltList) {
+  const transfers = [];
+  const reserved = new Set();
+
+  // First: animate every product on its own belt.
+  for (const belt of belts) {
     if (!belt.item) continue;
 
-    belt.item.progress += dt;
-
-    if (belt.item.progress < BELT_STEP) {
-      continue;
-    }
-
-    const direction = DIRS[belt.dir];
-
-    const target = getMachineAt(
-      belt.x + direction.x,
-      belt.y + direction.y
+    belt.item.progress = Math.min(
+      1,
+      belt.item.progress + dt / BELT_TIME
     );
 
-    if (!target) {
-      // Item waits until a connected tile is available.
-      belt.item.progress = BELT_STEP;
-      continue;
-    }
+    if (belt.item.progress < 1) continue;
 
-    if (target.type === 'belt') {
-      if (target.item) {
-        belt.item.progress = BELT_STEP;
+    // Find the next tile in the arrow direction.
+    const d = direction(belt);
+
+    const next = machineAt(
+      belt.x + d.x,
+      belt.y + d.y
+    );
+
+    // No next building: product waits at the end.
+    if (!next) continue;
+
+    // Next tile is another conveyor.
+    if (next.type === 'belt') {
+      if (next.item || reserved.has(next.id)) {
         continue;
       }
 
-      target.item = {
-        kind: belt.item.kind,
-        progress: 0
-      };
+      reserved.add(next.id);
 
-      belt.item = null;
+      transfers.push({
+        source: belt,
+        target: next,
+        product: belt.item
+      });
+
       continue;
     }
 
-    if (
-      deliverToMachine(target, belt.item.kind)
-    ) {
+    // Next tile is a machine.
+    // The machine must accept this exact product.
+    if (acceptProduct(next, belt.item.type)) {
       belt.item = null;
-    } else {
-      belt.item.progress = BELT_STEP;
+    }
+  }
+
+  // Second: perform belt-to-belt transfers.
+  // This prevents products jumping across several
+  // tiles in a single game frame.
+  for (const transfer of transfers) {
+    if (!transfer.target.item) {
+      transfer.target.item = {
+        type: transfer.product.type,
+        progress: 0
+      };
+
+      transfer.source.item = null;
     }
   }
 }
 
-// ============================================================
+// ======================================================
 // MACHINE PRODUCTION
-// ============================================================
+// ======================================================
 
 function processMachines(dt) {
   for (const machine of machines) {
-    const def = DEFINITIONS[machine.type];
-
     if (
       machine.type === 'belt' ||
       machine.type === 'seller'
@@ -737,24 +571,29 @@ function processMachines(dt) {
       continue;
     }
 
-    if (machine.output >= 20) continue;
+    const data = MACHINES[machine.type];
 
+    // Maximum output buffer: 10 products.
+    if (machine.output >= 10) continue;
+
+    const interval = data.time / machine.level;
+
+    // MINER: creates ore without input.
     if (machine.type === 'miner') {
       machine.timer += dt;
 
-      const interval = def.interval / machine.level;
-
       while (
         machine.timer >= interval &&
-        machine.output < 20
+        machine.output < 10
       ) {
         machine.timer -= interval;
-        machine.output += 1;
-        machine.produced += 1;
 
-        productionCounts.ore += 1;
+        machine.output++;
+        machine.produced++;
 
-        spawnParticles(
+        production.ore++;
+
+        createEffect(
           machine.x,
           machine.y,
           '#d49a5a',
@@ -762,115 +601,432 @@ function processMachines(dt) {
         );
       }
 
-    } else {
-      const inputKind = def.input;
+      continue;
+    }
 
-      if (machine.input[inputKind] <= 0) {
-        machine.timer = Math.min(
-          machine.timer,
-          def.interval / machine.level
-        );
+    // SMELTER and ASSEMBLER:
+    // They can only produce with the right input.
+    const required = data.input;
 
-        continue;
-      }
+    if (machine.input[required] <= 0) continue;
 
-      machine.timer += dt;
+    machine.timer += dt;
 
-      const interval = def.interval / machine.level;
+    while (
+      machine.timer >= interval &&
+      machine.input[required] > 0 &&
+      machine.output < 10
+    ) {
+      machine.timer -= interval;
 
-      while (
-        machine.timer >= interval &&
-        machine.input[inputKind] > 0 &&
-        machine.output < 20
-      ) {
-        machine.timer -= interval;
+      machine.input[required]--;
+      machine.output++;
+      machine.produced++;
 
-        machine.input[inputKind] -= 1;
-        machine.output += 1;
-        machine.produced += 1;
+      production[data.output]++;
 
-        productionCounts[def.output] += 1;
-
-        spawnParticles(
-          machine.x,
-          machine.y,
-          itemColor(def.output),
-          `+${def.makes}`
-        );
-      }
+      createEffect(
+        machine.x,
+        machine.y,
+        data.output === 'metal' ? '#b5c9d8' : '#ffbd54',
+        '+ ' + data.output.toUpperCase()
+      );
     }
   }
 }
 
-// ============================================================
-// DRAWING HELPERS
-// ============================================================
+// ======================================================
+// PRODUCTION ROUTE STATUS
+// ======================================================
 
-function roundedRect(
-  context,
-  x,
-  y,
-  width,
-  height,
-  radius
-) {
-  const r = Math.min(
-    radius,
-    width / 2,
-    height / 2
-  );
+function updateRouteGuide() {
+  const count = type =>
+    machines.filter(m => m.type === type).length;
 
-  context.beginPath();
-  context.moveTo(x + r, y);
-  context.arcTo(
-    x + width,
-    y,
-    x + width,
-    y + height,
-    r
-  );
-  context.arcTo(
-    x + width,
-    y + height,
-    x,
-    y + height,
-    r
-  );
-  context.arcTo(
-    x,
-    y + height,
-    x,
-    y,
-    r
-  );
-  context.arcTo(
-    x,
-    y,
-    x + width,
-    y,
-    r
-  );
-  context.closePath();
+  const miner = count('miner') > 0;
+  const smelter = count('smelter') > 0;
+  const assembler = count('assembler') > 0;
+  const seller = count('seller') > 0;
+
+  $('stepMiner').classList.toggle('done', miner);
+  $('stepSmelter').classList.toggle('done', smelter);
+  $('stepAssembler').classList.toggle('done', assembler);
+  $('stepSeller').classList.toggle('done', seller);
+
+  const belts = count('belt');
+
+  let message = 'Place an Ore Miner to get started.';
+
+  if (miner && !smelter) {
+    message = 'Good! Now place a Smelter for your ore.';
+  } else if (miner && smelter && !assembler) {
+    message = 'Great! Place an Assembler to make gears.';
+  } else if (miner && smelter && assembler && !seller) {
+    message = 'Almost there! Place your Sell Station.';
+  } else if (miner && smelter && assembler && seller && belts === 0) {
+    message = 'Machines ready! Now connect them with conveyor belts.';
+  } else if (miner && smelter && assembler && seller) {
+    message = 'Production chain built! Check that every arrow points to the next machine.';
+  }
+
+  $('routeMessage').textContent = message;
 }
 
-// ============================================================
-// FACTORY FLOOR
-// ============================================================
+// ======================================================
+// DESTINATION STATUS
+// ======================================================
 
-function drawFloor() {
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-
-  const bg = ctx.createLinearGradient(
-    0, 0,
-    width, height
+function updateDestination() {
+  const sellers = machines.filter(
+    m => m.type === 'seller'
   );
 
-  bg.addColorStop(0, '#142330');
-  bg.addColorStop(1, '#101a24');
+  const card = $('destinationCard');
 
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, width, height);
+  const sold = sellers.reduce(
+    (total, m) => total + m.sold,
+    0
+  );
+
+  if (sellers.length === 0) {
+    card.classList.remove('active');
+
+    $('destinationTitle').textContent = 'Not built yet';
+    $('destinationDescription').textContent =
+      'Place a Sell Station to earn cash.';
+
+  } else {
+    card.classList.add('active');
+
+    $('destinationTitle').textContent =
+      sellers.length === 1
+        ? 'Sell Station active'
+        : sellers.length + ' Sell Stations active';
+
+    $('destinationDescription').textContent =
+      'Each delivered gear earns $50 per level.';
+  }
+
+  $('soldCount').textContent = number(sold);
+}
+
+// ======================================================
+// CASH MILESTONES
+// ======================================================
+
+function checkGoal() {
+  if (money < goal) return;
+
+  const completed = goal;
+
+  if (goal < 5000) {
+    goal = 5000;
+  } else if (goal < 15000) {
+    goal = 15000;
+  } else if (goal < 50000) {
+    goal = 50000;
+  } else {
+    goal += 50000;
+  }
+
+  showToast('MILESTONE REACHED! $' + number(completed));
+}
+
+// ======================================================
+// PRODUCTION RATE
+// ======================================================
+
+function updateRates(dt) {
+  rateTimer += dt;
+
+  if (rateTimer < 5) return;
+
+  const factor = 60 / rateTimer;
+
+  rates.ore = Math.round(production.ore * factor);
+  rates.metal = Math.round(production.metal * factor);
+  rates.gear = Math.round(production.gear * factor);
+  rates.cash = Math.round(production.cash * factor);
+
+  production.ore = 0;
+  production.metal = 0;
+  production.gear = 0;
+  production.cash = 0;
+
+  rateTimer = 0;
+}
+
+// ======================================================
+// INSPECTOR
+// ======================================================
+
+function updateInspector() {
+  const machine = selectedMachine();
+  const info = $('machineInfo');
+  const actions = $('machineActions');
+
+  if (!machine) {
+    info.className = 'machine-inspector';
+
+    info.innerHTML = `
+      <div class="empty-icon">＋</div>
+      <h3>Nothing selected</h3>
+      <p>Click a machine on the factory floor.</p>
+    `;
+
+    actions.innerHTML = '';
+    return;
+  }
+
+  const data = MACHINES[machine.type];
+
+  let inputText = 'None';
+  let bufferText = machine.output;
+
+  if (machine.type === 'smelter') {
+    inputText = machine.input.ore + ' / 10 ore';
+  }
+
+  if (machine.type === 'assembler') {
+    inputText = machine.input.metal + ' / 10 metal';
+  }
+
+  if (machine.type === 'seller') {
+    inputText = 'Gears';
+    bufferText = machine.sold + ' sold';
+  }
+
+  if (machine.type === 'belt') {
+    inputText = DIRS[machine.dir].name;
+    bufferText = machine.item
+      ? machine.item.type.toUpperCase()
+      : 'Empty';
+  }
+
+  const speed = data.time
+    ? (1 / (data.time / machine.level)).toFixed(2) + ' / sec'
+    : 'Continuous';
+
+  info.className = 'machine-inspector filled';
+
+  info.innerHTML = `
+    <div class="machine-hero">
+      <div class="machine-hero-icon">${data.icon}</div>
+      <div>
+        <h3>${data.name}</h3>
+        <small>LEVEL ${machine.level} · ${machine.type.toUpperCase()}</small>
+      </div>
+    </div>
+
+    <p class="machine-description">${data.description}</p>
+
+    <div class="machine-metrics">
+      <div class="machine-metric">
+        <small>PRODUCTION SPEED</small>
+        <b>${speed}</b>
+      </div>
+      <div class="machine-metric">
+        <small>INPUT / DIRECTION</small>
+        <b>${inputText}</b>
+      </div>
+      <div class="machine-metric">
+        <small>OUTPUT BUFFER</small>
+        <b>${bufferText}</b>
+      </div>
+      <div class="machine-metric">
+        <small>TOTAL PRODUCED</small>
+        <b>${machine.produced}</b>
+      </div>
+    </div>
+  `;
+
+  if (machine.type === 'belt') {
+    actions.innerHTML = `
+      <button class="action-button" id="rotateMachine">↻ ROTATE BELT</button>
+      <button class="action-button danger" id="removeMachine">REMOVE</button>
+    `;
+
+    $('rotateMachine').addEventListener('click', () => {
+      machine.dir = (machine.dir + 1) % 4;
+      updateInspector();
+      draw();
+      showToast('Belt rotated!');
+    });
+
+  } else {
+    const price = Math.round(
+      data.price * machine.level * .72
+    );
+
+    actions.innerHTML = `
+      <button class="action-button" id="upgradeMachine">⬆ UPGRADE $${number(price)}</button>
+      <button class="action-button danger" id="removeMachine">REMOVE</button>
+    `;
+
+    $('upgradeMachine').addEventListener('click', upgradeMachine);
+  }
+
+  $('removeMachine').addEventListener('click', removeMachine);
+}
+
+function upgradeMachine() {
+  const machine = selectedMachine();
+
+  if (!machine || machine.type === 'belt') return;
+
+  const price = Math.round(
+    MACHINES[machine.type].price * machine.level * .72
+  );
+
+  if (money < price) {
+    showToast('Not enough cash for upgrade!');
+    return;
+  }
+
+  money -= price;
+  machine.level++;
+
+  updateUI();
+  showToast('Machine upgraded to level ' + machine.level);
+  saveGame(false);
+}
+
+function removeMachine() {
+  const machine = selectedMachine();
+  if (!machine) return;
+
+  const refund = Math.floor(
+    MACHINES[machine.type].price * .45
+  );
+
+  machines = machines.filter(m => m.id !== machine.id);
+  money += refund;
+  selectedId = null;
+
+  updateUI();
+  updateRouteGuide();
+
+  showToast('Building removed. Refund: $' + refund);
+  saveGame(false);
+}
+
+// ======================================================
+// INVENTORY DISPLAY
+// ======================================================
+
+function inventory() {
+  const stock = {
+    ore: 0,
+    metal: 0,
+    gear: 0
+  };
+
+  for (const m of machines) {
+    if (m.type === 'miner') {
+      stock.ore += m.output;
+    }
+
+    if (m.type === 'smelter') {
+      stock.ore += m.input.ore;
+      stock.metal += m.output;
+    }
+
+    if (m.type === 'assembler') {
+      stock.metal += m.input.metal;
+      stock.gear += m.output;
+    }
+
+    if (m.type === 'belt' && m.item) {
+      stock[m.item.type]++;
+    }
+  }
+
+  return stock;
+}
+
+// ======================================================
+// VISUAL PARTICLES
+// ======================================================
+
+function createEffect(x, y, color, text) {
+  particles.push({
+    x: offsetX + (x + .5) * cellSize,
+    y: offsetY + (y + .5) * cellSize,
+    color,
+    text,
+    life: .8
+  });
+
+  if (particles.length > 45) {
+    particles.shift();
+  }
+}
+
+function updateEffects(dt) {
+  for (const p of particles) {
+    p.life -= dt;
+    p.y -= dt * 18;
+  }
+
+  particles = particles.filter(p => p.life > 0);
+}
+
+function drawEffects() {
+  for (const p of particles) {
+    ctx.save();
+
+    ctx.globalAlpha = clamp(p.life / .8, 0, 1);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
+    ctx.fillText(p.text, p.x, p.y);
+
+    ctx.restore();
+  }
+}
+
+// ======================================================
+// DRAWING HELPERS
+// ======================================================
+
+function roundedRect(x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function darken(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+
+  const r = clamp((n >> 16) + amount, 0, 255);
+  const g = clamp(((n >> 8) & 255) + amount, 0, 255);
+  const b = clamp((n & 255) + amount, 0, 255);
+
+  return `rgb(${r},${g},${b})`;
+}
+
+// ======================================================
+// DRAW FLOOR
+// ======================================================
+
+function drawFloor() {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, '#192b39');
+  gradient.addColorStop(1, '#111d28');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
 
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
@@ -879,264 +1035,169 @@ function drawFloor() {
 
       ctx.fillStyle =
         (x + y) % 2 === 0
-          ? 'rgba(49,69,83,.30)'
-          : 'rgba(35,53,67,.30)';
+          ? 'rgba(69,94,111,.25)'
+          : 'rgba(36,59,76,.27)';
 
-      ctx.fillRect(
-        px + 1,
-        py + 1,
-        cellSize - 2,
-        cellSize - 2
-      );
+      ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
 
-      ctx.strokeStyle = 'rgba(139,165,187,.13)';
+      ctx.strokeStyle = 'rgba(176,201,218,.13)';
       ctx.lineWidth = 1;
 
-      ctx.strokeRect(
-        px + .5,
-        py + .5,
-        cellSize,
-        cellSize
-      );
-
-      if ((x * 7 + y * 11) % 23 === 0) {
-        ctx.fillStyle = 'rgba(173,195,212,.15)';
-
-        ctx.fillRect(
-          px + cellSize * .18,
-          py + cellSize * .18,
-          2,
-          2
-        );
-      }
+      ctx.strokeRect(px + .5, py + .5, cellSize, cellSize);
     }
   }
 
-  // Subtle safety markings around the factory floor.
-  ctx.save();
-
-  ctx.strokeStyle = 'rgba(255,184,77,.12)';
+  ctx.setLineDash([6, 7]);
+  ctx.strokeStyle = 'rgba(255,184,77,.15)';
   ctx.lineWidth = 2;
-  ctx.setLineDash([7, 8]);
 
   ctx.strokeRect(
-    offsetX + 4,
-    offsetY + 4,
-    COLS * cellSize - 8,
-    ROWS * cellSize - 8
+    offsetX + 3,
+    offsetY + 3,
+    COLS * cellSize - 6,
+    ROWS * cellSize - 6
   );
 
-  ctx.restore();
+  ctx.setLineDash([]);
 }
 
-// ============================================================
-// DRAW TRANSPORT BELTS
-// ============================================================
+// ======================================================
+// DRAW MOVING PRODUCT
+// ======================================================
 
-function drawBelt(machine) {
-  const px = offsetX + machine.x * cellSize;
-  const py = offsetY + machine.y * cellSize;
+function drawProduct(belt) {
+  if (!belt.item) return;
 
-  const s = cellSize;
-  const cx = px + s / 2;
-  const cy = py + s / 2;
-  const d = DIRS[machine.dir];
+  const d = direction(belt);
+  const t = clamp(belt.item.progress, 0, 1);
 
-  ctx.save();
+  const centerX = offsetX + (belt.x + .5) * cellSize;
+  const centerY = offsetY + (belt.y + .5) * cellSize;
 
-  ctx.shadowColor = 'rgba(0,0,0,.28)';
-  ctx.shadowBlur = 7;
-  ctx.shadowOffsetY = 3;
+  // The object visibly travels from the entrance
+  // to the exit of each single conveyor tile.
+  const distance = cellSize * .36;
 
-  roundedRect(
-    ctx,
-    px + 3,
-    py + 3,
-    s - 6,
-    s - 6,
-    Math.max(4, s * .12)
-  );
+  const x = centerX + d.x * (t * 2 - 1) * distance;
+  const y = centerY + d.y * (t * 2 - 1) * distance;
 
-  ctx.fillStyle = '#394b59';
-  ctx.fill();
+  const colors = {
+    ore: '#dc9a53',
+    metal: '#c8d8e3',
+    gear: '#ffbd54'
+  };
 
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
-
-  // Belt rails and moving rollers.
-  ctx.strokeStyle = '#91a4b1';
-  ctx.lineWidth = Math.max(2, s * .065);
-  ctx.lineCap = 'round';
-
-  if (d.x !== 0) {
-    ctx.beginPath();
-    ctx.moveTo(
-      px + s * .18,
-      cy - s * .19
-    );
-    ctx.lineTo(
-      px + s * .82,
-      cy - s * .19
-    );
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(
-      px + s * .18,
-      cy + s * .19
-    );
-    ctx.lineTo(
-      px + s * .82,
-      cy + s * .19
-    );
-    ctx.stroke();
-
-    for (let i = 0; i < 4; i++) {
-      const roller =
-        ((animationTime * .9 + i / 4) % 1);
-
-      const rx =
-        px + s * (.2 + roller * .6);
-
-      ctx.fillStyle = '#c0ccd4';
-      ctx.beginPath();
-
-      ctx.arc(
-        rx,
-        cy,
-        Math.max(1.5, s * .045),
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-    }
-
-  } else {
-    ctx.beginPath();
-    ctx.moveTo(
-      cx - s * .19,
-      py + s * .18
-    );
-    ctx.lineTo(
-      cx - s * .19,
-      py + s * .82
-    );
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(
-      cx + s * .19,
-      py + s * .18
-    );
-    ctx.lineTo(
-      cx + s * .19,
-      py + s * .82
-    );
-    ctx.stroke();
-
-    for (let i = 0; i < 4; i++) {
-      const roller =
-        ((animationTime * .9 + i / 4) % 1);
-
-      const ry =
-        py + s * (.2 + roller * .6);
-
-      ctx.fillStyle = '#c0ccd4';
-      ctx.beginPath();
-
-      ctx.arc(
-        cx,
-        ry,
-        Math.max(1.5, s * .045),
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-    }
-  }
-
-  // Direction arrow.
-  ctx.translate(cx, cy);
-  ctx.rotate(machine.dir * Math.PI / 2);
-
-  ctx.fillStyle = '#f2c16f';
-  ctx.beginPath();
-
-  ctx.moveTo(s * .20, 0);
-  ctx.lineTo(-s * .10, -s * .16);
-  ctx.lineTo(-s * .10, -s * .055);
-  ctx.lineTo(-s * .25, -s * .055);
-  ctx.lineTo(-s * .25, s * .055);
-  ctx.lineTo(-s * .10, s * .055);
-  ctx.lineTo(-s * .10, s * .16);
-
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.restore();
-
-  if (machine.item) {
-    drawProduct(
-      cx,
-      cy,
-      machine.item.kind,
-      machine.item.progress
-    );
-  }
-}
-
-// ============================================================
-// DRAW PRODUCTS
-// ============================================================
-
-function drawProduct(cx, cy, kind, progress) {
-  const color = itemColor(kind);
-
-  const bob =
-    Math.sin(animationTime * 8 + progress * 5) * 1.2;
+  const color = colors[belt.item.type];
+  const size = Math.max(8, cellSize * .23);
 
   ctx.save();
 
   ctx.shadowColor = color;
-  ctx.shadowBlur = 11;
-  ctx.fillStyle = color;
+  ctx.shadowBlur = 13;
 
-  ctx.beginPath();
-
-  ctx.arc(
-    cx,
-    cy + bob,
-    Math.max(4, cellSize * .105),
-    0,
-    Math.PI * 2
+  roundedRect(
+    x - size / 2,
+    y - size / 2,
+    size,
+    size,
+    3
   );
 
+  ctx.fillStyle = color;
   ctx.fill();
 
   ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,.7)';
-
-  ctx.beginPath();
-
-  ctx.arc(
-    cx - cellSize * .025,
-    cy + bob - cellSize * .025,
-    Math.max(1, cellSize * .025),
-    0,
-    Math.PI * 2
+  ctx.fillStyle = 'rgba(255,255,255,.75)';
+  ctx.fillRect(
+    x - size * .25,
+    y - size * .25,
+    size * .25,
+    size * .2
   );
 
-  ctx.fill();
+  ctx.fillStyle = '#273440';
+  ctx.font = `bold ${Math.max(6, size * .4)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.fillText(
+    belt.item.type === 'ore'
+      ? 'O'
+      : belt.item.type === 'metal'
+        ? 'M'
+        : 'G',
+    x,
+    y + size * .1
+  );
 
   ctx.restore();
 }
 
-// ============================================================
-// DRAW MACHINES
-// ============================================================
+// ======================================================
+// DRAW BELT
+// ======================================================
+
+function drawBelt(machine) {
+  const px = offsetX + machine.x * cellSize;
+  const py = offsetY + machine.y * cellSize;
+  const s = cellSize;
+
+  const horizontal = machine.dir === 0 || machine.dir === 2;
+
+  ctx.save();
+
+  // Belt foundation.
+  roundedRect(px + 3, py + 3, s - 6, s - 6, 6);
+  ctx.fillStyle = '#465d6d';
+  ctx.fill();
+
+  ctx.strokeStyle = '#263b4b';
+  ctx.lineWidth = 2;
+
+  if (horizontal) {
+    ctx.fillStyle = '#172936';
+    ctx.fillRect(px + 4, py + s * .3, s - 8, s * .4);
+
+    ctx.beginPath();
+    ctx.moveTo(px + 4, py + s * .22);
+    ctx.lineTo(px + s - 4, py + s * .22);
+    ctx.moveTo(px + 4, py + s * .78);
+    ctx.lineTo(px + s - 4, py + s * .78);
+    ctx.stroke();
+
+  } else {
+    ctx.fillStyle = '#172936';
+    ctx.fillRect(px + s * .3, py + 4, s * .4, s - 8);
+
+    ctx.beginPath();
+    ctx.moveTo(px + s * .22, py + 4);
+    ctx.lineTo(px + s * .22, py + s - 4);
+    ctx.moveTo(px + s * .78, py + 4);
+    ctx.lineTo(px + s * .78, py + s - 4);
+    ctx.stroke();
+  }
+
+  // Arrow indicates exact direction.
+  ctx.save();
+  ctx.translate(px + s / 2, py + s / 2);
+  ctx.rotate(machine.dir * Math.PI / 2);
+
+  ctx.fillStyle = '#ffcf7b';
+  ctx.font = `bold ${Math.max(13, s * .38)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('→', 0, 0);
+
+  ctx.restore();
+  ctx.restore();
+
+  // The actual moving object is drawn on top.
+  drawProduct(machine);
+}
+
+// ======================================================
+// DRAW MACHINE
+// ======================================================
 
 function drawMachine(machine) {
   if (machine.type === 'belt') {
@@ -1146,365 +1207,208 @@ function drawMachine(machine) {
 
   const px = offsetX + machine.x * cellSize;
   const py = offsetY + machine.y * cellSize;
-
   const s = cellSize;
-  const def = DEFINITIONS[machine.type];
-  const pad = Math.max(3, s * .075);
-  const selected = machine.id === selectedMachineId;
+  const data = MACHINES[machine.type];
 
   ctx.save();
 
-  ctx.shadowColor = selected
-    ? 'rgba(255,184,77,.26)'
-    : 'rgba(0,0,0,.35)';
-
-  ctx.shadowBlur = selected ? 13 : 8;
+  ctx.shadowColor = '#0009';
+  ctx.shadowBlur = 8;
   ctx.shadowOffsetY = 3;
 
-  roundedRect(
-    ctx,
-    px + pad,
-    py + pad,
-    s - pad * 2,
-    s - pad * 2,
-    Math.max(5, s * .14)
-  );
+  roundedRect(px + 3, py + 3, s - 6, s - 6, 6);
 
-  const gradient = ctx.createLinearGradient(
-    px,
-    py,
-    px + s,
-    py + s
-  );
-
-  gradient.addColorStop(0, def.color);
-  gradient.addColorStop(
-    1,
-    shadeColor(def.color, -38)
-  );
+  const gradient = ctx.createLinearGradient(px, py, px + s, py + s);
+  gradient.addColorStop(0, data.color);
+  gradient.addColorStop(1, darken(data.color, -45));
 
   ctx.fillStyle = gradient;
   ctx.fill();
 
-  ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
-  // Machine roof panel.
-  roundedRect(
-    ctx,
-    px + pad + 3,
-    py + pad + 3,
-    s - pad * 2 - 6,
-    s * .19,
-    3
-  );
-
-  ctx.fillStyle = 'rgba(255,255,255,.16)';
+  // Top plate.
+  ctx.fillStyle = '#ffffff25';
+  roundedRect(px + 7, py + 6, s - 14, s * .17, 3);
   ctx.fill();
 
-  ctx.fillStyle = 'rgba(14,23,32,.34)';
-
-  ctx.fillRect(
-    px + pad + 4,
-    py + s - pad - s * .12,
-    s - pad * 2 - 8,
-    s * .07
-  );
-
-  // Glowing status lamps.
+  // Small status lamps.
   for (let i = 0; i < 3; i++) {
-    ctx.fillStyle =
-      i === 0
-        ? '#77dfab'
-        : 'rgba(220,235,244,.38)';
+    ctx.fillStyle = i === 0 ? '#77dfab' : '#dbe5ea66';
 
     ctx.beginPath();
-
     ctx.arc(
-      px + s * (.29 + i * .18),
+      px + s * (.32 + i * .17),
       py + s * .25,
-      Math.max(1.3, s * .025),
+      Math.max(1.3, s * .035),
       0,
       Math.PI * 2
     );
-
     ctx.fill();
   }
 
+  // Main building symbol.
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `${Math.max(16, s * .42)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.fillText(data.icon, px + s / 2, py + s * .57);
 
-  ctx.font =
-    `${Math.max(15, Math.floor(s * .43))}px "Segoe UI Symbol", sans-serif`;
+  // Buffer meter.
+  let amount = 0;
 
-  ctx.fillStyle = '#fff';
-
-  ctx.fillText(
-    def.icon,
-    px + s / 2,
-    py + s * .57
-  );
-
-  // Level badge.
-  if (machine.level > 1) {
-    ctx.fillStyle = '#ffd17e';
-
-    roundedRect(
-      ctx,
-      px + s * .66,
-      py + s * .08,
-      s * .24,
-      s * .19,
-      3
-    );
-
-    ctx.fill();
-
-    ctx.fillStyle = '#392815';
-    ctx.font = `bold ${Math.max(7, s * .12)}px sans-serif`;
-
-    ctx.fillText(
-      machine.level,
-      px + s * .78,
-      py + s * .175
-    );
+  if (machine.type === 'miner') {
+    amount = machine.output / 10;
+  } else if (machine.type === 'smelter') {
+    amount = machine.input.ore / 10;
+  } else if (machine.type === 'assembler') {
+    amount = machine.input.metal / 10;
+  } else if (machine.type === 'seller') {
+    amount = Math.min(1, machine.sold / 20);
   }
 
-  // Small input/output activity bar.
-  const fillValue =
-    machine.type === 'miner'
-      ? machine.output / 20
-      : machine.type === 'seller'
-        ? Math.min(1, machine.sold / 20)
-        : machine.input[def.input] / 20;
+  ctx.fillStyle = '#111e2a';
+  ctx.fillRect(px + 7, py + s * .83, s - 14, 3);
 
-  ctx.fillStyle = 'rgba(8,15,22,.45)';
-
-  roundedRect(
-    ctx,
-    px + s * .17,
+  ctx.fillStyle = '#ffce77';
+  ctx.fillRect(
+    px + 7,
     py + s * .83,
-    s * .66,
-    Math.max(2, s * .055),
+    (s - 14) * amount,
     3
   );
 
-  ctx.fill();
+  // Sell Station has an extra green outline.
+  if (machine.type === 'seller') {
+    ctx.strokeStyle = '#a5f4be';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 4, py + 4, s - 8, s - 8);
+  }
 
-  ctx.fillStyle = '#f6c16b';
+  // Upgrade badge.
+  if (machine.level > 1) {
+    ctx.fillStyle = '#ffd17e';
+    ctx.beginPath();
+    ctx.arc(px + s - 9, py + 9, 8, 0, Math.PI * 2);
+    ctx.fill();
 
-  roundedRect(
-    ctx,
-    px + s * .17,
-    py + s * .83,
-    s * .66 * Math.max(0, Math.min(1, fillValue)),
-    Math.max(2, s * .055),
-    3
-  );
-
-  ctx.fill();
+    ctx.fillStyle = '#342719';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillText(machine.level, px + s - 9, py + 9);
+  }
 
   ctx.restore();
 }
 
-function shadeColor(hex, amount) {
-  const value = hex.replace('#', '');
-  const num = parseInt(value, 16);
+function drawSelection() {
+  const machine = selectedMachine();
+  if (!machine) return;
 
-  const r = Math.max(
-    0,
-    Math.min(255, (num >> 16) + amount)
+  const x = offsetX + machine.x * cellSize;
+  const y = offsetY + machine.y * cellSize;
+
+  ctx.save();
+
+  ctx.strokeStyle = '#ffcf79';
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#ffcf79';
+  ctx.shadowBlur = 10;
+
+  roundedRect(
+    x + 2,
+    y + 2,
+    cellSize - 4,
+    cellSize - 4,
+    7
   );
 
-  const g = Math.max(
-    0,
-    Math.min(255, ((num >> 8) & 255) + amount)
-  );
-
-  const b = Math.max(
-    0,
-    Math.min(255, (num & 255) + amount)
-  );
-
-  return `rgb(${r},${g},${b})`;
+  ctx.stroke();
+  ctx.restore();
 }
 
-// ============================================================
-// PARTICLE EFFECTS
-// ============================================================
+function drawPlacementPreview() {
+  if (
+    !pointerCell ||
+    selectedTool === 'select'
+  ) return;
 
-function spawnParticles(gridX, gridY, color, label) {
-  const px =
-    offsetX + (gridX + .5) * cellSize;
+  if (machineAt(pointerCell.x, pointerCell.y)) return;
 
-  const py =
-    offsetY + (gridY + .5) * cellSize;
+  const x = offsetX + pointerCell.x * cellSize;
+  const y = offsetY + pointerCell.y * cellSize;
 
-  particles.push({
-    x: px,
-    y: py,
-    color,
-    label,
-    life: .85,
-    maxLife: .85,
-    vy: -18
-  });
+  ctx.save();
 
-  if (particles.length > 45) {
-    particles.splice(
-      0,
-      particles.length - 45
-    );
-  }
-}
+  ctx.strokeStyle =
+    money >= MACHINES[selectedTool].price
+      ? '#ffcf79'
+      : '#ee7777';
 
-function updateParticles(dt) {
-  for (const p of particles) {
-    p.life -= dt;
-    p.y += p.vy * dt;
-  }
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
 
-  particles = particles.filter(
-    p => p.life > 0
+  ctx.strokeRect(
+    x + 3,
+    y + 3,
+    cellSize - 6,
+    cellSize - 6
   );
-}
 
-function drawParticles() {
-  for (const p of particles) {
-    ctx.save();
-
-    ctx.globalAlpha = Math.max(
-      0,
-      p.life / p.maxLife
+  if (selectedTool === 'belt') {
+    ctx.translate(
+      x + cellSize / 2,
+      y + cellSize / 2
     );
 
-    ctx.font =
-      `bold ${Math.max(8, cellSize * .17)}px Manrope, sans-serif`;
+    ctx.rotate(beltDirection * Math.PI / 2);
 
+    ctx.fillStyle = '#ffcf79';
+    ctx.font = `${cellSize * .4}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillStyle = p.color;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 8;
-
-    ctx.fillText(
-      p.label,
-      p.x,
-      p.y
-    );
-
-    ctx.restore();
+    ctx.textBaseline = 'middle';
+    ctx.fillText('→', 0, 0);
   }
+
+  ctx.restore();
 }
 
-// ============================================================
-// MAIN DRAW FUNCTION
-// ============================================================
+// ======================================================
+// DRAW EVERYTHING
+// ======================================================
 
 function draw() {
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
 
-  if (!width || !height) return;
+  if (!w || !h) return;
 
-  ctx.clearRect(0, 0, width, height);
+  ctx.clearRect(0, 0, w, h);
 
   drawFloor();
 
-  // Belts first, then machines.
+  // First draw conveyor foundations.
   for (const machine of machines) {
     if (machine.type === 'belt') {
       drawMachine(machine);
     }
   }
 
+  // Then draw production buildings.
   for (const machine of machines) {
     if (machine.type !== 'belt') {
       drawMachine(machine);
     }
   }
 
-  // Placement preview.
-  if (
-    pointerCell &&
-    selectedTool !== 'select' &&
-    !getMachineAt(pointerCell.x, pointerCell.y)
-  ) {
-    const x =
-      offsetX + pointerCell.x * cellSize;
-
-    const y =
-      offsetY + pointerCell.y * cellSize;
-
-    ctx.save();
-
-    ctx.strokeStyle =
-      money >= DEFINITIONS[selectedTool].cost
-        ? 'rgba(255,190,91,.85)'
-        : 'rgba(244,105,105,.85)';
-
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 3]);
-
-    ctx.strokeRect(
-      x + 2,
-      y + 2,
-      cellSize - 4,
-      cellSize - 4
-    );
-
-    if (selectedTool === 'belt') {
-      ctx.translate(
-        x + cellSize / 2,
-        y + cellSize / 2
-      );
-
-      ctx.rotate(beltDirection * Math.PI / 2);
-
-      ctx.fillStyle = 'rgba(255,190,91,.8)';
-      ctx.font = `bold ${cellSize * .35}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      ctx.fillText('→', 0, 0);
-    }
-
-    ctx.restore();
-  }
-
-  // Selected machine outline.
-  const selected = getSelectedMachine();
-
-  if (selected) {
-    const x = offsetX + selected.x * cellSize;
-    const y = offsetY + selected.y * cellSize;
-
-    ctx.save();
-
-    ctx.strokeStyle = '#ffd078';
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = 'rgba(255,184,77,.8)';
-    ctx.shadowBlur = 10;
-
-    roundedRect(
-      ctx,
-      x + 1.5,
-      y + 1.5,
-      cellSize - 3,
-      cellSize - 3,
-      7
-    );
-
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  drawParticles();
+  drawPlacementPreview();
+  drawSelection();
+  drawEffects();
 }
 
-// ============================================================
-// CANVAS SIZE
-// ============================================================
+// ======================================================
+// CANVAS RESIZE
+// ======================================================
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -1519,22 +1423,15 @@ function resizeCanvas() {
   canvas.width = Math.round(rect.width * dpr);
   canvas.height = Math.round(rect.height * dpr);
 
-  ctx.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   cellSize = Math.min(
     rect.width / COLS,
     rect.height / ROWS
   );
 
-  offsetX = (rect.width - cellSize * COLS) / 2;
-  offsetY = (rect.height - cellSize * ROWS) / 2;
+  offsetX = (rect.width - COLS * cellSize) / 2;
+  offsetY = (rect.height - ROWS * cellSize) / 2;
 
   draw();
 }
@@ -1547,189 +1444,84 @@ if ('ResizeObserver' in window) {
   window.addEventListener('resize', resizeCanvas);
 }
 
-// ============================================================
-// INVENTORY
-// ============================================================
+// ======================================================
+// MILESTONES
+// ======================================================
 
-function getInventory() {
-  const inventory = {
-    ore: 0,
-    metal: 0,
-    gear: 0
-  };
+function checkGoal() {
+  if (money < goal) return;
 
-  for (const machine of machines) {
-    if (machine.type === 'miner') {
-      inventory.ore += machine.output;
-    }
+  const completed = goal;
 
-    if (machine.type === 'smelter') {
-      inventory.ore += machine.input.ore;
-      inventory.metal += machine.output;
-    }
+  goal = goal < 5000
+    ? 5000
+    : goal < 15000
+      ? 15000
+      : goal < 50000
+        ? 50000
+        : goal + 50000;
 
-    if (machine.type === 'assembler') {
-      inventory.metal += machine.input.metal;
-      inventory.gear += machine.output;
-    }
-
-    if (machine.type === 'seller') {
-      inventory.gear += machine.input.gear;
-    }
-
-    if (machine.type === 'belt' && machine.item) {
-      inventory[machine.item.kind] += 1;
-    }
-  }
-
-  return inventory;
+  showToast('MILESTONE! $' + number(completed) + ' reached!');
 }
 
-// ============================================================
-// PRODUCTION STATISTICS
-// ============================================================
+// ======================================================
+// FULL INTERFACE UPDATE
+// ======================================================
 
-function updateRates(dt) {
-  rateTimer += dt;
+function updateUI() {
+  const stock = inventory();
 
-  if (rateTimer < 5) return;
+  $('money').textContent = '$' + number(money);
+  $('cashRate').textContent = '+$' + number(rates.cash) + ' / min';
 
-  const factor = 60 / rateTimer;
+  $('ore').textContent = number(stock.ore);
+  $('metal').textContent = number(stock.metal);
+  $('gears').textContent = number(stock.gear);
 
-  rates = {
-    ore: Math.round(productionCounts.ore * factor),
-    metal: Math.round(productionCounts.metal * factor),
-    gear: Math.round(productionCounts.gear * factor),
-    income: Math.round(productionCounts.income * factor)
-  };
+  $('oreRate').textContent = rates.ore + ' / min';
+  $('metalRate').textContent = rates.metal + ' / min';
+  $('gearRate').textContent = rates.gear + ' / min';
+  $('incomeRate').textContent = '$' + number(rates.cash) + ' / min';
 
-  productionCounts = {
-    ore: 0,
-    metal: 0,
-    gear: 0,
-    income: 0
-  };
+  const percent = clamp(money / goal * 100, 0, 100);
 
-  rateTimer = 0;
+  $('goalProgress').style.width = percent + '%';
+  $('goalPercent').textContent = Math.floor(percent) + '%';
+  $('goalText').textContent = '$' + number(goal) + ' cash';
 
-  document.getElementById('oreRate').textContent =
-    `${rates.ore} / min`;
-
-  document.getElementById('metalRate').textContent =
-    `${rates.metal} / min`;
-
-  document.getElementById('gearRate').textContent =
-    `${rates.gear} / min`;
-
-  document.getElementById('incomeRate').textContent =
-    `$${formatNumber(rates.income)} / min`;
-}
-
-// ============================================================
-// UPDATE USER INTERFACE
-// ============================================================
-
-function updateAllUI() {
-  const inventory = getInventory();
-
-  moneyEl.textContent = formatNumber(money);
-  oreEl.textContent = formatNumber(inventory.ore);
-  metalEl.textContent = formatNumber(inventory.metal);
-  gearsEl.textContent = formatNumber(inventory.gear);
-
-  const percent = Math.min(
-    100,
-    money / goal * 100
-  );
-
-  document.getElementById('goalProgress').style.width =
-    `${percent}%`;
-
-  document.getElementById('goalPercent').textContent =
-    `${Math.floor(percent)}%`;
-
-  document.getElementById('goalText').textContent =
-    `$${formatNumber(goal)} verdienen`;
-
-  document.getElementById('clockLabel').textContent =
-    formatClock(totalPlayTime);
+  $('clockLabel').textContent = formatClock(playTime);
 
   updateInspector();
+  updateDestination();
+  updateRouteGuide();
 }
 
 function formatClock(seconds) {
-  const whole = Math.floor(seconds);
+  const t = Math.floor(seconds);
 
-  const h = String(
-    Math.floor(whole / 3600)
-  ).padStart(2, '0');
+  const hours = String(Math.floor(t / 3600)).padStart(2, '0');
+  const minutes = String(Math.floor(t / 60) % 60).padStart(2, '0');
+  const secs = String(t % 60).padStart(2, '0');
 
-  const m = String(
-    Math.floor((whole % 3600) / 60)
-  ).padStart(2, '0');
-
-  const s = String(
-    whole % 60
-  ).padStart(2, '0');
-
-  return `${h}:${m}:${s}`;
+  return `${hours}:${minutes}:${secs}`;
 }
 
-// ============================================================
-// MILESTONES
-// ============================================================
-
-function checkMilestone() {
-  if (money >= goal) {
-    const reached = goal;
-
-    goal =
-      goal < 5000
-        ? 5000
-        : goal < 15000
-          ? 15000
-          : goal < 50000
-            ? 50000
-            : goal + 50000;
-
-    showToast(
-      `✦ Mijlpaal bereikt: $${formatNumber(reached)}! Volgende doel: $${formatNumber(goal)}.`
-    );
-  }
-}
-
-// ============================================================
-// SAVE SYSTEM
-// ============================================================
+// ======================================================
+// SAVE GAME
+// ======================================================
 
 function saveGame(showMessage = true) {
   const data = {
-    version: 2,
+    version: 1,
     money,
     goal,
-    totalPlayTime,
+    playTime,
     beltDirection,
 
     machines: machines.map(m => ({
-      id: m.id,
-      type: m.type,
-      x: m.x,
-      y: m.y,
-      dir: m.dir,
-      level: m.level,
-      timer: m.timer,
-      output: m.output,
-      input: m.input,
-      produced: m.produced,
-      received: m.received,
-      sold: m.sold,
-
-      item: m.item
-        ? {
-            kind: m.item.kind,
-            progress: m.item.progress
-          }
-        : null
+      ...m,
+      input: { ...m.input },
+      item: m.item ? { ...m.item } : null
     }))
   };
 
@@ -1739,30 +1531,28 @@ function saveGame(showMessage = true) {
       JSON.stringify(data)
     );
 
-    lastSaveLabel = 'Opgeslagen';
-
-    document.getElementById('saveStatus').innerHTML =
-      '<i class="tiny-led"></i> Opgeslagen';
+    $('saveStatus').textContent = '● Saved';
 
     if (showMessage) {
-      showToast('Fabriek opgeslagen!');
+      showToast('Factory saved!');
     }
 
     return true;
 
   } catch (error) {
-    document.getElementById('saveStatus').textContent =
-      'Opslaan mislukt';
+    $('saveStatus').textContent = '● Save failed';
 
     if (showMessage) {
-      showToast(
-        'Opslaan mislukt. Controleer je browserinstellingen.'
-      );
+      showToast('Could not save your factory.');
     }
 
     return false;
   }
 }
+
+// ======================================================
+// LOAD GAME
+// ======================================================
 
 function loadGame() {
   let raw;
@@ -1779,369 +1569,253 @@ function loadGame() {
     const data = JSON.parse(raw);
 
     if (
-      !data ||
-      data.version !== 2 ||
+      data.version !== 1 ||
       !Array.isArray(data.machines) ||
       !Number.isFinite(data.money)
     ) {
       throw new Error('Invalid save');
     }
 
-    const seen = new Set();
-    const loaded = [];
+    machines = [];
+    const occupied = new Set();
 
-    for (const item of data.machines) {
+    for (const saved of data.machines) {
       if (
-        !DEFINITIONS[item.type] ||
-        !Number.isInteger(item.x) ||
-        !Number.isInteger(item.y) ||
-        item.x < 0 ||
-        item.x >= COLS ||
-        item.y < 0 ||
-        item.y >= ROWS
-      ) {
-        continue;
-      }
+        !MACHINES[saved.type] ||
+        !Number.isInteger(saved.x) ||
+        !Number.isInteger(saved.y) ||
+        saved.x < 0 ||
+        saved.x >= COLS ||
+        saved.y < 0 ||
+        saved.y >= ROWS
+      ) continue;
 
-      const cell = `${item.x},${item.y}`;
+      const position = `${saved.x},${saved.y}`;
 
-      if (seen.has(cell)) continue;
+      if (occupied.has(position)) continue;
+      occupied.add(position);
 
-      seen.add(cell);
-
-      const m = makeMachine(
-        item.type,
-        item.x,
-        item.y,
-        Number.isInteger(item.dir)
-          ? ((item.dir % 4) + 4) % 4
-          : 0
+      const m = createMachine(
+        saved.type,
+        saved.x,
+        saved.y,
+        clamp(Math.floor(Number(saved.dir) || 0), 0, 3)
       );
 
-      m.id =
-        typeof item.id === 'string'
-          ? item.id
-          : m.id;
+      m.id = typeof saved.id === 'string' ? saved.id : m.id;
+      m.level = clamp(Math.floor(Number(saved.level) || 1), 1, 99);
+      m.timer = clamp(Number(saved.timer) || 0, 0, 20);
+      m.output = clamp(Math.floor(Number(saved.output) || 0), 0, 10);
 
-      m.level = Math.max(
-        1,
-        Math.min(
-          99,
-          Math.floor(Number(item.level) || 1)
-        )
-      );
+      m.input.ore = clamp(Math.floor(Number(saved.input?.ore) || 0), 0, 10);
+      m.input.metal = clamp(Math.floor(Number(saved.input?.metal) || 0), 0, 10);
 
-      m.timer = Math.max(
-        0,
-        Math.min(20, Number(item.timer) || 0)
-      );
-
-      m.output = Math.max(
-        0,
-        Math.min(20, Math.floor(Number(item.output) || 0))
-      );
-
-      m.input = {
-        ore: Math.max(
-          0,
-          Math.min(999, Math.floor(Number(item.input?.ore) || 0))
-        ),
-        metal: Math.max(
-          0,
-          Math.min(999, Math.floor(Number(item.input?.metal) || 0))
-        ),
-        gear: Math.max(
-          0,
-          Math.min(999, Math.floor(Number(item.input?.gear) || 0))
-        )
-      };
-
-      m.produced = Math.max(
-        0,
-        Math.floor(Number(item.produced) || 0)
-      );
-
-      m.received = Math.max(
-        0,
-        Math.floor(Number(item.received) || 0)
-      );
-
-      m.sold = Math.max(
-        0,
-        Math.floor(Number(item.sold) || 0)
-      );
+      m.produced = Math.max(0, Math.floor(Number(saved.produced) || 0));
+      m.received = Math.max(0, Math.floor(Number(saved.received) || 0));
+      m.sold = Math.max(0, Math.floor(Number(saved.sold) || 0));
 
       if (
-        item.item &&
-        ['ore', 'metal', 'gear'].includes(item.item.kind)
+        m.type === 'belt' &&
+        saved.item &&
+        ['ore', 'metal', 'gear'].includes(saved.item.type)
       ) {
         m.item = {
-          kind: item.item.kind,
-          progress: Math.max(
-            0,
-            Math.min(
-              BELT_STEP,
-              Number(item.item.progress) || 0
-            )
-          )
+          type: saved.item.type,
+          progress: clamp(Number(saved.item.progress) || 0, 0, 1)
         };
       }
 
-      loaded.push(m);
+      machines.push(m);
     }
 
-    machines = loaded;
+    money = Math.max(0, Math.floor(data.money));
+    goal = Math.max(1500, Math.floor(Number(data.goal) || 1500));
+    playTime = Math.max(0, Number(data.playTime) || 0);
 
-    money = Math.max(
-      0,
-      Math.floor(data.money)
-    );
+    beltDirection =
+      ((Math.floor(Number(data.beltDirection) || 0) % 4) + 4) % 4;
 
-    goal = Math.max(
-      1500,
-      Math.floor(Number(data.goal) || 1500)
-    );
-
-    totalPlayTime = Math.max(
-      0,
-      Number(data.totalPlayTime) || 0
-    );
-
-    beltDirection = Number.isInteger(data.beltDirection)
-      ? ((data.beltDirection % 4) + 4) % 4
-      : 0;
-
-    document.getElementById('directionLabel').textContent =
+    $('directionLabel').textContent =
       DIRS[beltDirection].name;
 
     return true;
 
   } catch (error) {
-    console.warn(
-      'Save kon niet worden geladen:',
-      error
-    );
-
+    console.warn('Save load failed:', error);
     return false;
   }
 }
 
-// ============================================================
-// SAVE BUTTON AND NEW FACTORY
-// ============================================================
+// ======================================================
+// BUTTONS
+// ======================================================
 
-document.getElementById('saveBtn').addEventListener(
-  'click',
-  () => saveGame(true)
-);
+$('saveBtn').addEventListener('click', () => {
+  saveGame(true);
+});
 
-document.getElementById('resetBtn').addEventListener(
-  'click',
-  () => {
-    const confirmed = window.confirm(
-      'Weet je zeker dat je een nieuwe fabriek wilt starten? Je huidige save wordt overschreven.'
-    );
-
-    if (!confirmed) return;
-
-    machines = [];
-    money = 1200;
-    goal = 1500;
-    totalPlayTime = 0;
-
-    selectedMachineId = null;
-    beltDirection = 0;
-
-    productionCounts = {
-      ore: 0,
-      metal: 0,
-      gear: 0,
-      income: 0
-    };
-
-    rates = {
-      ore: 0,
-      metal: 0,
-      gear: 0,
-      income: 0
-    };
-
-    document.getElementById('directionLabel').textContent =
-      DIRS[0].name;
-
-    setTool('select');
-
-    saveGame(false);
-    updateAllUI();
-
-    showToast(
-      'Nieuwe fabriek gestart. Veel succes!'
-    );
+$('resetBtn').addEventListener('click', () => {
+  if (!confirm('Start a completely new factory? Your current factory save will be replaced.')) {
+    return;
   }
-);
 
-// ============================================================
-// SPEED CONTROL
-// ============================================================
+  money = 1200;
+  goal = 1500;
+  machines = [];
+  particles = [];
+  selectedId = null;
+  beltDirection = 0;
+  playTime = 0;
 
-document.getElementById('speedBtn').addEventListener(
-  'click',
-  () => {
-    gameSpeed =
-      gameSpeed === 1
-        ? 2
-        : gameSpeed === 2
-          ? 3
-          : 1;
+  production.ore = 0;
+  production.metal = 0;
+  production.gear = 0;
+  production.cash = 0;
 
-    document.getElementById('speedBtn').innerHTML =
-      `${gameSpeed}× <span>⌄</span>`;
+  rates.ore = 0;
+  rates.metal = 0;
+  rates.gear = 0;
+  rates.cash = 0;
 
-    showToast(
-      `Productiesnelheid: ${gameSpeed}×`
-    );
-  }
-);
+  $('directionLabel').textContent = DIRS[0].name;
 
-// ============================================================
-// PAUSE BUTTON
-// ============================================================
+  setTool('select');
+  updateUI();
+  saveGame(false);
 
-document.getElementById('pauseBtn').addEventListener(
-  'click',
-  () => {
-    paused = !paused;
+  showToast('New factory started!');
+});
 
-    const button =
-      document.getElementById('pauseBtn');
+$('speedBtn').addEventListener('click', () => {
+  gameSpeed = gameSpeed === 1
+    ? 2
+    : gameSpeed === 2
+      ? 3
+      : 1;
 
-    button.innerHTML = paused
-      ? '▶ <span>VERDER</span>'
-      : 'Ⅱ <span>PAUZE</span>';
+  $('speedBtn').textContent = gameSpeed + '×';
 
-    showToast(
-      paused
-        ? 'Fabriek gepauzeerd.'
-        : 'Fabriek draait weer.'
-    );
-  }
-);
+  showToast('Production speed: ' + gameSpeed + '×');
+});
 
-// ============================================================
-// KEYBOARD CONTROLS
-// ============================================================
+$('pauseBtn').addEventListener('click', () => {
+  paused = !paused;
+
+  $('pauseBtn').textContent =
+    paused ? '▶ RESUME' : 'Ⅱ PAUSE';
+
+  showToast(paused ? 'Factory paused.' : 'Factory running.');
+});
+
+// ======================================================
+// KEYBOARD
+// ======================================================
 
 window.addEventListener('keydown', event => {
   if (
-    event.key.toLowerCase() === 'r'
-  ) {
-    event.preventDefault();
+    event.target instanceof HTMLInputElement ||
+    event.target instanceof HTMLTextAreaElement
+  ) return;
+
+  if (event.key.toLowerCase() === 'r') {
     rotateSelectedBelt();
+  }
 
-  } else if (
-    event.key.toLowerCase() === 'v' &&
-    !['INPUT', 'TEXTAREA'].includes(
-      document.activeElement.tagName
-    )
-  ) {
+  if (event.key.toLowerCase() === 'v') {
     setTool('select');
+  }
 
-  } else if (
-    event.key === 'Escape'
-  ) {
-    selectedMachineId = null;
-
+  if (event.key === 'Escape') {
+    selectedId = null;
     updateInspector();
     draw();
   }
 });
 
-// ============================================================
-// AUTOMATIC SAVE
-// ============================================================
+// ======================================================
+// AUTOSAVE
+// ======================================================
 
-window.addEventListener(
-  'beforeunload',
-  () => saveGame(false)
-);
+window.addEventListener('beforeunload', () => {
+  saveGame(false);
+});
 
-document.addEventListener(
-  'visibilitychange',
-  () => {
-    if (document.visibilityState === 'hidden') {
-      saveGame(false);
-    }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    saveGame(false);
   }
-);
+});
 
-// ============================================================
-// MAIN GAME LOOP
-// ============================================================
+// ======================================================
+// SIMULATION
+// ======================================================
 
-function simulationStep(dt) {
+function simulate(dt) {
+  // 1. Machines make products.
   processMachines(dt);
-  pushMachineOutputs();
-  moveConveyors(dt);
-  checkMilestone();
+
+  // 2. Products leave machines and enter the first belt.
+  sendOutputsToBelts();
+
+  // 3. Products move from belt to belt.
+  moveProducts(dt);
+
+  // 4. Check money milestones.
+  checkGoal();
 }
 
+// ======================================================
+// MAIN GAME LOOP
+// ======================================================
+
 function gameLoop(timestamp) {
-  const rawDt = lastFrame
-    ? Math.min(
-        (timestamp - lastFrame) / 1000,
-        0.05
-      )
+  const rawDt = lastTime
+    ? Math.min((timestamp - lastTime) / 1000, 0.05)
     : 0;
 
-  lastFrame = timestamp;
+  lastTime = timestamp;
 
-  const dt = paused
-    ? 0
-    : rawDt * gameSpeed;
+  const dt = paused ? 0 : rawDt * gameSpeed;
 
   if (dt > 0) {
     animationTime += dt;
-    totalPlayTime += dt;
+    playTime += dt;
 
-    updateParticles(dt);
-    simulationStep(dt);
+    simulate(dt);
+    updateEffects(dt);
     updateRates(dt);
 
-    autosaveElapsed += dt;
+    uiTimer += dt;
+    saveTimer += dt;
 
-    if (autosaveElapsed >= 15) {
-      saveGame(false);
-      autosaveElapsed = 0;
+    if (uiTimer >= 0.2) {
+      updateUI();
+      uiTimer = 0;
     }
 
-    uiTimer += dt;
-
-    if (uiTimer >= .18) {
-      updateAllUI();
-      uiTimer = 0;
+    if (saveTimer >= 15) {
+      saveGame(false);
+      saveTimer = 0;
     }
   }
 
   draw();
-
   requestAnimationFrame(gameLoop);
 }
 
-// ============================================================
-// START GAME
-// ============================================================
+// ======================================================
+// START
+// ======================================================
 
-const hadSave = loadGame();
+const loaded = loadGame();
 
 resizeCanvas();
-updateAllUI();
+updateUI();
 
-if (hadSave) {
-  showToast('Je fabriek is geladen.');
-} else {
-  showToast(
-    'Welkom! Bouw een productielijn om geld te verdienen.'
-  );
-}
+showToast(
+  loaded
+    ? 'Welcome back! Your factory is loaded.'
+    : 'Welcome! Build your first production line.'
+);
 
 requestAnimationFrame(gameLoop);
