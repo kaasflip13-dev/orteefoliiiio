@@ -29,10 +29,8 @@
       </div>
     </div>
 
-    <div class="resources">
-      <div class="resource"><span>◆</span><div><small>ORE</small><b id="ore">0</b></div></div>
-      <div class="resource"><span>▰</span><div><small>METAL</small><b id="metal">0</b></div></div>
-      <div class="resource"><span>⚙</span><div><small>GEARS</small><b id="gears">0</b></div></div>
+    <div class="resources" id="resources">
+      <!-- Resources are created by app.js -->
     </div>
 
     <div class="top-actions">
@@ -46,62 +44,115 @@
 
     <aside class="panel build-panel">
       <div class="panel-heading">
-        <div><small>CONSTRUCTION</small><h2>Build menu</h2></div>
+        <div>
+          <small>CONSTRUCTION</small>
+          <h2>Build menu</h2>
+        </div>
         <span class="heading-icon">＋</span>
       </div>
 
       <div class="section-label">TOOLS</div>
+
       <button class="tool-button active" data-type="select">
         <span class="tool-icon">⌖</span>
         <span><b>Select</b><small>Inspect a building</small></span>
         <kbd>V</kbd>
       </button>
 
-      <div class="section-label">PRODUCTION</div>
+      <div class="section-label">RAW MATERIALS</div>
+
       <button class="tool-button" data-type="miner">
-        <span class="tool-icon miner">⛏</span>
+        <span class="tool-icon miner">⛏️</span>
         <span><b>Ore Miner</b><small>Produces ore</small></span>
         <em>$100</em>
       </button>
 
+      <button class="tool-button" data-type="crystalMiner">
+        <span class="tool-icon crystal">💎</span>
+        <span><b>Crystal Miner</b><small>Produces crystals</small></span>
+        <em>$250</em>
+      </button>
+
+      <button class="tool-button" data-type="quarry">
+        <span class="tool-icon stone">🪨</span>
+        <span><b>Stone Quarry</b><small>Produces stone</small></span>
+        <em>$150</em>
+      </button>
+
+      <div class="section-label">PROCESSING MACHINES</div>
+
       <button class="tool-button" data-type="smelter">
         <span class="tool-icon smelter">🔥</span>
-        <span><b>Smelter</b><small>Ore → Metal</small></span>
+        <span><b>Smelter</b><small>Ore → Metal ×5</small></span>
         <em>$220</em>
       </button>
 
+      <button class="tool-button" data-type="crusher">
+        <span class="tool-icon crusher">🪓</span>
+        <span><b>Crusher</b><small>Stone → Bricks ×4</small></span>
+        <em>$200</em>
+      </button>
+
+      <button class="tool-button" data-type="press">
+        <span class="tool-icon press">🏗️</span>
+        <span><b>Metal Press</b><small>Metal → Plates ×4</small></span>
+        <em>$280</em>
+      </button>
+
       <button class="tool-button" data-type="assembler">
-        <span class="tool-icon assembler">⚙</span>
-        <span><b>Assembler</b><small>Metal → Gears</small></span>
+        <span class="tool-icon assembler">⚙️</span>
+        <span><b>Assembler</b><small>Metal → Gears ×6</small></span>
         <em>$320</em>
       </button>
 
-      <div class="section-label">TRANSPORT</div>
+      <button class="tool-button" data-type="circuit">
+        <span class="tool-icon circuit">💻</span>
+        <span><b>Circuit Factory</b><small>Metal → Circuits ×4</small></span>
+        <em>$450</em>
+      </button>
+
+      <button class="tool-button" data-type="battery">
+        <span class="tool-icon battery">🔋</span>
+        <span><b>Battery Factory</b><small>Crystal → Batteries ×5</small></span>
+        <em>$400</em>
+      </button>
+
+      <button class="tool-button" data-type="toolmaker">
+        <span class="tool-icon toolmaker">🛠️</span>
+        <span><b>Tool Workshop</b><small>Gear → Tools ×3</small></span>
+        <em>$500</em>
+      </button>
+
+      <div class="section-label">TRANSPORT & STORAGE</div>
+
       <button class="tool-button" data-type="belt">
-        <span class="tool-icon belt">➜</span>
-        <span><b>Conveyor belt</b><small>Move visible products</small></span>
+        <span class="tool-icon belt">➡️</span>
+        <span><b>Conveyor Belt</b><small>Moves products</small></span>
         <em>$20</em>
       </button>
 
+      <button class="tool-button" data-type="storage">
+        <span class="tool-icon storage">📦</span>
+        <span><b>Warehouse</b><small>Stores all products</small></span>
+        <em>$300</em>
+      </button>
+
+      <div class="section-label">SELLING</div>
+
       <button class="tool-button destination-tool" data-type="seller">
         <span class="tool-icon seller">💰</span>
-        <span><b>Sell Station</b><small>FINAL DESTINATION</small></span>
+        <span><b>Sell Station</b><small>Final destination</small></span>
         <em>$180</em>
       </button>
 
       <div class="direction-box">
-        <div><b>New belt direction</b><small id="directionLabel">Right →</small></div>
+        <div><b>Belt direction</b><small id="directionLabel">Right →</small></div>
         <button id="rotateBtn">↻ ROTATE</button>
       </div>
 
-      <div class="instructions">
-        <strong>HOW TO BUILD</strong>
-        <div><span>1</span> Select a machine.</div>
-        <div><span>2</span> Click an empty tile.</div>
-        <div><span>3</span> Add conveyor belts.</div>
-        <div><span>4</span> Point the arrows forward.</div>
-        <div><span>5</span> Build a Sell Station at the end.</div>
-        <p>Press <kbd>R</kbd> to rotate a new belt. Select an existing belt and press R to rotate it.</p>
+      <div class="build-tip">
+        <strong>FACTORY TIP</strong>
+        <p>Every machine can connect to a belt. Processed goods are worth more. Warehouses can store products until you sell them.</p>
       </div>
 
       <div class="panel-bottom"><i></i> FACTORY GRID <span>16 × 10</span></div>
@@ -115,7 +166,10 @@
         </div>
 
         <div class="toolbar-actions">
-          <div class="speed-box"><small>SPEED</small><button id="speedBtn">1×</button></div>
+          <div class="speed-box">
+            <small>SPEED</small>
+            <button id="speedBtn">1×</button>
+          </div>
           <button id="pauseBtn">Ⅱ PAUSE</button>
         </div>
       </div>
@@ -131,8 +185,8 @@
         <div class="canvas-legend">
           <span><i class="dot ore-dot"></i> ORE</span>
           <span><i class="dot metal-dot"></i> METAL</span>
-          <span><i class="dot gear-dot"></i> GEARS</span>
-          <span class="legend-note">ARROWS SHOW THE MOVEMENT DIRECTION</span>
+          <span><i class="dot gear-dot"></i> PRODUCTS</span>
+          <span class="legend-note">ARROWS SHOW DIRECTION</span>
         </div>
       </div>
 
@@ -143,17 +197,25 @@
 
       <div class="flow-guide">
         <div class="flow-title">
-          <b>YOUR PRODUCTION ROUTE</b>
-          <small id="routeMessage">Start by placing an Ore Miner.</small>
+          <b>PRODUCTION ROUTE</b>
+          <small id="routeMessage">Start by placing a machine.</small>
         </div>
         <div class="flow-steps">
-          <div class="flow-step" id="stepMiner"><span>⛏</span><b>MINER</b></div>
+          <div class="flow-step" id="stepMiner">
+            <span>⛏️</span><b>MINING</b>
+          </div>
           <div class="flow-arrow">→</div>
-          <div class="flow-step" id="stepSmelter"><span>🔥</span><b>SMELTER</b></div>
+          <div class="flow-step" id="stepProcessing">
+            <span>🔥</span><b>PROCESSING</b>
+          </div>
           <div class="flow-arrow">→</div>
-          <div class="flow-step" id="stepAssembler"><span>⚙</span><b>ASSEMBLER</b></div>
+          <div class="flow-step" id="stepStorage">
+            <span>📦</span><b>STORAGE</b>
+          </div>
           <div class="flow-arrow">→</div>
-          <div class="flow-step destination-step" id="stepSeller"><span>💰</span><b>SELL</b></div>
+          <div class="flow-step destination-step" id="stepSeller">
+            <span>💰</span><b>SELL</b>
+          </div>
         </div>
       </div>
     </section>
@@ -167,7 +229,7 @@
       <div id="machineInfo" class="machine-inspector">
         <div class="empty-icon">＋</div>
         <h3>Nothing selected</h3>
-        <p>Click a machine on the factory floor.</p>
+        <p>Click a building on the factory floor.</p>
       </div>
 
       <div id="machineActions"></div>
@@ -181,13 +243,15 @@
 
       <div class="rate-list">
         <div><span>◆ Ore</span><b id="oreRate">0 / min</b></div>
+        <div><span>💎 Crystals</span><b id="crystalRate">0 / min</b></div>
         <div><span>▰ Metal</span><b id="metalRate">0 / min</b></div>
         <div><span>⚙ Gears</span><b id="gearRate">0 / min</b></div>
+        <div><span>📦 Other products</span><b id="otherRate">0 / min</b></div>
         <div class="income-row"><span>↗ Cash earned</span><b id="incomeRate">$0 / min</b></div>
       </div>
 
       <div class="destination-card" id="destinationCard">
-        <div class="destination-heading"><span>FINAL DESTINATION</span><b>●</b></div>
+        <div class="destination-heading"><span>SELL DESTINATION</span><b>●</b></div>
         <div class="destination-content">
           <span>💰</span>
           <div>
@@ -195,7 +259,7 @@
             <small id="destinationDescription">Place a Sell Station to earn cash.</small>
           </div>
         </div>
-        <div class="sold-total">TOTAL SOLD <b id="soldCount">0</b></div>
+        <div class="sold-total">TOTAL PRODUCTS SOLD <b id="soldCount">0</b></div>
       </div>
 
       <div class="goal-card">
@@ -210,6 +274,7 @@
         <b id="saveStatus">● Automatic</b>
       </div>
     </aside>
+
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
