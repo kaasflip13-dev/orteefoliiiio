@@ -2,423 +2,161 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ROBOCLICKER — Future Factory</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Nunito:wght@500;600;700;800;900&display=swap');
-
-:root{
-  --bg:#050a13;--panel:#0b1526;--panel2:#101f35;
-  --blue:#42d9ff;--gold:#ffbd43;--purple:#a77bff;
-  --green:#a8ff73;--text:#eff8ff;--muted:#91a7c2;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Nunito,sans-serif;min-height:100vh}
-button{font:inherit}
-button:focus-visible{outline:3px solid white;outline-offset:3px}
-button:disabled{opacity:.42;cursor:not-allowed!important}
-.app{min-height:100vh;position:relative;overflow:hidden;background:
-radial-gradient(ellipse at 20% 20%,#123b6044,transparent 38%),
-radial-gradient(ellipse at 80% 60%,#4b258333,transparent 38%),
-linear-gradient(135deg,#07111f,#050a13 65%,#101329)}
-.grid-bg{position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:
-linear-gradient(#4bcfff20 1px,transparent 1px),
-linear-gradient(90deg,#4bcfff20 1px,transparent 1px);
-background-size:48px 48px;mask-image:linear-gradient(to bottom,black,transparent 90%)}
-.scanline{position:fixed;top:-40%;left:0;right:0;height:25%;pointer-events:none;
-background:linear-gradient(transparent,#45d9ff09,transparent);animation:scan 9s linear infinite}
-@keyframes scan{to{top:120%}}
-header{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;
-gap:15px;padding:19px clamp(15px,4vw,48px);border-bottom:1px solid #29415d88;
-background:#07101ed9;backdrop-filter:blur(16px)}
-.logo{display:flex;align-items:center;gap:12px;font-family:Orbitron,sans-serif;
-font-weight:900;font-size:clamp(18px,3vw,29px);letter-spacing:1px}
-.logo-bot{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;
-background:linear-gradient(145deg,#183e5d,#0a1c30);border:1px solid #47d7ff77;
-box-shadow:0 0 25px #37cfff22;font-size:27px}
-.logo span{color:var(--blue)}
-.header-right{display:flex;align-items:center;gap:9px}
-.pill{border:1px solid #29425e;background:#0c192b;padding:9px 13px;
-border-radius:12px;color:#c9dcf4;font-size:12px;font-weight:900}
-.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);
-box-shadow:0 0 10px var(--green);margin-right:7px}
-.icon-btn{background:#11233a;border:1px solid #344e70;color:white;border-radius:12px;
-padding:10px 13px;cursor:pointer}
-.icon-btn:hover{border-color:var(--blue);color:var(--blue)}
-main{position:relative;z-index:1;max-width:1450px;margin:auto;padding:25px clamp(14px,3vw,38px) 45px}
-.section-tag{color:var(--blue);font:700 10px Orbitron,sans-serif;letter-spacing:2.3px}
-.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(380px,.9fr);gap:22px}
-.left{display:flex;flex-direction:column;gap:18px;min-width:0}
-.hero{position:relative;border:1px solid #2a4868;border-radius:25px;padding:24px;
-background:linear-gradient(145deg,#101f35f5,#091323f5);overflow:hidden;
-box-shadow:0 18px 60px #0004,inset 0 1px #ffffff08}
-.hero:after{content:"";position:absolute;width:260px;height:260px;right:-100px;top:-130px;
-border-radius:50%;border:1px solid #43d9ff18;box-shadow:0 0 0 30px #43d9ff05,0 0 0 60px #43d9ff04}
-.hero-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
-.level{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:1px}
-h1{font:900 clamp(20px,3vw,30px) Orbitron,sans-serif;margin:10px 0 5px}
-.subtitle{color:var(--muted);font-size:14px}
-.scorebox{margin-top:23px;padding:19px;border-radius:18px;border:1px solid #31547a;
-background:linear-gradient(120deg,#102641,#0b182b);position:relative}
-.scorelabel{font-size:11px;letter-spacing:2px;color:var(--muted);font-weight:900}
-.score{font:900 clamp(38px,6vw,64px) Orbitron,sans-serif;color:var(--gold);
-letter-spacing:-2px;overflow-wrap:anywhere;text-shadow:0 0 30px #ffb52c20}
-.scorefoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#b8cbe0;font-size:13px}
-.cps{color:var(--green);font-weight:900}
-.robot-stage{min-height:285px;position:relative;display:flex;align-items:center;justify-content:center;
-overflow:hidden;border:1px solid #223c58;border-radius:25px;
-background:radial-gradient(ellipse at 50% 78%,#1a78a744,transparent 44%),
-linear-gradient(180deg,#0c1b2c,#08111f)}
-.stage-label{position:absolute;left:18px;top:17px;color:#819cb8;font:700 10px Orbitron,sans-serif;letter-spacing:2px}
-.stage-status{position:absolute;right:16px;top:15px;display:flex;align-items:center;gap:7px;
-font-size:10px;font-weight:900;color:var(--green);letter-spacing:1px}
-.orbit{position:absolute;width:245px;height:245px;border:1px solid #45d7ff3b;border-radius:50%;
-animation:spin 15s linear infinite}
-.orbit:before,.orbit:after{content:"";position:absolute;border:1px dashed #45d7ff44;border-radius:50%}
-.orbit:before{inset:20px}.orbit:after{inset:45px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.orbit-dot{position:absolute;width:10px;height:10px;background:var(--gold);border-radius:50%;
-box-shadow:0 0 16px var(--gold);top:24px;left:42px}
-.platform{position:absolute;bottom:29px;width:240px;height:48px;border-radius:50%;
-border:2px solid #39d5ff77;background:radial-gradient(ellipse,#2bbde333,#0c2138 70%);
-box-shadow:0 0 30px #29cfff22}
-.platform:after{content:"";position:absolute;inset:9px 25px;border:1px solid #45d9ff44;border-radius:50%}
-.robot{position:relative;z-index:2;font-size:clamp(110px,17vw,170px);cursor:pointer;
-user-select:none;filter:drop-shadow(0 0 18px #44cfff50);transform-origin:center bottom;
-animation:float 3s ease-in-out infinite;transition:filter .15s}
-.robot:hover{filter:drop-shadow(0 0 28px #44dfff)}
-.robot:active{transform:scale(.88)!important}
-@keyframes float{0%,100%{translate:0 0}50%{translate:0 -9px}}
-.robot.hit{animation:hit .22s ease}
-@keyframes hit{50%{transform:scale(1.13) rotate(-4deg)}}
-.click-btn{position:relative;width:100%;border:1px solid #ffe08c;border-radius:17px;
-padding:19px;background:linear-gradient(110deg,#ffad27,#ffda63,#ffad27);
-background-size:200% 100%;color:#211609;font:900 17px Orbitron,sans-serif;letter-spacing:1px;
-cursor:pointer;box-shadow:0 5px 0 #9c5713,0 0 25px #ffb52c12;transition:.15s}
-.click-btn:hover{background-position:100% 0;box-shadow:0 5px 0 #9c5713,0 0 32px #ffb52c40}
-.click-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #9c5713}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.stat{border:1px solid #253d5b;border-radius:17px;padding:15px;background:#0b1728}
-.stat-icon{font-size:20px}.stat-name{color:var(--muted);font-size:11px;margin-top:8px}
-.stat-number{font:800 19px Orbitron,sans-serif;margin-top:6px}
-.right{border:1px solid #29435f;border-radius:25px;padding:22px;background:#0a1423dd;
-box-shadow:0 18px 60px #0003;min-width:0}
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-.panel-head h2{font:800 20px Orbitron,sans-serif;margin:7px 0 0}
-.counter{background:#12253c;border:1px solid #2e4c6d;border-radius:10px;padding:8px 11px;
-font-size:12px;font-weight:900;color:var(--blue)}
-.tabs{display:flex;gap:7px;margin-bottom:17px}
-.tab{flex:1;border:1px solid #263e5b;background:#0b192b;color:#8da7c5;padding:10px 5px;
-border-radius:10px;cursor:pointer;font-size:11px;font-weight:900}
-.tab.active{background:#15344d;border-color:#43cfff;color:#fff;box-shadow:inset 0 0 14px #42d9ff0b}
-.upgrade-list{display:flex;flex-direction:column;gap:11px}
-.upgrade{width:100%;display:grid;grid-template-columns:55px minmax(0,1fr) auto;align-items:center;
-gap:12px;text-align:left;padding:12px;border:1px solid #2a4565;border-radius:16px;
-background:linear-gradient(110deg,#11243a,#0d1b2d);color:white;cursor:pointer;transition:.17s}
-.upgrade:hover:not(:disabled){transform:translateY(-2px);border-color:var(--blue);
-background:linear-gradient(110deg,#173550,#10243a);box-shadow:0 8px 25px #0003}
-.upgrade:disabled{cursor:not-allowed}
-.up-icon{width:54px;height:54px;display:grid;place-items:center;font-size:31px;
-border-radius:14px;background:linear-gradient(145deg,#1c3653,#0a1829);border:1px solid #2d4d6d}
-.up-name{font-weight:900;font-size:14px}
-.up-desc{font-size:11px;color:#90a9c5;line-height:1.5;margin-top:4px}
-.up-right{text-align:right;min-width:63px}
-.up-count{font:900 21px Orbitron,sans-serif;color:var(--green)}
-.up-cost{color:var(--gold);font-size:11px;font-weight:900;margin-top:5px}
-.up-cost small{color:#829cb9;display:block;font-size:9px;margin-top:3px}
-.progress-wrap{margin-top:20px;border:1px solid #263f5b;background:#0b1728;padding:15px;border-radius:15px}
-.progress-title{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:900}
-.progress-title span:last-child{color:var(--blue)}
-.progress{height:7px;background:#1c3049;border-radius:20px;margin-top:11px;overflow:hidden}
-.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#36baff,#a77bff);
-border-radius:20px;transition:width .3s;box-shadow:0 0 12px #42d9ff66}
-.bottom-note{text-align:center;color:#526b87;font-size:10px;margin-top:24px;letter-spacing:1px}
-.float-text{position:absolute;z-index:5;pointer-events:none;color:#ffe16a;
-font:900 20px Orbitron,sans-serif;text-shadow:0 0 15px #ffae00;animation:rise .85s forwards}
-@keyframes rise{to{opacity:0;transform:translateY(-85px) scale(1.3)}}
-.toast{position:fixed;z-index:20;bottom:25px;left:50%;transform:translate(-50%,20px);
-opacity:0;pointer-events:none;background:#132c42;border:1px solid var(--blue);
-border-radius:13px;padding:13px 20px;font-weight:900;box-shadow:0 0 35px #0008;
-transition:.2s;max-width:90vw;text-align:center}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.overlay{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
-padding:20px;background:#020710dd;backdrop-filter:blur(12px)}
-.overlay.show{display:flex}
-.modal{width:min(100%,450px);max-height:85vh;overflow:auto;background:linear-gradient(145deg,#142b44,#091423);
-border:1px solid #456688;border-radius:24px;padding:25px;box-shadow:0 25px 90px #0009}
-.modal h2{font:800 22px Orbitron,sans-serif}
-.modal p{color:var(--muted);line-height:1.6}
-.modal button{display:block;width:100%;margin-top:10px;padding:13px;border-radius:12px;
-border:1px solid #355371;background:#10243a;color:white;font-weight:900;cursor:pointer}
-.modal button.primary{background:linear-gradient(100deg,#ffad27,#ffda63);color:#211609;border:0}
-.achievement{padding:13px;margin:9px 0;border-radius:13px;background:#0b192b;border:1px solid #29415e}
-.achievement span{display:block;font-size:12px;color:#8ea8c2;margin-top:4px}
-.achievement.locked{opacity:.4}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.right{padding:17px}.robot{font-size:145px}.robot-stage{min-height:255px}}
-@media(max-width:480px){header{padding:13px}.logo{font-size:16px;gap:7px}.logo-bot{width:35px;height:35px;font-size:22px}
-.pill{display:none}main{padding:16px 11px 30px}.hero{padding:16px}.right{padding:13px}
-.upgrade{grid-template-columns:44px minmax(0,1fr) auto;gap:8px;padding:9px}
-.up-icon{width:43px;height:43px;font-size:25px}.up-name{font-size:12px}.up-desc{font-size:10px}
-.up-right{min-width:48px}.up-count{font-size:16px}.up-cost{font-size:10px}.stats{gap:7px}
-.stat{padding:10px 5px}.stat-number{font-size:15px}.score{font-size:38px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory Tycoon</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-<div class="app">
-<div class="grid-bg"></div><div class="scanline"></div>
 
-<header>
-  <div class="logo"><div class="logo-bot">🤖</div><div>ROBO<span>CLICKER</span></div></div>
-  <div class="header-right">
-    <div class="pill"><span class="live-dot"></span>FABRIEK ONLINE</div>
-    <button class="icon-btn" id="saveBtn" title="Opslaan">💾</button>
-    <button class="icon-btn" id="menuBtn" title="Menu">☰</button>
-  </div>
-</header>
+<div class="game">
 
-<main>
-<div class="layout">
-<section class="left">
-  <div class="hero">
-    <div class="hero-head">
-      <div><div class="section-tag">COMMAND CENTER / 001</div><h1>ROBOT CONTROL</h1>
-      <div class="subtitle">Bouw je eigen robotimperium.</div></div>
-      <div class="level" id="level">LVL 01</div>
-    </div>
-    <div class="scorebox">
-      <div class="scorelabel">TOTALE ENERGIEPUNTEN</div>
-      <div class="score" id="score">0</div>
-      <div class="scorefoot"><span>⚡ Productie</span><span class="cps" id="cps">+0 / seconde</span></div>
-    </div>
-  </div>
+    <header class="topbar">
+        <div class="logo">
+            <span class="logo-icon">⚙</span>
+            <div>
+                <h1>FACTORY <span>TYCOON</span></h1>
+                <small>BUILD • PRODUCE • EXPAND</small>
+            </div>
+        </div>
 
-  <div class="robot-stage" id="robotStage">
-    <div class="stage-label">UNIT-01 / ACTIVE</div>
-    <div class="stage-status"><span class="live-dot"></span>ONLINE</div>
-    <div class="orbit"><div class="orbit-dot"></div></div>
-    <div class="platform"></div>
-    <div class="robot" id="robot" title="Klik op de robot">🤖</div>
-  </div>
+        <div class="stats">
+            <div class="stat">
+                <span>💰 GELD</span>
+                <strong id="money">500</strong>
+            </div>
+            <div class="stat">
+                <span>⛏️ ERST</span>
+                <strong id="ore">0</strong>
+            </div>
+            <div class="stat">
+                <span>🔩 METAAL</span>
+                <strong id="metal">0</strong>
+            </div>
+            <div class="stat">
+                <span>⚙️ TANDWIELEN</span>
+                <strong id="gears">0</strong>
+            </div>
+        </div>
+    </header>
 
-  <button class="click-btn" id="clickBtn">⚡ &nbsp; ENERGIE VERZAMELEN</button>
+    <main class="layout">
 
-  <div class="stats">
-    <div class="stat"><div class="stat-icon">👆</div><div class="stat-name">KLIK-KRACHT</div><div class="stat-number" id="power">1</div></div>
-    <div class="stat"><div class="stat-icon">🦾</div><div class="stat-name">ROBOTLEGER</div><div class="stat-number" id="owned">0</div></div>
-    <div class="stat"><div class="stat-icon">🏆</div><div class="stat-name">PRESTATIES</div><div class="stat-number" id="achievementCount">0/6</div></div>
-  </div>
+        <aside class="sidebar">
+            <div class="panel-title">BOUW MENU</div>
 
-  <div class="progress-wrap">
-    <div class="progress-title"><span>VOLGENDE LEVEL</span><span id="progressText">0 / 100</span></div>
-    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
-  </div>
-  <div class="bottom-note">ROBOCLICKER INDUSTRIES © 2026 · BUILD THE FUTURE</div>
-</section>
+            <p class="section-label">PRODUCTIE</p>
 
-<aside class="right">
-  <div class="panel-head">
-    <div><div class="section-tag">FABRIEK MANAGEMENT</div><h2>Upgrades</h2></div>
-    <div class="counter" id="upgradeCount">0 GEKOCHT</div>
-  </div>
-  <div class="tabs">
-    <button class="tab active" data-tab="all">ALLE</button>
-    <button class="tab" data-tab="owned">GEKOCHT</button>
-    <button class="tab" data-tab="affordable">BETAALBAAR</button>
-  </div>
-  <div class="upgrade-list" id="upgradeList"></div>
-</aside>
+            <button class="build-btn active" data-type="select">
+                <span>👆</span>
+                <div><b>Selecteren</b><small>Bekijk machines</small></div>
+            </button>
+
+            <button class="build-btn" data-type="miner">
+                <span>⛏️</span>
+                <div><b>Mijnmachine</b><small>Kost: $100</small></div>
+            </button>
+
+            <button class="build-btn" data-type="smelter">
+                <span>🔥</span>
+                <div><b>Smelterij</b><small>Kost: $180</small></div>
+            </button>
+
+            <button class="build-btn" data-type="assembler">
+                <span>⚙️</span>
+                <div><b>Assembler</b><small>Kost: $300</small></div>
+            </button>
+
+            <button class="build-btn" data-type="seller">
+                <span>📦</span>
+                <div><b>Verzendstation</b><small>Kost: $150</small></div>
+            </button>
+
+            <p class="section-label">TRANSPORT</p>
+
+            <button class="build-btn" data-type="belt">
+                <span>➡️</span>
+                <div><b>Transportband</b><small>Kost: $15</small></div>
+            </button>
+
+            <div class="help-box">
+                <b>💡 TIP</b>
+                <p>Maak een productieketen met mijnmachines, smelterijen en assemblers. Verkoop je tandwielen voor geld!</p>
+            </div>
+        </aside>
+
+        <section class="factory-area">
+            <div class="factory-header">
+                <div>
+                    <h2>Mijn fabriek</h2>
+                    <span id="factory-status">● Fabriek actief</span>
+                </div>
+                <div class="factory-actions">
+                    <button id="saveBtn">💾 Opslaan</button>
+                    <button id="speedBtn">⏩ 1x</button>
+                </div>
+            </div>
+
+            <div class="canvas-wrap">
+                <canvas id="factoryCanvas"></canvas>
+            </div>
+
+            <div class="bottom-info">
+                <div>📍 Klik op een vakje om te bouwen</div>
+                <div id="selectedInfo">Geselecteerd: Selecteren</div>
+            </div>
+        </section>
+
+        <aside class="rightbar">
+            <div class="panel-title">MACHINE INFO</div>
+
+            <div id="machineInfo" class="machine-info">
+                <div class="big-icon">🏭</div>
+                <h3>Geen machine geselecteerd</h3>
+                <p>Klik op een machine in je fabriek om informatie te bekijken.</p>
+            </div>
+
+            <div id="machineActions"></div>
+
+            <div class="production-panel">
+                <h3>📊 PRODUCTIE</h3>
+                <div class="production-row">
+                    <span>Erts</span>
+                    <strong id="oreRate">0/min</strong>
+                </div>
+                <div class="production-row">
+                    <span>Metaal</span>
+                    <strong id="metalRate">0/min</strong>
+                </div>
+                <div class="production-row">
+                    <span>Tandwielen</span>
+                    <strong id="gearRate">0/min</strong>
+                </div>
+                <div class="production-row">
+                    <span>Inkomsten</span>
+                    <strong id="incomeRate">$0/min</strong>
+                </div>
+            </div>
+
+            <div class="goal-panel">
+                <h3>🎯 VOLGENDE DOEL</h3>
+                <p id="goalText">Verdien $1.000</p>
+                <div class="progress-bg">
+                    <div id="goalProgress"></div>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <footer>
+        FACTORY TYCOON <span>•</span> BUILD YOUR INDUSTRIAL EMPIRE
+    </footer>
+
 </div>
-</main>
-</div>
 
-<div class="overlay" id="menuOverlay"><div class="modal">
-  <div class="section-tag">SYSTEM MENU</div><h2>🤖 Controlekamer</h2>
-  <p>Welkom terug, fabrieksdirecteur. Wat wil je doen?</p>
-  <button class="primary" id="continueBtn">▶ Verder spelen</button>
-  <button id="achievementsBtn">🏆 Prestaties bekijken</button>
-  <button id="saveMenuBtn">💾 Spel opslaan</button>
-  <button id="resetBtn">🔄 Nieuw spel starten</button>
-  <button id="closeMenuBtn">Sluiten</button>
-</div></div>
-
-<div class="overlay" id="achievementOverlay"><div class="modal">
-  <div class="section-tag">MILESTONE DATABASE</div><h2>🏆 Prestaties</h2><div id="achievementList"></div>
-  <button class="primary" id="closeAchievements">Terug naar de fabriek</button>
-</div></div>
-
-<div class="overlay" id="resetOverlay"><div class="modal">
-  <h2>Nieuwe start?</h2><p>Je huidige punten en upgrades worden gewist. Dit kan niet ongedaan worden gemaakt.</p>
-  <button class="primary" id="confirmReset">Ja, opnieuw beginnen</button>
-  <button id="cancelReset">Annuleren</button>
-</div></div>
-<div class="toast" id="toast"></div>
-
-<script>
-(() => {
-"use strict";
-const $ = id => document.getElementById(id);
-
-const products = [
- {id:"bot",icon:"🧑‍🍳",name:"Robotmonteur",desc:"Een kleine robot die helpt bouwen.",cost:15,cps:1,growth:1.16},
- {id:"battery",icon:"🔋",name:"Energiecel",desc:"Produceert stroom voor de fabriek.",cost:100,cps:5,growth:1.17},
- {id:"belt",icon:"📦",name:"Transportband",desc:"Automatiseert de onderdelenlijn.",cost:500,cps:20,growth:1.18},
- {id:"drone",icon:"🚁",name:"Bouwdrone",desc:"Bouwt robots vanuit de lucht.",cost:2500,cps:80,growth:1.19},
- {id:"factory",icon:"🏭",name:"Mega-fabriek",desc:"Een complete geautomatiseerde fabriek.",cost:10000,cps:350,growth:1.20},
- {id:"computer",icon:"🖥️",name:"Supercomputer",desc:"Stuurt een gigantisch robotleger aan.",cost:40000,cps:1500,growth:1.21},
- {id:"portal",icon:"🌀",name:"Ruimteportaal",desc:"Haalt technologie uit een andere dimensie.",cost:200000,cps:8000,growth:1.22},
- {id:"moon",icon:"🌕",name:"Maanbasis",desc:"Bouw robots op een andere planeet.",cost:1000000,cps:45000,growth:1.23}
-];
-
-const achievements = [
- {name:"Eerste contact",desc:"Klik voor de eerste keer.",test:s=>s.clicks>=1},
- {name:"Eerste honderd",desc:"Verzamel 100 punten in totaal.",test:s=>s.lifetime>=100},
- {name:"Robotbouwer",desc:"Verzamel 1.000 punten in totaal.",test:s=>s.lifetime>=1000},
- {name:"Fabrieksdirecteur",desc:"Verzamel 10.000 punten in totaal.",test:s=>s.lifetime>=10000},
- {name:"Robotleger",desc:"Koop 10 upgrades.",test:s=>ownedTotal(s)>=10},
- {name:"Klikkampioen",desc:"Bereik 100 punten per klik.",test:s=>s.power>=100}
-];
-
-function fresh(){return {points:0,lifetime:0,clicks:0,power:1,owned:{},unlocked:[],last:Date.now()};}
-let s=fresh(), tab="all", toastTimer;
-function ownedTotal(){return products.reduce((n,p)=>n+(s.owned[p.id]||0),0);}
-function cps(){return products.reduce((n,p)=>n+p.cps*(s.owned[p.id]||0),0);}
-function cost(p){return Math.floor(p.cost*Math.pow(p.growth,s.owned[p.id]||0));}
-function fmt(n){
- if(!Number.isFinite(n))return "0";
- if(n<1000)return Math.floor(n).toLocaleString("nl-NL");
- const units=["K","M","B","T","Qa","Qi","Sx"];
- let i=-1;while(n>=1000&&i<units.length-1){n/=1000;i++;}
- return n.toLocaleString("nl-NL",{maximumFractionDigits:n<10?2:1})+" "+units[i];
-}
-function toast(msg){
- $("toast").textContent=msg;$("toast").classList.add("show");
- clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2300);
-}
-function save(silent=false){
- try{
- s.last=Date.now();localStorage.setItem("roboclicker_future_save",JSON.stringify(s));
- if(!silent)toast("💾 Voortgang veilig opgeslagen!");
- }catch(e){if(!silent)toast("Opslaan is niet beschikbaar in deze browser.");}
-}
-function load(){
- try{
- const raw=localStorage.getItem("roboclicker_future_save");if(!raw)return;
- const d=JSON.parse(raw);if(!d||typeof d!=="object")return;
- s.points=Math.max(0,Number(d.points)||0);
- s.lifetime=Math.max(s.points,Number(d.lifetime)||0);
- s.clicks=Math.max(0,Number(d.clicks)||0);
- s.power=Math.max(1,Number(d.power)||1);
- s.owned={};products.forEach(p=>s.owned[p.id]=Math.max(0,Math.floor(Number(d.owned?.[p.id])||0)));
- s.unlocked=Array.isArray(d.unlocked)?d.unlocked:[];
- const away=Math.min(28800,Math.max(0,(Date.now()-(Number(d.last)||Date.now()))/1000));
- const bonus=cps()*away*.25;
- if(bonus>0){s.points+=bonus;s.lifetime+=bonus;setTimeout(()=>toast("🌙 Welkom terug! +"+fmt(bonus)+" punten."),600);}
- }catch(e){console.warn("Savebestand kon niet geladen worden.",e);}
-}
-function unlockAchievements(){
- achievements.forEach((a,i)=>{
- if(!s.unlocked.includes(i)&&a.test(s)){
- s.unlocked.push(i);toast("🏆 Prestatie: "+a.name);
- }});
-}
-function renderProducts(){
- const list=$("upgradeList");list.innerHTML="";
- let shown=0;
- products.forEach(p=>{
- const count=s.owned[p.id]||0,price=cost(p),can=s.points>=price;
- if(tab==="owned"&&count===0)return;
- if(tab==="affordable"&&!can)return;
- shown++;
- const b=document.createElement("button");b.className="upgrade";b.disabled=!can;
- b.innerHTML=`<span class="up-icon">${p.icon}</span>
- <span><span class="up-name">${p.name}</span>
- <span class="up-desc">${p.desc}<br>+${fmt(p.cps)} punten/sec</span></span>
- <span class="up-right"><span class="up-count">${count}</span>
- <span class="up-cost">${fmt(price)}<small>⚡ PUNTEN</small></span></span>`;
- b.addEventListener("click",()=>buy(p.id));list.appendChild(b);
- });
- if(!shown){
- const empty=document.createElement("div");empty.style.cssText="padding:25px;text-align:center;color:#91a7c2";
- empty.textContent=tab==="owned"?"Je hebt nog geen upgrades gekocht.":"Nog geen upgrades betaalbaar. Blijf klikken!";
- list.appendChild(empty);
- }
-}
-function render(){
- $("score").textContent=fmt(s.points);
- $("cps").textContent="+"+fmt(cps())+" / seconde";
- $("power").textContent=fmt(s.power);
- $("owned").textContent=fmt(ownedTotal());
- $("upgradeCount").textContent=ownedTotal()+" GEKOCHT";
- $("achievementCount").textContent=s.unlocked.length+"/"+achievements.length;
- const level=Math.floor(Math.sqrt(s.lifetime/100))+1;
- $("level").textContent="LVL "+String(level).padStart(2,"0");
- const goal=level*level*100,previous=(level-1)*(level-1)*100;
- const pct=Math.min(100,Math.max(0,(s.lifetime-previous)/(goal-previous)*100));
- $("progressFill").style.width=pct+"%";
- $("progressText").textContent=fmt(s.lifetime)+" / "+fmt(goal);
- renderProducts();
-}
-function clickRobot(event){
- s.points+=s.power;s.lifetime+=s.power;s.clicks++;
- const r=$("robotStage").getBoundingClientRect();
- const x=event&&event.clientX?r.clientX-event.clientX:0;
- const el=document.createElement("div");el.className="float-text";
- el.textContent="+"+fmt(s.power);
- const left=event&&event.clientX?event.clientX-r.left:r.width/2;
- const top=event&&event.clientY?event.clientY-r.top:r.height/2;
- el.style.left=Math.max(10,Math.min(r.width-70,left))+"px";
- el.style.top=Math.max(10,Math.min(r.height-35,top))+"px";
- $("robotStage").appendChild(el);setTimeout(()=>el.remove(),900);
- const bot=$("robot");bot.classList.remove("hit");void bot.offsetWidth;bot.classList.add("hit");
- unlockAchievements();render();
-}
-function buy(id){
- const p=products.find(x=>x.id===id);if(!p)return;
- const price=cost(p);if(s.points<price){toast("Niet genoeg energiepunten!");return;}
- s.points-=price;s.owned[id]=(s.owned[id]||0)+1;
- unlockAchievements();render();save(true);toast("⚙️ "+p.name+" gebouwd!");
-}
-function open(id){$(id).classList.add("show");}
-function close(id){$(id).classList.remove("show");}
-function renderAchievements(){
- const list=$("achievementList");list.innerHTML="";
- achievements.forEach((a,i)=>{
- const done=s.unlocked.includes(i),el=document.createElement("div");
- el.className="achievement"+(done?"":" locked");
- el.innerHTML=`<strong>${done?"🏆":"🔒"} ${a.name}</strong><span>${a.desc}</span>`;
- list.appendChild(el);
- });
-}
-$("robot").addEventListener("click",clickRobot);
-$("clickBtn").addEventListener("click",clickRobot);
-$("saveBtn").addEventListener("click",()=>save());
-$("saveMenuBtn").addEventListener("click",()=>save());
-$("menuBtn").addEventListener("click",()=>open("menuOverlay"));
-$("continueBtn").addEventListener("click",()=>close("menuOverlay"));
-$("closeMenuBtn").addEventListener("click",()=>close("menuOverlay"));
-$("achievementsBtn").addEventListener("click",()=>{renderAchievements();close("menuOverlay");open("achievementOverlay");});
-$("closeAchievements").addEventListener("click",()=>close("achievementOverlay"));
-$("resetBtn").addEventListener("click",()=>{close("menuOverlay");open("resetOverlay");});
-$("cancelReset").addEventListener("click",()=>{close("resetOverlay");open("menuOverlay");});
-$("confirmReset").addEventListener("click",()=>{
- s=fresh();try{localStorage.removeItem("roboclicker_future_save");}catch(e){}
- close("resetOverlay");render();toast("✨ Je nieuwe robotavontuur begint!");
-});
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
- tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));renderProducts();
-}));
-document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)close(o.id);}));
-let last=Date.now();
-setInterval(()=>{
- const now=Date.now(),dt=Math.min(2,(now-last)/1000);last=now;
- const earned=cps()*dt;s.points+=earned;s.lifetime+=earned;
- unlockAchievements();render();
-},250);
-setInterval(()=>save(true),15000);
-load();render();
-})();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
