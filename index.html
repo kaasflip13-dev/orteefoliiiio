@@ -1,119 +1,220 @@
 
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#101722">
-  <title>Factory Tycoon — Build your empire</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#0b1119">
+  <title>Factory Tycoon</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="#" aria-label="Factory Tycoon home">
-        <span class="brand-mark"><span>F</span><i></i></span>
-        <span class="brand-copy"><strong>FACTORY<span> TYCOON</span></strong><small>BUILD YOUR INDUSTRIAL EMPIRE</small></span>
-      </a>
+<div class="app">
 
-      <div class="top-stats">
-        <div class="stat-card money-card"><span class="stat-icon">＄</span><div><small>CASH</small><strong id="money">1.200</strong></div></div>
-        <div class="stat-card"><span class="stat-icon ore-icon">◆</span><div><small>ORE</small><strong id="ore">0</strong></div></div>
-        <div class="stat-card"><span class="stat-icon metal-icon">▰</span><div><small>METAL</small><strong id="metal">0</strong></div></div>
-        <div class="stat-card"><span class="stat-icon gear-icon">⚙</span><div><small>GEARS</small><strong id="gears">0</strong></div></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">F</div>
+      <div>
+        <strong>FACTORY <span>TYCOON</span></strong>
+        <small>BUILD YOUR INDUSTRIAL EMPIRE</small>
+      </div>
+    </div>
+
+    <div class="cash-box">
+      <div class="cash-symbol">$</div>
+      <div>
+        <small>YOUR CASH</small>
+        <strong id="money">$1,200</strong>
+        <span id="cashRate">+$0 / min</span>
+      </div>
+    </div>
+
+    <div class="resources">
+      <div class="resource"><span>◆</span><div><small>ORE</small><b id="ore">0</b></div></div>
+      <div class="resource"><span>▰</span><div><small>METAL</small><b id="metal">0</b></div></div>
+      <div class="resource"><span>⚙</span><div><small>GEARS</small><b id="gears">0</b></div></div>
+    </div>
+
+    <div class="top-actions">
+      <span class="online"><i></i> ONLINE</span>
+      <button id="saveBtn" title="Save">▣</button>
+      <button id="resetBtn" title="New factory">↻</button>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <aside class="panel build-panel">
+      <div class="panel-heading">
+        <div><small>CONSTRUCTION</small><h2>Build menu</h2></div>
+        <span class="heading-icon">＋</span>
       </div>
 
-      <div class="top-actions">
-        <div class="status-pill"><span class="live-dot"></span> SYSTEM ONLINE</div>
-        <button class="icon-button" id="saveBtn" title="Nu opslaan" aria-label="Opslaan">▣</button>
-        <button class="icon-button reset-button" id="resetBtn" title="Nieuwe fabriek" aria-label="Nieuwe fabriek">↻</button>
+      <div class="section-label">TOOLS</div>
+      <button class="tool-button active" data-type="select">
+        <span class="tool-icon">⌖</span>
+        <span><b>Select</b><small>Inspect a building</small></span>
+        <kbd>V</kbd>
+      </button>
+
+      <div class="section-label">PRODUCTION</div>
+      <button class="tool-button" data-type="miner">
+        <span class="tool-icon miner">⛏</span>
+        <span><b>Ore Miner</b><small>Produces ore</small></span>
+        <em>$100</em>
+      </button>
+
+      <button class="tool-button" data-type="smelter">
+        <span class="tool-icon smelter">🔥</span>
+        <span><b>Smelter</b><small>Ore → Metal</small></span>
+        <em>$220</em>
+      </button>
+
+      <button class="tool-button" data-type="assembler">
+        <span class="tool-icon assembler">⚙</span>
+        <span><b>Assembler</b><small>Metal → Gears</small></span>
+        <em>$320</em>
+      </button>
+
+      <div class="section-label">TRANSPORT</div>
+      <button class="tool-button" data-type="belt">
+        <span class="tool-icon belt">➜</span>
+        <span><b>Conveyor belt</b><small>Move visible products</small></span>
+        <em>$20</em>
+      </button>
+
+      <button class="tool-button destination-tool" data-type="seller">
+        <span class="tool-icon seller">💰</span>
+        <span><b>Sell Station</b><small>FINAL DESTINATION</small></span>
+        <em>$180</em>
+      </button>
+
+      <div class="direction-box">
+        <div><b>New belt direction</b><small id="directionLabel">Right →</small></div>
+        <button id="rotateBtn">↻ ROTATE</button>
       </div>
-    </header>
 
-    <main class="game-layout">
-      <aside class="build-panel panel">
-        <div class="panel-heading"><div><span class="eyebrow">CONSTRUCTION</span><h2>Bouwmenu</h2></div><span class="heading-icon">＋</span></div>
+      <div class="instructions">
+        <strong>HOW TO BUILD</strong>
+        <div><span>1</span> Select a machine.</div>
+        <div><span>2</span> Click an empty tile.</div>
+        <div><span>3</span> Add conveyor belts.</div>
+        <div><span>4</span> Point the arrows forward.</div>
+        <div><span>5</span> Build a Sell Station at the end.</div>
+        <p>Press <kbd>R</kbd> to rotate a new belt. Select an existing belt and press R to rotate it.</p>
+      </div>
 
-        <div class="build-section">
-          <div class="section-label">SELECTIE</div>
-          <button class="tool-button active" data-type="select">
-            <span class="tool-icon select-icon">⌖</span><span class="tool-copy"><b>Selecteren</b><small>Bekijk een gebouw</small></span><span class="tool-key">V</span>
-          </button>
+      <div class="panel-bottom"><i></i> FACTORY GRID <span>16 × 10</span></div>
+    </aside>
+
+    <section class="panel factory-panel">
+      <div class="factory-toolbar">
+        <div>
+          <small>YOUR WORKSPACE / SECTOR 01</small>
+          <h1>Production floor <span class="live-badge">LIVE</span></h1>
         </div>
 
-        <div class="build-section">
-          <div class="section-label">PRODUCTIE MACHINES</div>
-          <button class="tool-button" data-type="miner"><span class="tool-icon miner-icon">⛏</span><span class="tool-copy"><b>Mijnmachine</b><small>Wint grondstoffen</small></span><span class="tool-cost">$100</span></button>
-          <button class="tool-button" data-type="smelter"><span class="tool-icon smelter-icon">♨</span><span class="tool-copy"><b>Smelterij</b><small>Erts → metaal</small></span><span class="tool-cost">$220</span></button>
-          <button class="tool-button" data-type="assembler"><span class="tool-icon assembler-icon">⚙</span><span class="tool-copy"><b>Assembler</b><small>Metaal → tandwiel</small></span><span class="tool-cost">$320</span></button>
-          <button class="tool-button" data-type="seller"><span class="tool-icon seller-icon">▣</span><span class="tool-copy"><b>Verzendstation</b><small>Verkoopt tandwielen</small></span><span class="tool-cost">$180</span></button>
+        <div class="toolbar-actions">
+          <div class="speed-box"><small>SPEED</small><button id="speedBtn">1×</button></div>
+          <button id="pauseBtn">Ⅱ PAUSE</button>
+        </div>
+      </div>
+
+      <div class="canvas-shell">
+        <div class="canvas-topline">
+          <span><i></i> PRODUCTION GRID</span>
+          <span id="clockLabel">00:00:00</span>
         </div>
 
-        <div class="build-section">
-          <div class="section-label">TRANSPORT</div>
-          <button class="tool-button" data-type="belt"><span class="tool-icon belt-icon">➜</span><span class="tool-copy"><b>Transportband</b><small>Verplaatst producten</small></span><span class="tool-cost">$20</span></button>
-          <div class="belt-rotate-row"><span><b>Richting band</b><small id="directionLabel">Naar rechts →</small></span><button id="rotateBtn" class="rotate-button" title="Draai transportband">↻ DRAAI</button></div>
+        <canvas id="factoryCanvas"></canvas>
+
+        <div class="canvas-legend">
+          <span><i class="dot ore-dot"></i> ORE</span>
+          <span><i class="dot metal-dot"></i> METAL</span>
+          <span><i class="dot gear-dot"></i> GEARS</span>
+          <span class="legend-note">ARROWS SHOW THE MOVEMENT DIRECTION</span>
         </div>
+      </div>
 
-        <div class="build-tip"><span class="tip-symbol">✦</span><div><b>BOUW TIP</b><p>Verbind machines met transportbanden. Druk op <kbd>R</kbd> om de richting van je banden te draaien.</p></div></div>
-        <div class="panel-bottom"><span class="tiny-led"></span> FACTORY GRID <span class="mono">16 × 10</span></div>
-      </aside>
+      <div class="factory-footer">
+        <span id="selectedInfo">Choose a building or select a machine</span>
+        <span id="coordsInfo">X: -- · Y: --</span>
+      </div>
 
-      <section class="factory-panel panel">
-        <div class="factory-toolbar">
-          <div class="factory-title"><span class="eyebrow">YOUR WORKSPACE / SECTOR 01</span><h1>Productievloer <span class="live-badge">LIVE</span></h1></div>
-          <div class="toolbar-actions">
-            <div class="speed-control"><span>SIM SPEED</span><button id="speedBtn">1× <span>⌄</span></button></div>
-            <button id="pauseBtn" class="pause-button" title="Pauzeren">Ⅱ <span>PAUZE</span></button>
+      <div class="flow-guide">
+        <div class="flow-title">
+          <b>YOUR PRODUCTION ROUTE</b>
+          <small id="routeMessage">Start by placing an Ore Miner.</small>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step" id="stepMiner"><span>⛏</span><b>MINER</b></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" id="stepSmelter"><span>🔥</span><b>SMELTER</b></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" id="stepAssembler"><span>⚙</span><b>ASSEMBLER</b></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step destination-step" id="stepSeller"><span>💰</span><b>SELL</b></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel info-panel">
+      <div class="panel-heading">
+        <div><small>INSPECTOR</small><h2>Building info</h2></div>
+        <span class="heading-icon">⌘</span>
+      </div>
+
+      <div id="machineInfo" class="machine-inspector">
+        <div class="empty-icon">＋</div>
+        <h3>Nothing selected</h3>
+        <p>Click a machine on the factory floor.</p>
+      </div>
+
+      <div id="machineActions"></div>
+
+      <div class="divider"></div>
+
+      <div class="section-heading">
+        <h3>Production overview</h3>
+        <span class="mini-live">● LIVE</span>
+      </div>
+
+      <div class="rate-list">
+        <div><span>◆ Ore</span><b id="oreRate">0 / min</b></div>
+        <div><span>▰ Metal</span><b id="metalRate">0 / min</b></div>
+        <div><span>⚙ Gears</span><b id="gearRate">0 / min</b></div>
+        <div class="income-row"><span>↗ Cash earned</span><b id="incomeRate">$0 / min</b></div>
+      </div>
+
+      <div class="destination-card" id="destinationCard">
+        <div class="destination-heading"><span>FINAL DESTINATION</span><b>●</b></div>
+        <div class="destination-content">
+          <span>💰</span>
+          <div>
+            <strong id="destinationTitle">Not built yet</strong>
+            <small id="destinationDescription">Place a Sell Station to earn cash.</small>
           </div>
         </div>
+        <div class="sold-total">TOTAL SOLD <b id="soldCount">0</b></div>
+      </div>
 
-        <div class="canvas-shell">
-          <div class="canvas-topline"><span><i class="tiny-led"></i> GRID CONNECTION STABLE</span><span id="clockLabel">00:00:00</span></div>
-          <canvas id="factoryCanvas" aria-label="Bouw je fabriek op het raster"></canvas>
-          <div class="canvas-legend"><span><i class="legend-dot ore-dot"></i> ORE</span><span><i class="legend-dot metal-dot"></i> METAL</span><span><i class="legend-dot gear-dot"></i> GEARS</span><span class="legend-hint">KLIK OP EEN VAKJE OM TE BOUWEN</span></div>
-        </div>
+      <div class="goal-card">
+        <div class="goal-heading"><span>NEXT MILESTONE</span><b>✦</b></div>
+        <strong id="goalText">$1,500 cash</strong>
+        <div class="progress-track"><div id="goalProgress"></div></div>
+        <div class="goal-footer"><span>FACTORY FUND</span><b id="goalPercent">0%</b></div>
+      </div>
 
-        <div class="factory-footer">
-          <div class="selection-status"><span class="cursor-symbol">⌖</span><span id="selectedInfo">Selecteer een machine of kies iets om te bouwen</span></div>
-          <div class="factory-coords" id="coordsInfo">X: -- &nbsp; Y: --</div>
-        </div>
-      </section>
+      <div class="inspector-footer">
+        <span>LOCAL SAVE</span>
+        <b id="saveStatus">● Automatic</b>
+      </div>
+    </aside>
+  </main>
 
-      <aside class="info-panel panel">
-        <div class="panel-heading"><div><span class="eyebrow">INSPECTOR</span><h2>Machine info</h2></div><span class="heading-icon">⌘</span></div>
-        <div id="machineInfo" class="machine-inspector empty-inspector">
-          <div class="empty-machine-icon"><span>＋</span></div>
-          <h3>Niets geselecteerd</h3>
-          <p>Klik op een machine op de productievloer om de instellingen en productie te bekijken.</p>
-        </div>
-        <div id="machineActions" class="machine-actions"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</div>
 
-        <div class="panel-divider"></div>
-        <div class="section-heading"><h3>Productie overzicht</h3><span class="mini-live">● LIVE</span></div>
-        <div class="rate-list">
-          <div class="rate-row"><span><i class="legend-dot ore-dot"></i> Erts</span><b id="oreRate">0 / min</b></div>
-          <div class="rate-row"><span><i class="legend-dot metal-dot"></i> Metaal</span><b id="metalRate">0 / min</b></div>
-          <div class="rate-row"><span><i class="legend-dot gear-dot"></i> Tandwielen</span><b id="gearRate">0 / min</b></div>
-          <div class="rate-row income-row"><span>↗ Inkomsten</span><b id="incomeRate">$0 / min</b></div>
-        </div>
-
-        <div class="goal-card">
-          <div class="goal-top"><span>VOLGENDE MIJLPAAL</span><span class="goal-star">✦</span></div>
-          <div class="goal-number" id="goalText">$1.500 verdienen</div>
-          <div class="progress-track"><div id="goalProgress"></div></div>
-          <div class="goal-foot"><span>FACTORY FUND</span><b id="goalPercent">0%</b></div>
-        </div>
-
-        <div class="inspector-foot"><span>LOCAL SAVE</span><span id="saveStatus"><i class="tiny-led"></i> Automatisch</span></div>
-      </aside>
-    </main>
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  </div>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
