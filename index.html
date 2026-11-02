@@ -1,162 +1,339 @@
-
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factory Tycoon</title>
+    <meta name="theme-color" content="#08130f">
+    <link rel="icon" type="image/png" href="SC.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>SushiClicker</title>
+
+    <!-- Apply the saved screen size before the page draws, so it does not flash -->
+    <script>
+        try {
+            var s = Number(localStorage.getItem('sushiScale'));
+            if (s >= 50 && s <= 150) {
+                document.documentElement.style.setProperty('--ui-scale', s / 100);
+            }
+        } catch (e) {}
+    </script>
     <link rel="stylesheet" href="style.css">
+    <script type="module" src="app.js"></script>
 </head>
 <body>
 
-<div class="game">
+    <!-- Atmosphere: lantern glows, a faint wave pattern and a vignette. Purely decorative. -->
+    <div id="ambient" aria-hidden="true">
+        <div class="waves"></div>
+        <div class="orb one"></div>
+        <div class="orb two"></div>
+        <div class="orb three"></div>
+        <div class="vignette"></div>
+    </div>
+    <!-- Click sparks and purchase sparkles are drawn here (fx.js) -->
+    <canvas id="fx-canvas" aria-hidden="true"></canvas>
 
-    <header class="topbar">
-        <div class="logo">
-            <span class="logo-icon">⚙</span>
-            <div>
-                <h1>FACTORY <span>TYCOON</span></h1>
-                <small>BUILD • PRODUCE • EXPAND</small>
+    <section id="loading-screen" class="screen">
+        <p>Loading...</p>
+    </section>
+
+    <section id="login-screen" class="screen hidden">
+        <h1>SushiClicker</h1>
+        <p>Sign in to play</p>
+        <button id="login-btn">Sign in with Google</button>
+        <p id="login-error"></p>
+    </section>
+
+    <section id="menu-screen" class="screen hidden">
+        <img src="SC.png" alt="SushiClicker logo" class="logo">
+        <h1>Welcome To SushiClicker!</h1>
+        <p id="login-status"></p>
+        <button data-goto="game-screen">Start Game</button>
+        <button class="quiet" data-goto="trade-screen">🤝 Trade</button>
+        <button class="quiet" data-goto="leaderboard-screen">🏆 Leaderboard</button>
+        <button class="quiet" data-goto="settings-screen">⚙️ Settings</button>
+        <button id="logout-btn">Sign out</button>
+    </section>
+
+    <!-- The game: left = the nigiri you click, right = the kitchen store -->
+    <section id="game-screen" class="screen hidden">
+        <div class="game-layout">
+
+            <div class="counter">
+                <h4>SushiClicker&copy;</h4>
+                <h2>Points: <span id="score">0</span></h2>
+                <p id="per-second">0 per second</p>
+                <button id="click-btn">Click Me!</button>
+                <button id="chopsticks-btn" class="chopsticks-btn">
+                    <span class="chopsticks-title">🥢 Chopsticks <span id="chopsticks-count">x0</span></span>
+                    <span class="chopsticks-detail">+1 per click, <span id="chopsticks-cost">10</span> points</span>
+                </button>
+                <button class="quiet" data-goto="shop-screen">🛒 Shop</button>
+                <button class="quiet" data-goto="crates-screen">📦 Crates</button>
+                <button class="quiet" data-goto="inventory-screen">🎒 Inventory</button>
+                <button id="anvil-btn" class="quiet hidden" data-goto="anvil-screen">⚒️ Anvil</button>
+                <button class="quiet" data-goto="trade-screen">🤝 Trade</button>
+                <button class="quiet" data-goto="leaderboard-screen">🏆 Leaderboard</button>
+                <button class="quiet" data-goto="settings-screen">⚙️ Settings</button>
+                <button data-goto="menu-screen">Menu</button>
+            </div>
+
+            <div class="factory">
+                <h3 id="factory-title">Sushi Factory</h3>
+                <!-- Only shown while you are inside a chopping table -->
+                <div id="table-bar" class="table-bar hidden">
+                    <button id="table-back" class="small quiet">⬅ Leave table</button>
+                    <p id="table-trail" class="table-trail"></p>
+                </div>
+                <!-- app.js fills the hotbar (the first 9 inventory slots) and the tool buttons -->
+                <div id="toolbar">
+                    <div class="hotbar-line">
+                        <div id="hotbar"></div>
+                        <!-- The special chopping table slot: only shown once you own a chopping table -->
+                        <div id="game-table-slot" class="game-table-slot hidden">
+                            <span id="game-table-label" class="game-table-label">Table slot</span>
+                            <button id="game-table-btn" class="slot table-slot" type="button">
+                                <span class="slot-emoji"></span><span class="slot-count"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="tool-buttons"></div>
+                </div>
+                <p id="held-info" class="held-info"></p>
+                <!-- app.js draws the factory floor and the moving sushi here -->
+                <canvas id="factory-canvas"></canvas>
+                <p class="factory-help">
+                    Buy pieces in the Shop. Pick one in the hotbar (or press 1-9), click a square,
+                    and press R to turn it. Rearrange your hotbar in the Inventory.
+                    Rice cookers make rice balls.
+                    Run rice balls past a fish to make complete sushi, add chefs to make it worth more, then end the line
+                    with a serving counter to sell it.
+                    Chopping tables are little factories: place one, press R to turn it, then use ✏️ Edit on it to build inside.
+                    Everything that sells inside is packed into one spectacular sushi that comes out of the table every second:
+                    send it down belts to a serving counter. It flies over any other tables in its way.
+                    Own a chopping table? Select it in the hotbar and click the table slot next to the hotbar: it works by itself, and its profit boosts everything your factory sells. Use Edit, Shift-click or right-click on the slot to build inside it.
+                </p>
+                <p id="factory-message" class="factory-message" aria-live="polite"></p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- The shop: buy tiles (they go to your inventory) and unlock the anvil -->
+    <section id="crates-screen" class="screen hidden">
+        <div class="panel">
+            <h1>Crates</h1>
+            <p>Points: <span id="crates-score" class="points-text">0</span></p>
+            <div id="crates-list" class="item-list"></div>
+            <div id="crate-result" class="crate-result hidden"></div>
+        </div>
+        <button class="quiet" data-goto="game-screen">Back to factory</button>
+    </section>
+
+    <section id="shop-screen" class="screen hidden">
+        <div class="panel">
+            <h1>Shop</h1>
+            <p>Points: <span id="shop-score" class="points-text">0</span></p>
+            <div class="buy-amount">
+                <span>Buy:</span>
+                <button class="amount-btn" data-amount="1">x1</button>
+                <button class="amount-btn" data-amount="10">x10</button>
+            </div>
+            <div id="shop-list" class="item-list"></div>
+        </div>
+        <button class="quiet" data-goto="game-screen">Back to factory</button>
+    </section>
+
+    <!-- The inventory: slots like in Minecraft. The top row is the hotbar. -->
+    <section id="inventory-screen" class="screen hidden">
+        <div class="panel wide">
+            <h1>Inventory</h1>
+            <p id="inventory-total">0 items</p>
+            <p class="slot-label">Hotbar (shown in the factory)</p>
+            <div id="inv-hotbar" class="slot-grid hotbar-row"></div>
+            <p class="slot-label">Bag</p>
+            <div id="inv-bag" class="slot-grid"></div>
+            <p class="slot-label">Trash</p>
+            <div class="trash-row">
+                <div id="trash-slot" class="slot trash" role="button" tabindex="0" aria-label="Trash can" title="Trash can">
+                    <span class="slot-emoji">🗑️</span>
+                </div>
+                <p class="trash-hint">Click a stack, then click the trash can (or drag it in). Right-click throws away just one. It always asks first.</p>
+            </div>
+            <p id="inv-info" class="slot-info"></p>
+            <!-- Shown when a chopping table is selected -->
+            <button id="inv-edit-btn" class="small hidden">✏️ Edit chopping table</button>
+        </div>
+        <button class="quiet" data-goto="game-screen">Back to factory</button>
+    </section>
+
+    <!-- Trading: two players swap items and points. One creates a trade and shares the code, the other joins. -->
+    <section id="trade-screen" class="screen hidden">
+        <div class="panel wide">
+            <h1><span class="emo">🤝</span> Trade</h1>
+
+            <!-- No trade yet -->
+            <div id="trade-lobby" class="trade-lobby">
+                <p>Swap items and points with a friend. One of you creates a trade and sends the code, the other joins with it.</p>
+                <button id="trade-create">Create a trade</button>
+                <div class="setting">
+                    <label for="trade-code-input">Join a trade</label>
+                    <div class="setting-row">
+                        <input id="trade-code-input" class="text-input" type="text" maxlength="8" autocomplete="off" spellcheck="false" placeholder="Trade code">
+                        <button id="trade-join" class="small">Join</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- A trade is going on -->
+            <div id="trade-room" class="hidden">
+                <p class="trade-code-line">Trade code: <span id="trade-code" class="points-text"></span>
+                    <button id="trade-copy" class="small quiet">Copy</button></p>
+                <p id="trade-status" class="trade-status" aria-live="polite"></p>
+
+                <div class="trade-cols">
+                    <div class="trade-col" id="trade-mine-col">
+                        <h3>You</h3>
+                        <label class="trade-points-row" for="trade-points">Points
+                            <input id="trade-points" class="text-input" type="number" min="0" step="1" value="0">
+                        </label>
+                        <div id="trade-mine" class="trade-offer"></div>
+                        <p id="trade-mine-ok" class="trade-ok"></p>
+                    </div>
+                    <div class="trade-col" id="trade-theirs-col">
+                        <h3 id="trade-their-title">Them</h3>
+                        <p class="trade-points-row">Points <span id="trade-their-points" class="points-text">0</span></p>
+                        <div id="trade-theirs" class="trade-offer"></div>
+                        <p id="trade-their-ok" class="trade-ok"></p>
+                    </div>
+                </div>
+
+                <div id="trade-bag-box">
+                    <p class="slot-label">Your items: click to offer one, Shift-click to offer all. Click an offered item to take it back.</p>
+                    <div id="trade-bag" class="trade-bag"></div>
+                </div>
+
+                <div class="trade-buttons">
+                    <button id="trade-accept">Accept</button>
+                    <button id="trade-cancel" class="quiet">Cancel trade</button>
+                </div>
+            </div>
+
+            <p id="trade-msg" class="setting-msg" aria-live="polite"></p>
+            <button id="trade-close" class="small hidden">Close</button>
+        </div>
+        <button class="quiet" data-goto="game-screen">Back to factory</button>
+        <button class="quiet" data-goto="menu-screen">Menu</button>
+    </section>
+
+    <!-- Leaderboard: the 10 players with the most points -->
+    <section id="leaderboard-screen" class="screen hidden">
+        <div class="panel">
+            <h1><span class="emo">🏆</span> Leaderboard</h1>
+            <p>The 10 players with the most points</p>
+            <div id="board-list" class="item-list"></div>
+            <p id="board-status"></p>
+            <button id="board-refresh" class="small quiet">Refresh</button>
+        </div>
+        <button class="quiet" data-goto="game-screen">Back to factory</button>
+        <button class="quiet" data-goto="menu-screen">Menu</button>
+    </section>
+
+    <!-- Settings: username, game size, redeem codes -->
+    <section id="settings-screen" class="screen hidden">
+        <div class="panel">
+            <h1><span class="emo">⚙️</span> Settings</h1>
+
+            <div class="setting">
+                <label for="name-input">Username</label>
+                <div class="setting-row">
+                    <input id="name-input" class="text-input" type="text" maxlength="14" autocomplete="off" spellcheck="false">
+                    <button id="name-save" class="small">Save</button>
+                </div>
+                <p id="name-msg" class="setting-msg" aria-live="polite"></p>
+            </div>
+
+            <div class="setting">
+                <label for="scale-input">Game size: <span id="scale-value" class="points-text">80%</span></label>
+                <input id="scale-input" type="range" min="50" max="150" step="5" value="80">
+                <button id="scale-reset" class="small quiet">Reset to 80%</button>
+            </div>
+
+            <div class="setting">
+                <label for="music-input">Music volume: <span id="music-value" class="points-text">50%</span></label>
+                <input id="music-input" type="range" min="0" max="100" step="5" value="50">
+            </div>
+
+            <div class="setting">
+                <label for="sfx-input">Sound effects volume: <span id="sfx-value" class="points-text">50%</span></label>
+                <input id="sfx-input" type="range" min="0" max="100" step="5" value="50">
+            </div>
+
+            <div class="setting">
+                <label for="code-input">Redeem code</label>
+                <div class="setting-row">
+                    <input id="code-input" class="text-input" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Enter a code">
+                    <button id="code-btn" class="small">Redeem</button>
+                </div>
+                <p id="code-msg" class="setting-msg" aria-live="polite"></p>
             </div>
         </div>
+        <button id="settings-back" class="quiet">Back</button>
+    </section>
 
-        <div class="stats">
-            <div class="stat">
-                <span>💰 GELD</span>
-                <strong id="money">500</strong>
+    <!-- The anvil: unlocked in the shop. Two slots: put items in and see what happens. -->
+    <section id="anvil-screen" class="screen hidden">
+        <div class="panel wide">
+            <h1><span class="emo">⚒️</span> Anvil</h1>
+            <p>Put items in the two slots and see what happens...</p>
+            <div class="anvil-row">
+                <div id="anvil-in" class="anvil-slots"></div>
+                <span class="anvil-arrow">→</span>
+                <div id="anvil-out" class="anvil-slots"></div>
             </div>
-            <div class="stat">
-                <span>⛏️ ERST</span>
-                <strong id="ore">0</strong>
-            </div>
-            <div class="stat">
-                <span>🔩 METAAL</span>
-                <strong id="metal">0</strong>
-            </div>
-            <div class="stat">
-                <span>⚙️ TANDWIELEN</span>
-                <strong id="gears">0</strong>
+            <p id="anvil-msg" class="setting-msg" aria-live="polite"></p>
+            <p class="slot-label">Hotbar</p>
+            <div id="anv-hotbar" class="slot-grid hotbar-row"></div>
+            <p class="slot-label">Bag</p>
+            <div id="anv-bag" class="slot-grid"></div>
+            <p class="slot-info">Click a stack, then click a slot. Right-click moves one item. Click the result to take it (Shift-click takes as many as possible).</p>
+        </div>
+        <button class="quiet" data-goto="game-screen">Back to factory</button>
+    </section>
+
+    <!-- Asks before something is thrown in the trash can -->
+    <div id="trash-popup" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="trash-title">
+        <div class="trash-box">
+            <div id="trash-emoji" class="trash-emoji" aria-hidden="true"></div>
+            <h2 id="trash-title">Throw this away?</h2>
+            <p id="trash-detail" class="trash-detail"></p>
+            <div class="weird-buttons">
+                <button id="trash-keep" class="quiet">Keep it</button>
+                <button id="trash-yes" class="danger">Throw away</button>
             </div>
         </div>
-    </header>
+    </div>
 
-    <main class="layout">
-
-        <aside class="sidebar">
-            <div class="panel-title">BOUW MENU</div>
-
-            <p class="section-label">PRODUCTIE</p>
-
-            <button class="build-btn active" data-type="select">
-                <span>👆</span>
-                <div><b>Selecteren</b><small>Bekijk machines</small></div>
-            </button>
-
-            <button class="build-btn" data-type="miner">
-                <span>⛏️</span>
-                <div><b>Mijnmachine</b><small>Kost: $100</small></div>
-            </button>
-
-            <button class="build-btn" data-type="smelter">
-                <span>🔥</span>
-                <div><b>Smelterij</b><small>Kost: $180</small></div>
-            </button>
-
-            <button class="build-btn" data-type="assembler">
-                <span>⚙️</span>
-                <div><b>Assembler</b><small>Kost: $300</small></div>
-            </button>
-
-            <button class="build-btn" data-type="seller">
-                <span>📦</span>
-                <div><b>Verzendstation</b><small>Kost: $150</small></div>
-            </button>
-
-            <p class="section-label">TRANSPORT</p>
-
-            <button class="build-btn" data-type="belt">
-                <span>➡️</span>
-                <div><b>Transportband</b><small>Kost: $15</small></div>
-            </button>
-
-            <div class="help-box">
-                <b>💡 TIP</b>
-                <p>Maak een productieketen met mijnmachines, smelterijen en assemblers. Verkoop je tandwielen voor geld!</p>
+    <!-- The weirdness: shown when a whole factory is full of diamonds -->
+    <div id="weird-popup" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="weird-title">
+        <div class="weird-box">
+            <div class="weird-gems-row" aria-hidden="true">💎 💎 💎</div>
+            <h2 id="weird-title">Something Weird Is Going on...</h2>
+            <div class="weird-buttons">
+                <button id="weird-stop" class="quiet">Stop the weirdness</button>
+                <button id="weird-go">Let me see then!</button>
             </div>
-        </aside>
+        </div>
+    </div>
 
-        <section class="factory-area">
-            <div class="factory-header">
-                <div>
-                    <h2>Mijn fabriek</h2>
-                    <span id="factory-status">● Fabriek actief</span>
-                </div>
-                <div class="factory-actions">
-                    <button id="saveBtn">💾 Opslaan</button>
-                    <button id="speedBtn">⏩ 1x</button>
-                </div>
-            </div>
+    <div id="weird-scene" class="overlay hidden" aria-live="polite">
+        <div id="weird-field" class="weird-field" aria-hidden="true"></div>
+        <div id="weird-flash" class="weird-flash"></div>
+        <div id="weird-table" class="weird-table hidden" aria-hidden="true">🔪</div>
+        <p id="weird-line" class="weird-line"></p>
+        <button id="weird-done" class="hidden">Take it</button>
+    </div>
 
-            <div class="canvas-wrap">
-                <canvas id="factoryCanvas"></canvas>
-            </div>
-
-            <div class="bottom-info">
-                <div>📍 Klik op een vakje om te bouwen</div>
-                <div id="selectedInfo">Geselecteerd: Selecteren</div>
-            </div>
-        </section>
-
-        <aside class="rightbar">
-            <div class="panel-title">MACHINE INFO</div>
-
-            <div id="machineInfo" class="machine-info">
-                <div class="big-icon">🏭</div>
-                <h3>Geen machine geselecteerd</h3>
-                <p>Klik op een machine in je fabriek om informatie te bekijken.</p>
-            </div>
-
-            <div id="machineActions"></div>
-
-            <div class="production-panel">
-                <h3>📊 PRODUCTIE</h3>
-                <div class="production-row">
-                    <span>Erts</span>
-                    <strong id="oreRate">0/min</strong>
-                </div>
-                <div class="production-row">
-                    <span>Metaal</span>
-                    <strong id="metalRate">0/min</strong>
-                </div>
-                <div class="production-row">
-                    <span>Tandwielen</span>
-                    <strong id="gearRate">0/min</strong>
-                </div>
-                <div class="production-row">
-                    <span>Inkomsten</span>
-                    <strong id="incomeRate">$0/min</strong>
-                </div>
-            </div>
-
-            <div class="goal-panel">
-                <h3>🎯 VOLGENDE DOEL</h3>
-                <p id="goalText">Verdien $1.000</p>
-                <div class="progress-bg">
-                    <div id="goalProgress"></div>
-                </div>
-            </div>
-        </aside>
-
-    </main>
-
-    <div id="toast" class="toast"></div>
-
-    <footer>
-        FACTORY TYCOON <span>•</span> BUILD YOUR INDUSTRIAL EMPIRE
-    </footer>
-
-</div>
-
-<script src="app.js"></script>
 </body>
 </html>
