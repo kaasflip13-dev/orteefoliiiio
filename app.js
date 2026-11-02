@@ -3,7 +3,7 @@
 
 // ======================================================
 // FACTORY TYCOON
-// Real moving products + real sell destination
+// Instant processing • More products • Optional machines
 // ======================================================
 
 const canvas = document.getElementById('factoryCanvas');
@@ -11,8 +11,20 @@ const ctx = canvas.getContext('2d');
 
 const COLS = 16;
 const ROWS = 10;
-const BELT_TIME = 0.8;
-const SAVE_KEY = 'factoryTycoon_clear_v1';
+
+const BELT_TIME = 0.55;
+const MAX_BUFFER = 100;
+const SAVE_KEY = 'factoryTycoon_clear_v2';
+const OLD_SAVE_KEY = 'factoryTycoon_clear_v1';
+
+const SMELT_YIELD = 5;
+const ASSEMBLE_YIELD = 6;
+
+const SELL_PRICES = {
+  ore: 5,
+  metal: 15,
+  gear: 40
+};
 
 const DIRS = [
   { x: 1, y: 0, name: 'Right →', arrow: '→' },
@@ -27,9 +39,9 @@ const MACHINES = {
     icon: '⛏',
     price: 100,
     color: '#a57a4c',
-    time: 2.4,
+    time: 2,
     output: 'ore',
-    description: 'Creates ore automatically. Connect a conveyor to its output.'
+    description: 'Mines ore automatically. The ore can be sold directly or processed.'
   },
 
   smelter: {
@@ -37,10 +49,9 @@ const MACHINES = {
     icon: '🔥',
     price: 220,
     color: '#b96143',
-    time: 3,
     input: 'ore',
     output: 'metal',
-    description: 'Takes ore from a conveyor and melts it into metal.'
+    description: 'INSTANT PROCESSING. One ore becomes five metal.'
   },
 
   assembler: {
@@ -48,10 +59,9 @@ const MACHINES = {
     icon: '⚙',
     price: 320,
     color: '#477da4',
-    time: 3.4,
     input: 'metal',
     output: 'gear',
-    description: 'Uses metal to make gears for your Sell Station.'
+    description: 'INSTANT PROCESSING. One metal becomes six gears.'
   },
 
   belt: {
@@ -67,7 +77,7 @@ const MACHINES = {
     icon: '💰',
     price: 180,
     color: '#428665',
-    description: 'FINAL DESTINATION. Each gear delivered here earns $50.'
+    description: 'FINAL DESTINATION. Accepts ore, metal and gears and turns them into cash.'
   }
 };
 
@@ -89,6 +99,7 @@ let paused = false;
 let animationTime = 0;
 let playTime = 0;
 let lastTime = 0;
+
 let uiTimer = 0;
 let rateTimer = 0;
 let saveTimer = 0;
@@ -124,7 +135,7 @@ const number = v =>
   Math.floor(v).toLocaleString('en-US');
 
 // ======================================================
-// CREATE BUILDING
+// CREATE MACHINE
 // ======================================================
 
 function createMachine(type, x, y, direction = 0) {
@@ -135,20 +146,18 @@ function createMachine(type, x, y, direction = 0) {
     y,
     dir: direction,
     level: 1,
-
     timer: 0,
+
+    // Number of products waiting to leave this machine.
     output: 0,
-
-    input: {
-      ore: 0,
-      metal: 0
-    },
-
-    item: null,
 
     produced: 0,
     received: 0,
-    sold: 0
+    sold: 0,
+    revenue: 0,
+
+    // A belt contains one visible moving product.
+    item: null
   };
 }
 
@@ -169,7 +178,7 @@ function direction(machine) {
 }
 
 // ======================================================
-// MESSAGE
+// NOTIFICATIONS
 // ======================================================
 
 function showToast(message) {
@@ -245,7 +254,7 @@ function rotateSelectedBelt() {
     showToast('Conveyor direction changed!');
   } else {
     rotateDirection();
-    showToast('New conveyor direction: ' + DIRS[beltDirection].name);
+    showToast('New belt direction: ' + DIRS[beltDirection].name);
   }
 }
 
@@ -255,7 +264,7 @@ $('rotateBtn').addEventListener(
 );
 
 // ======================================================
-// PLACE BUILDING
+// PLACE MACHINE
 // ======================================================
 
 function placeMachine(type, x, y) {
@@ -284,15 +293,13 @@ function placeMachine(type, x, y) {
   selectedId = machine.id;
 
   updateUI();
-  updateRouteGuide();
-
   showToast(MACHINES[type].name + ' placed!');
 
   saveGame(false);
 }
 
 // ======================================================
-// GRID INPUT
+// CANVAS INPUT
 // ======================================================
 
 function getCell(event) {
@@ -376,117 +383,165 @@ function getAdjacentBelts(machine) {
 }
 
 // ======================================================
-// MACHINE OUTPUT -> BELT
+// MACHINE OUTPUT TO BELTS
 // ======================================================
 
 function sendOutputsToBelts() {
   for (const machine of machines) {
     if (
       machine.type === 'belt' ||
-      machine.type === 'seller' ||
       machine.output <= 0
     ) {
       continue;
     }
 
-    const belts = getAdjacentBelts(machine);
-
-    for (const belt of belts) {
+    for (const belt of getAdjacentBelts(machine)) {
       if (belt.item) continue;
 
       const d = direction(belt);
 
-      const nextX = belt.x + d.x;
-      const nextY = belt.y + d.y;
-
-      // Do not send a product onto a belt
-      // that points straight back into its machine.
+      // A belt must point away from its producer.
       if (
-        nextX === machine.x &&
-        nextY === machine.y
+        belt.x + d.x === machine.x &&
+        belt.y + d.y === machine.y
       ) {
         continue;
       }
 
-      // Put one real product onto the belt.
       belt.item = {
         type: MACHINES[machine.type].output,
-        progress: 0
+        progress: 0,
+        blocked: false
       };
 
       machine.output--;
-
       break;
     }
   }
 }
 
 // ======================================================
-// WHAT EACH MACHINE ACCEPTS
+// INSTANT PROCESSING AND SELLING
 // ======================================================
 
 function acceptProduct(machine, product) {
+  // ------------------------------
+  // SMELTER
+  // One ore = five metal.
+  // NO TIMER.
+  // ------------------------------
+
   if (
     machine.type === 'smelter' &&
     product === 'ore'
   ) {
-    // Maximum input buffer: 10 ore.
-    if (machine.input.ore >= 10) {
+    const amount =
+      SMELT_YIELD + (machine.level - 1) * 2;
+
+    if (machine.output + amount > MAX_BUFFER) {
       return false;
     }
 
-    machine.input.ore++;
+    machine.output += amount;
     machine.received++;
+    machine.produced += amount;
 
-    createEffect(machine.x, machine.y, '#d49a5a', '+ORE');
+    production.metal += amount;
+
+    createEffect(
+      machine.x,
+      machine.y,
+      '#b5c9d8',
+      '+' + amount + ' METAL'
+    );
+
+    showToast(
+      '🔥 SMELTED! +' + amount + ' METAL'
+    );
 
     return true;
   }
+
+  // ------------------------------
+  // ASSEMBLER
+  // One metal = six gears.
+  // NO TIMER.
+  // ------------------------------
 
   if (
     machine.type === 'assembler' &&
     product === 'metal'
   ) {
-    // Maximum input buffer: 10 metal.
-    if (machine.input.metal >= 10) {
+    const amount =
+      ASSEMBLE_YIELD + (machine.level - 1) * 3;
+
+    if (machine.output + amount > MAX_BUFFER) {
       return false;
     }
 
-    machine.input.metal++;
+    machine.output += amount;
     machine.received++;
+    machine.produced += amount;
 
-    createEffect(machine.x, machine.y, '#b5c9d8', '+METAL');
+    production.gear += amount;
+
+    createEffect(
+      machine.x,
+      machine.y,
+      '#ffbd54',
+      '+' + amount + ' GEARS'
+    );
+
+    showToast(
+      '⚙ ASSEMBLED! +' + amount + ' GEARS'
+    );
 
     return true;
   }
+
+  // ------------------------------
+  // SELL STATION
+  // All three products can be sold.
+  // No other machine is required.
+  // ------------------------------
 
   if (
     machine.type === 'seller' &&
-    product === 'gear'
+    Object.hasOwn(SELL_PRICES, product)
   ) {
-    // MONEY IS ONLY AWARDED HERE!
-    const earnings = 50 * machine.level;
+    const value = SELL_PRICES[product];
+    const earned = value * machine.level;
 
-    money += earnings;
-    machine.sold++;
+    money += earned;
+
     machine.received++;
+    machine.sold++;
+    machine.revenue += earned;
 
-    production.cash += earnings;
+    production.cash += earned;
 
-    createEffect(machine.x, machine.y, '#77dfab', '+$' + earnings);
+    createEffect(
+      machine.x,
+      machine.y,
+      '#77dfab',
+      '+$' + earned
+    );
 
-    showToast('SOLD! +$' + earnings);
+    showToast(
+      '💰 SOLD ' +
+      product.toUpperCase() +
+      '! +$' + earned
+    );
 
     return true;
   }
 
-  // Wrong product or wrong destination.
-  // Keep the product on the conveyor.
+  // Wrong product: it remains on the belt.
   return false;
 }
 
 // ======================================================
-// PRODUCTS MOVING BETWEEN BELTS
+// MOVE PRODUCTS ALONG THE CONVEYOR BELTS
 // ======================================================
 
 function moveProducts(dt) {
@@ -497,9 +552,10 @@ function moveProducts(dt) {
   const transfers = [];
   const reserved = new Set();
 
-  // First: animate every product on its own belt.
   for (const belt of belts) {
     if (!belt.item) continue;
+
+    belt.item.blocked = false;
 
     belt.item.progress = Math.min(
       1,
@@ -508,7 +564,6 @@ function moveProducts(dt) {
 
     if (belt.item.progress < 1) continue;
 
-    // Find the next tile in the arrow direction.
     const d = direction(belt);
 
     const next = machineAt(
@@ -516,12 +571,17 @@ function moveProducts(dt) {
       belt.y + d.y
     );
 
-    // No next building: product waits at the end.
-    if (!next) continue;
+    // No building at the end of the belt.
+    // Keep the product visible and waiting.
+    if (!next) {
+      belt.item.blocked = true;
+      continue;
+    }
 
-    // Next tile is another conveyor.
+    // Next building is another belt.
     if (next.type === 'belt') {
       if (next.item || reserved.has(next.id)) {
+        belt.item.blocked = true;
         continue;
       }
 
@@ -536,21 +596,29 @@ function moveProducts(dt) {
       continue;
     }
 
-    // Next tile is a machine.
-    // The machine must accept this exact product.
-    if (acceptProduct(next, belt.item.type)) {
+    // Next building is a processing machine or seller.
+    const accepted = acceptProduct(
+      next,
+      belt.item.type
+    );
+
+    if (accepted) {
       belt.item = null;
+    } else {
+      // Incorrect product or full output buffer:
+      // keep the item at the end of this belt.
+      belt.item.blocked = true;
     }
   }
 
-  // Second: perform belt-to-belt transfers.
-  // This prevents products jumping across several
-  // tiles in a single game frame.
+  // Transfer after checking all belts.
+  // Products can only move one tile per step.
   for (const transfer of transfers) {
     if (!transfer.target.item) {
       transfer.target.item = {
         type: transfer.product.type,
-        progress: 0
+        progress: 0,
+        blocked: false
       };
 
       transfer.source.item = null;
@@ -560,120 +628,91 @@ function moveProducts(dt) {
 
 // ======================================================
 // MACHINE PRODUCTION
+// ONLY THE MINER HAS A TIMER.
+// SMELTER AND ASSEMBLER PROCESS IMMEDIATELY
+// WHEN A PRODUCT ARRIVES ON THE BELT.
 // ======================================================
 
 function processMachines(dt) {
   for (const machine of machines) {
-    if (
-      machine.type === 'belt' ||
-      machine.type === 'seller'
-    ) {
-      continue;
-    }
+    if (machine.type !== 'miner') continue;
 
-    const data = MACHINES[machine.type];
+    if (machine.output >= MAX_BUFFER) continue;
 
-    // Maximum output buffer: 10 products.
-    if (machine.output >= 10) continue;
-
-    const interval = data.time / machine.level;
-
-    // MINER: creates ore without input.
-    if (machine.type === 'miner') {
-      machine.timer += dt;
-
-      while (
-        machine.timer >= interval &&
-        machine.output < 10
-      ) {
-        machine.timer -= interval;
-
-        machine.output++;
-        machine.produced++;
-
-        production.ore++;
-
-        createEffect(
-          machine.x,
-          machine.y,
-          '#d49a5a',
-          '+ORE'
-        );
-      }
-
-      continue;
-    }
-
-    // SMELTER and ASSEMBLER:
-    // They can only produce with the right input.
-    const required = data.input;
-
-    if (machine.input[required] <= 0) continue;
+    const interval =
+      MACHINES.miner.time / machine.level;
 
     machine.timer += dt;
 
     while (
       machine.timer >= interval &&
-      machine.input[required] > 0 &&
-      machine.output < 10
+      machine.output < MAX_BUFFER
     ) {
       machine.timer -= interval;
 
-      machine.input[required]--;
       machine.output++;
       machine.produced++;
 
-      production[data.output]++;
+      production.ore++;
 
       createEffect(
         machine.x,
         machine.y,
-        data.output === 'metal' ? '#b5c9d8' : '#ffbd54',
-        '+ ' + data.output.toUpperCase()
+        '#d49a5a',
+        '+ORE'
       );
     }
   }
 }
 
 // ======================================================
-// PRODUCTION ROUTE STATUS
+// ROUTE GUIDE
+// SMELTER AND ASSEMBLER ARE OPTIONAL
 // ======================================================
 
 function updateRouteGuide() {
-  const count = type =>
-    machines.filter(m => m.type === type).length;
+  const hasMiner = machines.some(m => m.type === 'miner');
+  const hasSmelter = machines.some(m => m.type === 'smelter');
+  const hasAssembler = machines.some(m => m.type === 'assembler');
+  const hasSeller = machines.some(m => m.type === 'seller');
 
-  const miner = count('miner') > 0;
-  const smelter = count('smelter') > 0;
-  const assembler = count('assembler') > 0;
-  const seller = count('seller') > 0;
+  $('stepMiner').classList.toggle('done', hasMiner);
+  $('stepSmelter').classList.toggle('done', hasSmelter);
+  $('stepAssembler').classList.toggle('done', hasAssembler);
+  $('stepSeller').classList.toggle('done', hasSeller);
 
-  $('stepMiner').classList.toggle('done', miner);
-  $('stepSmelter').classList.toggle('done', smelter);
-  $('stepAssembler').classList.toggle('done', assembler);
-  $('stepSeller').classList.toggle('done', seller);
+  const smelterLabel = $('stepSmelter').querySelector('b');
+  const assemblerLabel = $('stepAssembler').querySelector('b');
 
-  const belts = count('belt');
+  smelterLabel.textContent = hasSmelter
+    ? 'SMELTER'
+    : 'SMELTER OPTIONAL';
 
-  let message = 'Place an Ore Miner to get started.';
+  assemblerLabel.textContent = hasAssembler
+    ? 'ASSEMBLER'
+    : 'ASSEMBLER OPTIONAL';
 
-  if (miner && !smelter) {
-    message = 'Good! Now place a Smelter for your ore.';
-  } else if (miner && smelter && !assembler) {
-    message = 'Great! Place an Assembler to make gears.';
-  } else if (miner && smelter && assembler && !seller) {
-    message = 'Almost there! Place your Sell Station.';
-  } else if (miner && smelter && assembler && seller && belts === 0) {
-    message = 'Machines ready! Now connect them with conveyor belts.';
-  } else if (miner && smelter && assembler && seller) {
-    message = 'Production chain built! Check that every arrow points to the next machine.';
+  let message;
+
+  if (!hasMiner) {
+    message = 'Start with a Miner. You can sell ore directly!';
+  } else if (!hasSeller) {
+    message = 'Place a Sell Station. The Miner can sell ore directly.';
+  } else if (!hasSmelter && !hasAssembler) {
+    message = 'Ready! You can earn cash by selling ore. Extra machines increase its value.';
+  } else if (hasSmelter && !hasAssembler) {
+    message = 'Your Smelter creates 5 metal instantly. You can sell metal directly.';
+  } else if (hasAssembler) {
+    message = 'Your Assembler creates 6 gears instantly. Connect them to the Sell Station!';
+  } else {
+    message = 'Your production line is ready!';
   }
 
   $('routeMessage').textContent = message;
 }
 
 // ======================================================
-// DESTINATION STATUS
+// DESTINATION INFORMATION
 // ======================================================
 
 function updateDestination() {
@@ -683,8 +722,8 @@ function updateDestination() {
 
   const card = $('destinationCard');
 
-  const sold = sellers.reduce(
-    (total, m) => total + m.sold,
+  const totalSold = sellers.reduce(
+    (sum, m) => sum + m.sold,
     0
   );
 
@@ -693,7 +732,7 @@ function updateDestination() {
 
     $('destinationTitle').textContent = 'Not built yet';
     $('destinationDescription').textContent =
-      'Place a Sell Station to earn cash.';
+      'Build a Sell Station to earn cash.';
 
   } else {
     card.classList.add('active');
@@ -704,36 +743,42 @@ function updateDestination() {
         : sellers.length + ' Sell Stations active';
 
     $('destinationDescription').textContent =
-      'Each delivered gear earns $50 per level.';
+      'ORE $5 · METAL $15 · GEARS $40';
   }
 
-  $('soldCount').textContent = number(sold);
+  $('soldCount').textContent = number(totalSold);
 }
 
 // ======================================================
-// CASH MILESTONES
+// INVENTORY
 // ======================================================
 
-function checkGoal() {
-  if (money < goal) return;
+function inventory() {
+  const stock = {
+    ore: 0,
+    metal: 0,
+    gear: 0
+  };
 
-  const completed = goal;
+  for (const machine of machines) {
+    if (
+      machine.type === 'miner' ||
+      machine.type === 'smelter' ||
+      machine.type === 'assembler'
+    ) {
+      stock[MACHINES[machine.type].output] += machine.output;
+    }
 
-  if (goal < 5000) {
-    goal = 5000;
-  } else if (goal < 15000) {
-    goal = 15000;
-  } else if (goal < 50000) {
-    goal = 50000;
-  } else {
-    goal += 50000;
+    if (machine.type === 'belt' && machine.item) {
+      stock[machine.item.type]++;
+    }
   }
 
-  showToast('MILESTONE REACHED! $' + number(completed));
+  return stock;
 }
 
 // ======================================================
-// PRODUCTION RATE
+// PRODUCTION STATISTICS
 // ======================================================
 
 function updateRates(dt) {
@@ -757,11 +802,80 @@ function updateRates(dt) {
 }
 
 // ======================================================
-// INSPECTOR
+// CASH MILESTONES
+// ======================================================
+
+function checkGoal() {
+  if (money < goal) return;
+
+  const reached = goal;
+
+  goal = goal < 5000
+    ? 5000
+    : goal < 15000
+      ? 15000
+      : goal < 50000
+        ? 50000
+        : goal + 50000;
+
+  showToast('🏆 MILESTONE REACHED: $' + number(reached));
+}
+
+// ======================================================
+// UPDATE UI
+// ======================================================
+
+function updateUI() {
+  const stock = inventory();
+
+  $('money').textContent = '$' + number(money);
+  $('cashRate').textContent = '+$' + number(rates.cash) + ' / min';
+
+  $('ore').textContent = number(stock.ore);
+  $('metal').textContent = number(stock.metal);
+  $('gears').textContent = number(stock.gear);
+
+  $('oreRate').textContent = rates.ore + ' / min';
+  $('metalRate').textContent = rates.metal + ' / min';
+  $('gearRate').textContent = rates.gear + ' / min';
+  $('incomeRate').textContent = '$' + number(rates.cash) + ' / min';
+
+  const percent = clamp(money / goal * 100, 0, 100);
+
+  $('goalProgress').style.width = percent + '%';
+  $('goalPercent').textContent = Math.floor(percent) + '%';
+  $('goalText').textContent = '$' + number(goal) + ' cash';
+
+  const total = machines.reduce(
+    (sum, m) => sum + (m.type === 'seller' ? m.sold : 0),
+    0
+  );
+
+  $('soldCount').textContent = number(total);
+  $('clockLabel').textContent = formatClock(playTime);
+
+  updateInspector();
+  updateDestination();
+  updateRouteGuide();
+}
+
+function formatClock(seconds) {
+  const t = Math.floor(seconds);
+
+  const h = String(Math.floor(t / 3600)).padStart(2, '0');
+  const m = String(Math.floor(t / 60) % 60).padStart(2, '0');
+  const s = String(t % 60).padStart(2, '0');
+
+  return `${h}:${m}:${s}`;
+}
+
+// ======================================================
+// MACHINE INSPECTOR
 // ======================================================
 
 function updateInspector() {
   const machine = selectedMachine();
+
   const info = $('machineInfo');
   const actions = $('machineActions');
 
@@ -780,32 +894,35 @@ function updateInspector() {
 
   const data = MACHINES[machine.type];
 
-  let inputText = 'None';
-  let bufferText = machine.output;
+  let speed = 'Instant processing';
+  let input = 'None';
+  let output = machine.output;
+
+  if (machine.type === 'miner') {
+    speed = `${(1 / (data.time / machine.level)).toFixed(2)} / sec`;
+  }
 
   if (machine.type === 'smelter') {
-    inputText = machine.input.ore + ' / 10 ore';
+    input = '1 ORE';
+    output = `${SMELT_YIELD + (machine.level - 1) * 2} METAL`;
   }
 
   if (machine.type === 'assembler') {
-    inputText = machine.input.metal + ' / 10 metal';
+    input = '1 METAL';
+    output = `${ASSEMBLE_YIELD + (machine.level - 1) * 3} GEARS`;
   }
 
   if (machine.type === 'seller') {
-    inputText = 'Gears';
-    bufferText = machine.sold + ' sold';
+    input = 'ORE / METAL / GEARS';
+    output = '$' + number(machine.revenue);
   }
 
   if (machine.type === 'belt') {
-    inputText = DIRS[machine.dir].name;
-    bufferText = machine.item
+    input = DIRS[machine.dir].name;
+    output = machine.item
       ? machine.item.type.toUpperCase()
-      : 'Empty';
+      : 'EMPTY';
   }
-
-  const speed = data.time
-    ? (1 / (data.time / machine.level)).toFixed(2) + ' / sec'
-    : 'Continuous';
 
   info.className = 'machine-inspector filled';
 
@@ -822,20 +939,20 @@ function updateInspector() {
 
     <div class="machine-metrics">
       <div class="machine-metric">
-        <small>PRODUCTION SPEED</small>
+        <small>PROCESSING</small>
         <b>${speed}</b>
       </div>
       <div class="machine-metric">
-        <small>INPUT / DIRECTION</small>
-        <b>${inputText}</b>
+        <small>INPUT</small>
+        <b>${input}</b>
       </div>
       <div class="machine-metric">
-        <small>OUTPUT BUFFER</small>
-        <b>${bufferText}</b>
+        <small>OUTPUT</small>
+        <b>${output}</b>
       </div>
       <div class="machine-metric">
-        <small>TOTAL PRODUCED</small>
-        <b>${machine.produced}</b>
+        <small>TOTAL MADE / SOLD</small>
+        <b>${machine.produced + machine.sold}</b>
       </div>
     </div>
   `;
@@ -848,8 +965,10 @@ function updateInspector() {
 
     $('rotateMachine').addEventListener('click', () => {
       machine.dir = (machine.dir + 1) % 4;
+
       updateInspector();
       draw();
+
       showToast('Belt rotated!');
     });
 
@@ -863,15 +982,24 @@ function updateInspector() {
       <button class="action-button danger" id="removeMachine">REMOVE</button>
     `;
 
-    $('upgradeMachine').addEventListener('click', upgradeMachine);
+    $('upgradeMachine').addEventListener(
+      'click',
+      upgradeMachine
+    );
   }
 
-  $('removeMachine').addEventListener('click', removeMachine);
+  $('removeMachine').addEventListener(
+    'click',
+    removeMachine
+  );
 }
+
+// ======================================================
+// UPGRADING AND REMOVING
+// ======================================================
 
 function upgradeMachine() {
   const machine = selectedMachine();
-
   if (!machine || machine.type === 'belt') return;
 
   const price = Math.round(
@@ -879,7 +1007,7 @@ function upgradeMachine() {
   );
 
   if (money < price) {
-    showToast('Not enough cash for upgrade!');
+    showToast('Not enough cash!');
     return;
   }
 
@@ -887,7 +1015,11 @@ function upgradeMachine() {
   machine.level++;
 
   updateUI();
-  showToast('Machine upgraded to level ' + machine.level);
+
+  showToast(
+    `${MACHINES[machine.type].name} upgraded to level ${machine.level}!`
+  );
+
   saveGame(false);
 }
 
@@ -904,48 +1036,13 @@ function removeMachine() {
   selectedId = null;
 
   updateUI();
-  updateRouteGuide();
+  showToast('Building removed. $' + refund + ' refunded.');
 
-  showToast('Building removed. Refund: $' + refund);
   saveGame(false);
 }
 
 // ======================================================
-// INVENTORY DISPLAY
-// ======================================================
-
-function inventory() {
-  const stock = {
-    ore: 0,
-    metal: 0,
-    gear: 0
-  };
-
-  for (const m of machines) {
-    if (m.type === 'miner') {
-      stock.ore += m.output;
-    }
-
-    if (m.type === 'smelter') {
-      stock.ore += m.input.ore;
-      stock.metal += m.output;
-    }
-
-    if (m.type === 'assembler') {
-      stock.metal += m.input.metal;
-      stock.gear += m.output;
-    }
-
-    if (m.type === 'belt' && m.item) {
-      stock[m.item.type]++;
-    }
-  }
-
-  return stock;
-}
-
-// ======================================================
-// VISUAL PARTICLES
+// VISUAL EFFECTS
 // ======================================================
 
 function createEffect(x, y, color, text) {
@@ -957,9 +1054,7 @@ function createEffect(x, y, color, text) {
     life: .8
   });
 
-  if (particles.length > 45) {
-    particles.shift();
-  }
+  if (particles.length > 50) particles.shift();
 }
 
 function updateEffects(dt) {
@@ -976,41 +1071,31 @@ function drawEffects() {
     ctx.save();
 
     ctx.globalAlpha = clamp(p.life / .8, 0, 1);
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'center';
     ctx.fillStyle = p.color;
     ctx.shadowColor = p.color;
     ctx.shadowBlur = 8;
-    ctx.fillText(p.text, p.x, p.y);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
 
+    ctx.fillText(p.text, p.x, p.y);
     ctx.restore();
   }
 }
 
 // ======================================================
-// DRAWING HELPERS
+// CANVAS DRAWING HELPERS
 // ======================================================
 
-function roundedRect(x, y, w, h, r) {
-  const radius = Math.min(r, w / 2, h / 2);
+function roundedRect(x, y, w, h, radius) {
+  const r = Math.min(radius, w / 2, h / 2);
 
   ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
-}
-
-function darken(hex, amount) {
-  const n = parseInt(hex.slice(1), 16);
-
-  const r = clamp((n >> 16) + amount, 0, 255);
-  const g = clamp(((n >> 8) & 255) + amount, 0, 255);
-  const b = clamp((n & 255) + amount, 0, 255);
-
-  return `rgb(${r},${g},${b})`;
 }
 
 // ======================================================
@@ -1046,23 +1131,10 @@ function drawFloor() {
       ctx.strokeRect(px + .5, py + .5, cellSize, cellSize);
     }
   }
-
-  ctx.setLineDash([6, 7]);
-  ctx.strokeStyle = 'rgba(255,184,77,.15)';
-  ctx.lineWidth = 2;
-
-  ctx.strokeRect(
-    offsetX + 3,
-    offsetY + 3,
-    COLS * cellSize - 6,
-    ROWS * cellSize - 6
-  );
-
-  ctx.setLineDash([]);
 }
 
 // ======================================================
-// DRAW MOVING PRODUCT
+// DRAW PRODUCTS
 // ======================================================
 
 function drawProduct(belt) {
@@ -1071,29 +1143,26 @@ function drawProduct(belt) {
   const d = direction(belt);
   const t = clamp(belt.item.progress, 0, 1);
 
-  const centerX = offsetX + (belt.x + .5) * cellSize;
-  const centerY = offsetY + (belt.y + .5) * cellSize;
+  const cx = offsetX + (belt.x + .5) * cellSize;
+  const cy = offsetY + (belt.y + .5) * cellSize;
 
-  // The object visibly travels from the entrance
-  // to the exit of each single conveyor tile.
   const distance = cellSize * .36;
 
-  const x = centerX + d.x * (t * 2 - 1) * distance;
-  const y = centerY + d.y * (t * 2 - 1) * distance;
+  const x = cx + d.x * (t * 2 - 1) * distance;
+  const y = cy + d.y * (t * 2 - 1) * distance;
 
-  const colors = {
+  const color = {
     ore: '#dc9a53',
     metal: '#c8d8e3',
     gear: '#ffbd54'
-  };
+  }[belt.item.type];
 
-  const color = colors[belt.item.type];
   const size = Math.max(8, cellSize * .23);
 
   ctx.save();
 
   ctx.shadowColor = color;
-  ctx.shadowBlur = 13;
+  ctx.shadowBlur = 12;
 
   roundedRect(
     x - size / 2,
@@ -1107,15 +1176,16 @@ function drawProduct(belt) {
   ctx.fill();
 
   ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,.75)';
+  ctx.fillStyle = 'rgba(255,255,255,.8)';
+
   ctx.fillRect(
-    x - size * .25,
-    y - size * .25,
-    size * .25,
+    x - size * .23,
+    y - size * .23,
+    size * .23,
     size * .2
   );
 
-  ctx.fillStyle = '#273440';
+  ctx.fillStyle = '#263440';
   ctx.font = `bold ${Math.max(6, size * .4)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -1127,14 +1197,23 @@ function drawProduct(belt) {
         ? 'M'
         : 'G',
     x,
-    y + size * .1
+    y
   );
+
+  // Red warning ring means a product is blocked.
+  if (belt.item.blocked) {
+    ctx.strokeStyle = '#ff7777';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, size * .75, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
   ctx.restore();
 }
 
 // ======================================================
-// DRAW BELT
+// DRAW CONVEYOR BELTS
 // ======================================================
 
 function drawBelt(machine) {
@@ -1146,29 +1225,30 @@ function drawBelt(machine) {
 
   ctx.save();
 
-  // Belt foundation.
   roundedRect(px + 3, py + 3, s - 6, s - 6, 6);
-  ctx.fillStyle = '#465d6d';
+  ctx.fillStyle = '#435967';
   ctx.fill();
-
-  ctx.strokeStyle = '#263b4b';
-  ctx.lineWidth = 2;
 
   if (horizontal) {
     ctx.fillStyle = '#172936';
     ctx.fillRect(px + 4, py + s * .3, s - 8, s * .4);
+  } else {
+    ctx.fillStyle = '#172936';
+    ctx.fillRect(px + s * .3, py + 4, s * .4, s - 8);
+  }
 
+  // Rails.
+  ctx.strokeStyle = '#a6b8c4';
+  ctx.lineWidth = 2;
+
+  if (horizontal) {
     ctx.beginPath();
     ctx.moveTo(px + 4, py + s * .22);
     ctx.lineTo(px + s - 4, py + s * .22);
     ctx.moveTo(px + 4, py + s * .78);
     ctx.lineTo(px + s - 4, py + s * .78);
     ctx.stroke();
-
   } else {
-    ctx.fillStyle = '#172936';
-    ctx.fillRect(px + s * .3, py + 4, s * .4, s - 8);
-
     ctx.beginPath();
     ctx.moveTo(px + s * .22, py + 4);
     ctx.lineTo(px + s * .22, py + s - 4);
@@ -1177,26 +1257,28 @@ function drawBelt(machine) {
     ctx.stroke();
   }
 
-  // Arrow indicates exact direction.
+  // Direction arrow.
   ctx.save();
+
   ctx.translate(px + s / 2, py + s / 2);
   ctx.rotate(machine.dir * Math.PI / 2);
 
-  ctx.fillStyle = '#ffcf7b';
+  ctx.fillStyle = '#ffd17d';
   ctx.font = `bold ${Math.max(13, s * .38)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
   ctx.fillText('→', 0, 0);
 
   ctx.restore();
   ctx.restore();
 
-  // The actual moving object is drawn on top.
+  // Draw product over the belt.
   drawProduct(machine);
 }
 
 // ======================================================
-// DRAW MACHINE
+// DRAW MACHINES
 // ======================================================
 
 function drawMachine(machine) {
@@ -1208,6 +1290,7 @@ function drawMachine(machine) {
   const px = offsetX + machine.x * cellSize;
   const py = offsetY + machine.y * cellSize;
   const s = cellSize;
+
   const data = MACHINES[machine.type];
 
   ctx.save();
@@ -1228,16 +1311,25 @@ function drawMachine(machine) {
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
-  // Top plate.
+  // Roof.
   ctx.fillStyle = '#ffffff25';
-  roundedRect(px + 7, py + 6, s - 14, s * .17, 3);
+
+  roundedRect(
+    px + 7,
+    py + 6,
+    s - 14,
+    s * .17,
+    3
+  );
+
   ctx.fill();
 
-  // Small status lamps.
+  // Status lights.
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = i === 0 ? '#77dfab' : '#dbe5ea66';
 
     ctx.beginPath();
+
     ctx.arc(
       px + s * (.32 + i * .17),
       py + s * .25,
@@ -1245,61 +1337,76 @@ function drawMachine(machine) {
       0,
       Math.PI * 2
     );
+
     ctx.fill();
   }
 
-  // Main building symbol.
-  ctx.fillStyle = '#ffffff';
+  // Main icon.
+  ctx.fillStyle = '#fff';
   ctx.font = `${Math.max(16, s * .42)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(data.icon, px + s / 2, py + s * .57);
 
-  // Buffer meter.
-  let amount = 0;
-
-  if (machine.type === 'miner') {
-    amount = machine.output / 10;
-  } else if (machine.type === 'smelter') {
-    amount = machine.input.ore / 10;
-  } else if (machine.type === 'assembler') {
-    amount = machine.input.metal / 10;
-  } else if (machine.type === 'seller') {
-    amount = Math.min(1, machine.sold / 20);
-  }
-
-  ctx.fillStyle = '#111e2a';
-  ctx.fillRect(px + 7, py + s * .83, s - 14, 3);
-
-  ctx.fillStyle = '#ffce77';
-  ctx.fillRect(
-    px + 7,
-    py + s * .83,
-    (s - 14) * amount,
-    3
+  ctx.fillText(
+    data.icon,
+    px + s / 2,
+    py + s * .57
   );
 
-  // Sell Station has an extra green outline.
+  // Buffer bar.
+  let amount = machine.output / MAX_BUFFER;
+
+  if (machine.type === 'seller') {
+    amount = Math.min(1, machine.sold / 30);
+  }
+
+  ctx.fillStyle = '#101e2a';
+  ctx.fillRect(px + 7, py + s * .83, s - 14, 3);
+
+  ctx.fillStyle = '#ffd17d';
+  ctx.fillRect(px + 7, py + s * .83, (s - 14) * amount, 3);
+
+  // Sell station border.
   if (machine.type === 'seller') {
     ctx.strokeStyle = '#a5f4be';
     ctx.lineWidth = 2;
     ctx.strokeRect(px + 4, py + 4, s - 8, s - 8);
   }
 
-  // Upgrade badge.
+  // Upgrade level.
   if (machine.level > 1) {
     ctx.fillStyle = '#ffd17e';
+
     ctx.beginPath();
     ctx.arc(px + s - 9, py + 9, 8, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#342719';
     ctx.font = 'bold 9px sans-serif';
-    ctx.fillText(machine.level, px + s - 9, py + 9);
+
+    ctx.fillText(
+      machine.level,
+      px + s - 9,
+      py + 9
+    );
   }
 
   ctx.restore();
 }
+
+function darken(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+
+  const r = clamp((n >> 16) + amount, 0, 255);
+  const g = clamp(((n >> 8) & 255) + amount, 0, 255);
+  const b = clamp((n & 255) + amount, 0, 255);
+
+  return `rgb(${r},${g},${b})`;
+}
+
+// ======================================================
+// DRAW SELECTION AND PREVIEW
+// ======================================================
 
 function drawSelection() {
   const machine = selectedMachine();
@@ -1330,10 +1437,9 @@ function drawSelection() {
 function drawPlacementPreview() {
   if (
     !pointerCell ||
-    selectedTool === 'select'
+    selectedTool === 'select' ||
+    machineAt(pointerCell.x, pointerCell.y)
   ) return;
-
-  if (machineAt(pointerCell.x, pointerCell.y)) return;
 
   const x = offsetX + pointerCell.x * cellSize;
   const y = offsetY + pointerCell.y * cellSize;
@@ -1367,6 +1473,7 @@ function drawPlacementPreview() {
     ctx.font = `${cellSize * .4}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+
     ctx.fillText('→', 0, 0);
   }
 
@@ -1374,7 +1481,7 @@ function drawPlacementPreview() {
 }
 
 // ======================================================
-// DRAW EVERYTHING
+// DRAW ALL
 // ======================================================
 
 function draw() {
@@ -1387,14 +1494,14 @@ function draw() {
 
   drawFloor();
 
-  // First draw conveyor foundations.
+  // Belts below the machines.
   for (const machine of machines) {
     if (machine.type === 'belt') {
       drawMachine(machine);
     }
   }
 
-  // Then draw production buildings.
+  // Machines on top.
   for (const machine of machines) {
     if (machine.type !== 'belt') {
       drawMachine(machine);
@@ -1445,82 +1552,30 @@ if ('ResizeObserver' in window) {
 }
 
 // ======================================================
-// MILESTONES
-// ======================================================
-
-function checkGoal() {
-  if (money < goal) return;
-
-  const completed = goal;
-
-  goal = goal < 5000
-    ? 5000
-    : goal < 15000
-      ? 15000
-      : goal < 50000
-        ? 50000
-        : goal + 50000;
-
-  showToast('MILESTONE! $' + number(completed) + ' reached!');
-}
-
-// ======================================================
-// FULL INTERFACE UPDATE
-// ======================================================
-
-function updateUI() {
-  const stock = inventory();
-
-  $('money').textContent = '$' + number(money);
-  $('cashRate').textContent = '+$' + number(rates.cash) + ' / min';
-
-  $('ore').textContent = number(stock.ore);
-  $('metal').textContent = number(stock.metal);
-  $('gears').textContent = number(stock.gear);
-
-  $('oreRate').textContent = rates.ore + ' / min';
-  $('metalRate').textContent = rates.metal + ' / min';
-  $('gearRate').textContent = rates.gear + ' / min';
-  $('incomeRate').textContent = '$' + number(rates.cash) + ' / min';
-
-  const percent = clamp(money / goal * 100, 0, 100);
-
-  $('goalProgress').style.width = percent + '%';
-  $('goalPercent').textContent = Math.floor(percent) + '%';
-  $('goalText').textContent = '$' + number(goal) + ' cash';
-
-  $('clockLabel').textContent = formatClock(playTime);
-
-  updateInspector();
-  updateDestination();
-  updateRouteGuide();
-}
-
-function formatClock(seconds) {
-  const t = Math.floor(seconds);
-
-  const hours = String(Math.floor(t / 3600)).padStart(2, '0');
-  const minutes = String(Math.floor(t / 60) % 60).padStart(2, '0');
-  const secs = String(t % 60).padStart(2, '0');
-
-  return `${hours}:${minutes}:${secs}`;
-}
-
-// ======================================================
-// SAVE GAME
+// SAVE
 // ======================================================
 
 function saveGame(showMessage = true) {
   const data = {
-    version: 1,
+    version: 2,
     money,
     goal,
     playTime,
     beltDirection,
 
     machines: machines.map(m => ({
-      ...m,
-      input: { ...m.input },
+      id: m.id,
+      type: m.type,
+      x: m.x,
+      y: m.y,
+      dir: m.dir,
+      level: m.level,
+      timer: m.timer,
+      output: m.output,
+      produced: m.produced,
+      received: m.received,
+      sold: m.sold,
+      revenue: m.revenue,
       item: m.item ? { ...m.item } : null
     }))
   };
@@ -1543,7 +1598,7 @@ function saveGame(showMessage = true) {
     $('saveStatus').textContent = '● Save failed';
 
     if (showMessage) {
-      showToast('Could not save your factory.');
+      showToast('Could not save your factory!');
     }
 
     return false;
@@ -1551,14 +1606,16 @@ function saveGame(showMessage = true) {
 }
 
 // ======================================================
-// LOAD GAME
+// LOAD
 // ======================================================
 
 function loadGame() {
   let raw;
 
   try {
-    raw = localStorage.getItem(SAVE_KEY);
+    raw =
+      localStorage.getItem(SAVE_KEY) ||
+      localStorage.getItem(OLD_SAVE_KEY);
   } catch (error) {
     return false;
   }
@@ -1569,7 +1626,6 @@ function loadGame() {
     const data = JSON.parse(raw);
 
     if (
-      data.version !== 1 ||
       !Array.isArray(data.machines) ||
       !Number.isFinite(data.money)
     ) {
@@ -1577,6 +1633,7 @@ function loadGame() {
     }
 
     machines = [];
+
     const occupied = new Set();
 
     for (const saved of data.machines) {
@@ -1590,10 +1647,10 @@ function loadGame() {
         saved.y >= ROWS
       ) continue;
 
-      const position = `${saved.x},${saved.y}`;
+      const pos = `${saved.x},${saved.y}`;
 
-      if (occupied.has(position)) continue;
-      occupied.add(position);
+      if (occupied.has(pos)) continue;
+      occupied.add(pos);
 
       const m = createMachine(
         saved.type,
@@ -1605,14 +1662,17 @@ function loadGame() {
       m.id = typeof saved.id === 'string' ? saved.id : m.id;
       m.level = clamp(Math.floor(Number(saved.level) || 1), 1, 99);
       m.timer = clamp(Number(saved.timer) || 0, 0, 20);
-      m.output = clamp(Math.floor(Number(saved.output) || 0), 0, 10);
 
-      m.input.ore = clamp(Math.floor(Number(saved.input?.ore) || 0), 0, 10);
-      m.input.metal = clamp(Math.floor(Number(saved.input?.metal) || 0), 0, 10);
+      m.output = clamp(
+        Math.floor(Number(saved.output) || 0),
+        0,
+        MAX_BUFFER
+      );
 
       m.produced = Math.max(0, Math.floor(Number(saved.produced) || 0));
       m.received = Math.max(0, Math.floor(Number(saved.received) || 0));
       m.sold = Math.max(0, Math.floor(Number(saved.sold) || 0));
+      m.revenue = Math.max(0, Math.floor(Number(saved.revenue) || 0));
 
       if (
         m.type === 'belt' &&
@@ -1621,7 +1681,8 @@ function loadGame() {
       ) {
         m.item = {
           type: saved.item.type,
-          progress: clamp(Number(saved.item.progress) || 0, 0, 1)
+          progress: clamp(Number(saved.item.progress) || 0, 0, 1),
+          blocked: Boolean(saved.item.blocked)
         };
       }
 
@@ -1641,7 +1702,7 @@ function loadGame() {
     return true;
 
   } catch (error) {
-    console.warn('Save load failed:', error);
+    console.warn('Save could not be loaded:', error);
     return false;
   }
 }
@@ -1655,7 +1716,7 @@ $('saveBtn').addEventListener('click', () => {
 });
 
 $('resetBtn').addEventListener('click', () => {
-  if (!confirm('Start a completely new factory? Your current factory save will be replaced.')) {
+  if (!confirm('Start a new factory? Your current save will be replaced.')) {
     return;
   }
 
@@ -1667,20 +1728,16 @@ $('resetBtn').addEventListener('click', () => {
   beltDirection = 0;
   playTime = 0;
 
-  production.ore = 0;
-  production.metal = 0;
-  production.gear = 0;
-  production.cash = 0;
-
-  rates.ore = 0;
-  rates.metal = 0;
-  rates.gear = 0;
-  rates.cash = 0;
+  for (const key of Object.keys(production)) {
+    production[key] = 0;
+    rates[key] = 0;
+  }
 
   $('directionLabel').textContent = DIRS[0].name;
 
   setTool('select');
   updateUI();
+  draw();
   saveGame(false);
 
   showToast('New factory started!');
@@ -1751,21 +1808,21 @@ document.addEventListener('visibilitychange', () => {
 // ======================================================
 
 function simulate(dt) {
-  // 1. Machines make products.
+  // Only the miner waits to produce.
   processMachines(dt);
 
-  // 2. Products leave machines and enter the first belt.
+  // Products are sent from machine storage to belts.
   sendOutputsToBelts();
 
-  // 3. Products move from belt to belt.
+  // Products travel through the factory.
   moveProducts(dt);
 
-  // 4. Check money milestones.
+  // Check cash milestones.
   checkGoal();
 }
 
 // ======================================================
-// MAIN GAME LOOP
+// MAIN LOOP
 // ======================================================
 
 function gameLoop(timestamp) {
@@ -1804,7 +1861,7 @@ function gameLoop(timestamp) {
 }
 
 // ======================================================
-// START
+// START GAME
 // ======================================================
 
 const loaded = loadGame();
@@ -1814,8 +1871,8 @@ updateUI();
 
 showToast(
   loaded
-    ? 'Welcome back! Your factory is loaded.'
-    : 'Welcome! Build your first production line.'
+    ? 'Welcome back! Factory loaded.'
+    : 'Welcome! Build a Miner and a Sell Station.'
 );
 
 requestAnimationFrame(gameLoop);
