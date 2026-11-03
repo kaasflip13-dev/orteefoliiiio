@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -13,81 +12,124 @@
             <span class="brand-icon">⚙️</span>
             <div>
                 <h1>FACTORY WORLD</h1>
-                <p>BUILD • PRODUCE • SELL</p>
+                <p>Build. Produce. Sell.</p>
             </div>
         </div>
 
         <div class="stats">
             <div class="stat">
-                <span>💰 GELD</span>
-                <strong id="money">€500</strong>
+                <span>💰</span>
+                <div><small>GELD</small><strong id="money">€250</strong></div>
             </div>
             <div class="stat">
-                <span>📦 VERKOCHT</span>
-                <strong id="sold">0</strong>
-            </div>
-            <div class="stat">
-                <span>⚡ PRODUCTIE</span>
-                <strong id="production">0/min</strong>
+                <span>📦</span>
+                <div><small>VERKOCHT</small><strong id="sold">0</strong></div>
             </div>
         </div>
     </header>
 
     <main class="layout">
         <aside class="sidebar">
-            <div class="panel-heading">
-                <span>🏗️</span>
-                <div>
-                    <h2>BOUW MENU</h2>
-                    <p>Kies een gebouw</p>
-                </div>
+            <h2>BOUW MENU</h2>
+            <p class="help">Kies een gebouw en klik daarna op een vakje.</p>
+
+            <div class="category">PRODUCTIE</div>
+            <button class="build-button selected" data-build="miner">
+                <span class="build-icon">⛏️</span>
+                <span><strong>Mijnmachine</strong><small>Maakt steen en erts</small></span>
+                <b>€50</b>
+            </button>
+
+            <button class="build-button" data-build="smelter">
+                <span class="build-icon">🔥</span>
+                <span><strong>Smelter</strong><small>Maakt erts tot metaal</small></span>
+                <b>€75</b>
+            </button>
+
+            <button class="build-button" data-build="assembler">
+                <span class="build-icon">🏭</span>
+                <span><strong>Assembler</strong><small>Maakt tandwielen</small></span>
+                <b>€100</b>
+            </button>
+
+            <div class="category">TRANSPORT</div>
+            <button class="build-button" data-build="belt">
+                <span class="build-icon">➡️</span>
+                <span><strong>Transportband</strong><small>Verplaatst producten</small></span>
+                <b>€10</b>
+            </button>
+
+            <button class="build-button" data-build="sell">
+                <span class="build-icon">💰</span>
+                <span><strong>Verkoopstation</strong><small>Verkoopt producten</small></span>
+                <b>€25</b>
+            </button>
+
+            <div class="category">UPGRADES</div>
+            <button class="build-button upgrade-button" data-build="upgrade">
+                <span class="build-icon">⚡</span>
+                <span><strong>Productie-upgrade</strong><small>Dubbele productie van mijnmachine</small></span>
+                <b>€150</b>
+            </button>
+
+            <div class="category">GEREEDSCHAP</div>
+            <button class="build-button" data-build="erase">
+                <span class="build-icon">🧹</span>
+                <span><strong>Verwijderen</strong><small>Haal een gebouw weg</small></span>
+                <b>Gratis</b>
+            </button>
+
+            <button class="build-button" data-build="rotate">
+                <span class="build-icon">🔄</span>
+                <span><strong>Draai transportband</strong><small>Verander de richting</small></span>
+                <b>Gratis</b>
+            </button>
+
+            <div class="sidebar-bottom">
+                <button id="saveButton" class="secondary-button">💾 Opslaan</button>
+                <button id="resetButton" class="danger-button">Nieuwe fabriek</button>
             </div>
-
-            <div id="buildingMenu" class="building-menu"></div>
-
-            <div class="instructions">
-                <h3>💡 Hoe speel je?</h3>
-                <p>1. Kies een gebouw.</p>
-                <p>2. Klik op een vakje om het te plaatsen.</p>
-                <p>3. Verbind je gebouwen met transportbanden.</p>
-                <p>4. Plaats een verkoopstation aan het einde.</p>
-                <p>5. Verkoop producten en verdien geld!</p>
-            </div>
-
-            <button id="cancelButton" class="secondary-button">✖ Selectie annuleren</button>
-            <button id="saveButton" class="secondary-button">💾 Opslaan</button>
-            <button id="resetButton" class="danger-button">🗑️ Nieuwe game</button>
         </aside>
 
         <section class="game-area">
-            <div class="game-toolbar">
+            <div class="game-heading">
                 <div>
-                    <h2>JOUW FABRIEK</h2>
-                    <p id="selectedText">Selecteer een gebouw om te beginnen</p>
+                    <h2>Mijn fabriek</h2>
+                    <p id="status">Selecteer een gebouw om te beginnen.</p>
                 </div>
-                <div class="toolbar-right">
-                    <span class="live-dot"></span>
-                    <span>FABRIEK ACTIEF</span>
-                </div>
+                <div class="live-status"><span></span> PRODUCTIE ACTIEF</div>
             </div>
 
-            <div class="grid-wrapper">
-                <div id="factoryGrid" class="factory-grid"></div>
+            <div class="world-frame">
+                <div id="world" class="world"></div>
             </div>
 
-            <div class="bottom-bar">
-                <div>
-                    <strong>📦 Producten onderweg</strong>
-                    <span id="itemsMoving">0 producten</span>
-                </div>
-                <div>
-                    <strong>🏭 Gebouwen</strong>
-                    <span id="buildingCount">0 geplaatst</span>
-                </div>
-                <div>
-                    <strong>💰 Laatste verkoop</strong>
-                    <span id="lastSale">Nog niets verkocht</span>
-                </div>
+            <div class="legend">
+                <span>⛏️ Mijnmachine</span>
+                <span>🔥 Smelter</span>
+                <span>🏭 Assembler</span>
+                <span>➡️ Transportband</span>
+                <span>💰 Verkoopstation</span>
+            </div>
+
+            <div class="bottom-panels">
+                <section class="info-panel">
+                    <h3>📦 Productinformatie</h3>
+                    <div class="product-list">
+                        <div><span>🪨 Steen</span><b>€2</b></div>
+                        <div><span>🟠 Ruw erts</span><b>€5</b></div>
+                        <div><span>🔩 Metaal</span><b>€15</b></div>
+                        <div><span>⚙️ Tandwiel</span><b>€40</b></div>
+                    </div>
+                </section>
+
+                <section class="info-panel">
+                    <h3>📋 Spelregels</h3>
+                    <p>1. Zet een mijnmachine neer.</p>
+                    <p>2. Plaats transportbanden naar je machines.</p>
+                    <p>3. Verwerk erts tot metaal en tandwielen.</p>
+                    <p>4. Breng producten naar een verkoopstation.</p>
+                </section>
             </div>
         </section>
     </main>
