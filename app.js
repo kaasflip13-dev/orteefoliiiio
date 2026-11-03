@@ -1,519 +1,479 @@
+// ======================================================
+// FACTORY WORLD
+// Complete factory game
+// ======================================================
 
-"use strict";
+const world = document.getElementById("world");
+const moneyDisplay = document.getElementById("money");
+const soldDisplay = document.getElementById("sold");
+const statusDisplay = document.getElementById("status");
+const toast = document.getElementById("toast");
 
-// ============================================
-// FACTORY WORLD - COMPLETE GAME
-// ============================================
+const WIDTH = 12;
+const HEIGHT = 7;
 
-const WIDTH = 14;
-const HEIGHT = 9;
+const prices = {
+    miner: 50,
+    smelter: 75,
+    assembler: 100,
+    belt: 10,
+    sell: 25,
+    upgrade: 150
+};
 
-let money = 500;
+const products = {
+    stone: { icon: "🪨", name: "Steen", value: 2 },
+    ore: { icon: "🟠", name: "Ruw erts", value: 5 },
+    metal: { icon: "🔩", name: "Metaal", value: 15 },
+    gear: { icon: "⚙️", name: "Tandwiel", value: 40 }
+};
+
+let money = 250;
 let sold = 0;
-let selectedBuilding = null;
-let items = [];
-let cells = [];
-let totalSales = 0;
-let lastSale = "Nog niets verkocht";
+let selectedBuild = "miner";
+let buildings = {};
+let items = {};
+let assemblerBuffers = {};
+let nextItemId = 1;
+
 let lastProduction = 0;
+let lastMovement = 0;
+let minerCounters = {};
 
-const BUILDINGS = {
-    miner: {
-        name: "Mijnmachine",
-        emoji: "⛏️",
-        price: 80,
-        description: "Maakt ijzererts",
-        output: "ore",
-        interval: 1800
-    },
-    crystalMiner: {
-        name: "Kristalmijn",
-        emoji: "💎",
-        price: 140,
-        description: "Maakt kristallen",
-        output: "crystal",
-        interval: 2300
-    },
-    quarry: {
-        name: "Steengroeve",
-        emoji: "🪨",
-        price: 100,
-        description: "Maakt steen",
-        output: "stone",
-        interval: 2000
-    },
-    belt: {
-        name: "Transportband",
-        emoji: "➡️",
-        price: 10,
-        description: "Verplaatst producten",
-    },
-    smelter: {
-        name: "Smelter",
-        emoji: "🔥",
-        price: 120,
-        description: "Erts → metaal",
-    },
-    crusher: {
-        name: "Vergruizer",
-        emoji: "🔨",
-        price: 90,
-        description: "Erts → steen",
-    },
-    press: {
-        name: "Persmachine",
-        emoji: "🏗️",
-        price: 130,
-        description: "Metaal → platen",
-    },
-    assembler: {
-        name: "Assembler",
-        emoji: "🤖",
-        price: 180,
-        description: "Metaal → tandwielen",
-    },
-    storage: {
-        name: "Opslag",
-        emoji: "📦",
-        price: 75,
-        description: "Tussenstation voor producten",
-    },
-    seller: {
-        name: "Verkoopstation",
-        emoji: "💰",
-        price: 100,
-        description: "Verkoopt producten",
-    }
-};
+const directions = [
+    { x: 1, y: 0, icon: "➡️" },
+    { x: 0, y: 1, icon: "⬇️" },
+    { x: -1, y: 0, icon: "⬅️" },
+    { x: 0, y: -1, icon: "⬆️" }
+];
 
-const PRODUCTS = {
-    ore: {
-        name: "IJzererts",
-        emoji: "🟤",
-        value: 5
-    },
-    crystal: {
-        name: "Kristal",
-        emoji: "💎",
-        value: 16
-    },
-    stone: {
-        name: "Steen",
-        emoji: "🪨",
-        value: 4
-    },
-    metal: {
-        name: "Metaal",
-        emoji: "🔩",
-        value: 18
-    },
-    plate: {
-        name: "Metalen plaat",
-        emoji: "🟫",
-        value: 27
-    },
-    gear: {
-        name: "Tandwiel",
-        emoji: "⚙️",
-        value: 38
-    },
-    circuit: {
-        name: "Circuit",
-        emoji: "🔌",
-        value: 55
-    }
-};
-
-const PROCESSORS = {
-    smelter: {
-        ore: "metal"
-    },
-    crusher: {
-        ore: "stone"
-    },
-    press: {
-        metal: "plate"
-    },
-    assembler: {
-        metal: "gear",
-        crystal: "circuit"
-    }
-};
-
-const grid = document.getElementById("factoryGrid");
-const menu = document.getElementById("buildingMenu");
-
-function createGrid() {
-    cells = [];
-    items = [];
-    grid.innerHTML = "";
-
-    for (let y = 0; y < HEIGHT; y++) {
-        cells[y] = [];
-
-        for (let x = 0; x < WIDTH; x++) {
-            const cell = {
-                x,
-                y,
-                building: null,
-                cooldown: 0
-            };
-
-            cells[y][x] = cell;
-
-            const element = document.createElement("div");
-            element.className = "cell empty";
-            element.dataset.x = x;
-            element.dataset.y = y;
-
-            element.addEventListener("click", () => {
-                handleCellClick(x, y);
-            });
-
-            element.addEventListener("contextmenu", event => {
-                event.preventDefault();
-                removeBuilding(x, y);
-            });
-
-            grid.appendChild(element);
-        }
-    }
-
-    renderGrid();
+function key(x, y) {
+    return `${x},${y}`;
 }
 
-function createBuildingMenu() {
-    menu.innerHTML = "";
-
-    for (const [id, building] of Object.entries(BUILDINGS)) {
-        const button = document.createElement("button");
-        button.className = "building-button";
-        button.dataset.building = id;
-
-        button.innerHTML = `
-            <span class="building-emoji">${building.emoji}</span>
-            <span class="building-info">
-                <strong>${building.name}</strong>
-                <small>${building.description}</small>
-            </span>
-            <span class="building-price">€${building.price}</span>
-        `;
-
-        button.addEventListener("click", () => {
-            selectBuilding(id);
-        });
-
-        menu.appendChild(button);
-    }
+function getBuilding(x, y) {
+    return buildings[key(x, y)];
 }
 
-function selectBuilding(id) {
-    selectedBuilding = id;
+function getItem(x, y) {
+    return items[key(x, y)];
+}
 
-    document.querySelectorAll(".building-button").forEach(button => {
+function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2200);
+}
+
+function updateStats() {
+    moneyDisplay.textContent = `€${money}`;
+    soldDisplay.textContent = sold;
+}
+
+function selectBuild(type) {
+    selectedBuild = type;
+
+    document.querySelectorAll(".build-button").forEach(button => {
         button.classList.toggle(
             "selected",
-            button.dataset.building === id
+            button.dataset.build === type
         );
     });
 
-    const building = BUILDINGS[id];
+    const messages = {
+        miner: "Klik op een leeg vakje om een mijnmachine te plaatsen.",
+        smelter: "Plaats een smelter op een leeg vakje.",
+        assembler: "Plaats een assembler op een leeg vakje.",
+        belt: "Plaats een transportband. Klik op draaien om de richting te veranderen.",
+        sell: "Plaats een verkoopstation aan het einde van je transportband.",
+        upgrade: "Klik op een mijnmachine om de upgrade erop te plaatsen.",
+        erase: "Klik op een gebouw om het te verwijderen.",
+        rotate: "Klik op een transportband om hem te draaien."
+    };
 
-    document.getElementById("selectedText").textContent =
-        `${building.emoji} ${building.name} geselecteerd — klik op een vakje`;
-
-    showToast(`${building.name} geselecteerd`);
+    statusDisplay.textContent = messages[type] || "";
 }
 
-function cancelSelection() {
-    selectedBuilding = null;
-
-    document.querySelectorAll(".building-button").forEach(button => {
-        button.classList.remove("selected");
+document.querySelectorAll(".build-button").forEach(button => {
+    button.addEventListener("click", () => {
+        selectBuild(button.dataset.build);
     });
+});
 
-    document.getElementById("selectedText").textContent =
-        "Selecteer een gebouw om te beginnen";
-}
+// ------------------------------------------------------
+// GEBOUWEN PLAATSEN
+// ------------------------------------------------------
 
-function handleCellClick(x, y) {
-    const cell = cells[y][x];
+function placeBuilding(x, y) {
+    const id = key(x, y);
+    const existing = buildings[id];
 
-    if (!selectedBuilding) {
-        if (cell.building) {
-            removeBuilding(x, y);
+    if (selectedBuild === "erase") {
+        if (!existing) {
+            showToast("Hier staat geen gebouw.");
+            return;
         }
+
+        delete buildings[id];
+        delete items[id];
+        delete assemblerBuffers[id];
+        delete minerCounters[id];
+
+        render();
+        showToast("Gebouw verwijderd.");
         return;
     }
 
-    if (cell.building) {
-        showToast("Dit vakje is al bezet!");
+    if (selectedBuild === "rotate") {
+        if (!existing || existing.type !== "belt") {
+            showToast("Je kunt alleen transportbanden draaien.");
+            return;
+        }
+
+        existing.direction = (existing.direction + 1) % 4;
+        render();
+        showToast("Transportband gedraaid.");
         return;
     }
 
-    const building = BUILDINGS[selectedBuilding];
+    if (selectedBuild === "upgrade") {
+        if (!existing || existing.type !== "miner") {
+            showToast("Deze upgrade werkt alleen op een mijnmachine.");
+            return;
+        }
 
-    if (money < building.price) {
+        if (existing.upgraded) {
+            showToast("Deze machine heeft al een upgrade.");
+            return;
+        }
+
+        if (money < prices.upgrade) {
+            showToast("Niet genoeg geld!");
+            return;
+        }
+
+        money -= prices.upgrade;
+        existing.upgraded = true;
+
+        updateStats();
+        render();
+        showToast("⚡ Productie-upgrade geplaatst!");
+        return;
+    }
+
+    if (existing) {
+        showToast("Dit vakje is al bezet.");
+        return;
+    }
+
+    const price = prices[selectedBuild];
+
+    if (price === undefined) return;
+
+    if (money < price) {
         showToast("Niet genoeg geld!");
         return;
     }
 
-    money -= building.price;
+    money -= price;
 
-    cell.building = selectedBuilding;
-    cell.cooldown = 0;
+    buildings[id] = {
+        type: selectedBuild,
+        direction: 0,
+        upgraded: false
+    };
 
-    renderGrid();
+    if (selectedBuild === "assembler") {
+        assemblerBuffers[id] = 0;
+    }
+
+    if (selectedBuild === "miner") {
+        minerCounters[id] = 0;
+    }
+
     updateStats();
-
-    showToast(`${building.name} geplaatst!`);
+    render();
+    showToast("Gebouw geplaatst!");
 }
 
-function removeBuilding(x, y) {
-    const cell = cells[y][x];
-
-    if (!cell || !cell.building) return;
-
-    const id = cell.building;
-    const refund = Math.floor(BUILDINGS[id].price * 0.5);
-
-    cell.building = null;
-    cell.cooldown = 0;
-
-    items = items.filter(item => !(item.x === x && item.y === y));
-
-    money += refund;
-
-    renderGrid();
-    updateStats();
-
-    showToast(`Gebouw verwijderd. €${refund} teruggekregen.`);
-}
-
-function renderGrid() {
-    const elements = grid.children;
+function createWorld() {
+    world.innerHTML = "";
 
     for (let y = 0; y < HEIGHT; y++) {
         for (let x = 0; x < WIDTH; x++) {
-            const cell = cells[y][x];
-            const element = elements[y * WIDTH + x];
+            const cell = document.createElement("div");
 
-            element.className = "cell";
-            element.innerHTML = "";
+            cell.className = "cell";
+            cell.dataset.x = x;
+            cell.dataset.y = y;
 
-            if (!cell.building) {
-                element.classList.add("empty");
-            } else {
-                const building = BUILDINGS[cell.building];
+            cell.addEventListener("click", () => {
+                placeBuilding(x, y);
+            });
 
-                element.classList.add(cell.building);
-
-                const emoji = document.createElement("span");
-                emoji.className = "cell-emoji";
-                emoji.textContent = building.emoji;
-
-                const name = document.createElement("span");
-                name.className = "cell-name";
-                name.textContent = building.name;
-
-                element.appendChild(emoji);
-                element.appendChild(name);
-            }
+            world.appendChild(cell);
         }
     }
 
-    for (const item of items) {
-        const element = elements[item.y * WIDTH + item.x];
-
-        if (!element) continue;
-
-        const product = PRODUCTS[item.product];
-
-        const itemElement = document.createElement("span");
-        itemElement.className = "item";
-        itemElement.textContent = product.emoji;
-
-        element.appendChild(itemElement);
-    }
-
-    document.getElementById("buildingCount").textContent =
-        `${cells.flat().filter(cell => cell.building).length} geplaatst`;
-
-    document.getElementById("itemsMoving").textContent =
-        `${items.length} producten`;
+    render();
 }
 
-function createItem(x, y, product) {
-    if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
+// ------------------------------------------------------
+// WEERGAVE
+// ------------------------------------------------------
 
-    const target = cells[y][x];
+function render() {
+    const cells = world.querySelectorAll(".cell");
 
-    if (!target.building) return false;
+    cells.forEach(cell => {
+        const x = Number(cell.dataset.x);
+        const y = Number(cell.dataset.y);
+        const id = key(x, y);
 
-    if (items.some(item => item.x === x && item.y === y)) {
+        const building = buildings[id];
+        const item = items[id];
+
+        cell.className = "cell";
+        cell.innerHTML = "";
+
+        if (building) {
+            const type = building.type;
+
+            const info = {
+                miner: ["⛏️", "MIJN"],
+                smelter: ["🔥", "SMELTER"],
+                assembler: ["🏭", "ASSEMBLER"],
+                belt: [directions[building.direction].icon, "BAND"],
+                sell: ["💰", "VERKOOP"]
+            };
+
+            cell.classList.add(type);
+
+            const icon = document.createElement("div");
+            icon.className = "building";
+            icon.textContent = info[type][0];
+
+            if (type === "belt") {
+                icon.textContent = directions[building.direction].icon;
+            }
+
+            cell.appendChild(icon);
+
+            const name = document.createElement("div");
+            name.className = "machine-name";
+            name.textContent = info[type][1];
+            cell.appendChild(name);
+
+            if (building.upgraded) {
+                const upgrade = document.createElement("div");
+                upgrade.className = "upgrade-mark";
+                upgrade.textContent = "⚡";
+                cell.appendChild(upgrade);
+            }
+        }
+
+        if (item) {
+            const product = products[item.type];
+
+            const itemIcon = document.createElement("div");
+            itemIcon.className = "item";
+            itemIcon.textContent = product.icon;
+
+            const value = document.createElement("div");
+            value.className = "item-value";
+            value.textContent = `€${product.value}`;
+
+            cell.appendChild(itemIcon);
+            cell.appendChild(value);
+        }
+    });
+}
+
+// ------------------------------------------------------
+// TRANSPORT
+// ------------------------------------------------------
+
+function canReceive(x, y) {
+    if (x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT) {
         return false;
     }
 
-    items.push({
-        x,
-        y,
-        product
-    });
+    const building = getBuilding(x, y);
 
-    return true;
+    if (!building) return false;
+
+    return [
+        "belt",
+        "smelter",
+        "assembler",
+        "sell"
+    ].includes(building.type);
 }
 
-// ============================================
-// PRODUCTIE
-// ============================================
+function getNextPosition(x, y, building) {
+    let direction = 0;
 
-function produceItems(delta) {
-    for (let y = 0; y < HEIGHT; y++) {
-        for (let x = 0; x < WIDTH; x++) {
-            const cell = cells[y][x];
-
-            if (!cell.building) continue;
-
-            const building = BUILDINGS[cell.building];
-
-            if (!building.output) continue;
-
-            cell.cooldown += delta;
-
-            if (cell.cooldown >= building.interval) {
-                const made = createItem(
-                    x + 1,
-                    y,
-                    building.output
-                );
-
-                if (made) {
-                    cell.cooldown = 0;
-                    lastProduction++;
-                }
-            }
-        }
+    if (building.type === "belt") {
+        direction = building.direction;
     }
+
+    const d = directions[direction];
+
+    return {
+        x: x + d.x,
+        y: y + d.y
+    };
 }
 
-// ============================================
-// TRANSPORTBANDEN EN VERWERKING
-// ============================================
-
-function moveItems() {
-    // Eerst de meest rechtse producten verplaatsen.
-    items.sort((a, b) => b.x - a.x);
-
-    for (const item of [...items]) {
-        const currentCell = cells[item.y][item.x];
-
-        if (!currentCell || !currentCell.building) continue;
-
-        const buildingType = currentCell.building;
-
-        // Verwerk producten zodra ze op een machine staan.
-        if (PROCESSORS[buildingType]) {
-            const recipe = PROCESSORS[buildingType];
-
-            if (recipe[item.product]) {
-                item.product = recipe[item.product];
-            }
-        }
-
-        // Verkoopstation.
-        if (buildingType === "seller") {
-            sellItem(item);
-            continue;
-        }
-
-        // Opslag laat producten gewoon door.
-        const nextX = item.x + 1;
-
-        if (nextX >= WIDTH) continue;
-
-        const nextCell = cells[item.y][nextX];
-
-        // Producten bewegen alleen naar een geplaatst gebouw.
-        if (!nextCell.building) continue;
-
-        const occupied = items.some(other =>
-            other !== item &&
-            other.x === nextX &&
-            other.y === item.y
-        );
-
-        if (occupied) continue;
-
-        item.x = nextX;
-    }
-
-    // Verwijder producten die verkocht zijn.
-    items = items.filter(item => !item.sold);
+function createItem(type, x, y) {
+    items[key(x, y)] = {
+        id: nextItemId++,
+        type
+    };
 }
 
 function sellItem(item) {
-    const product = PRODUCTS[item.product];
+    const product = products[item.type];
 
     if (!product) return;
 
     money += product.value;
     sold++;
-    totalSales += product.value;
-
-    lastSale = `+€${product.value} (${product.name})`;
-
-    item.sold = true;
 
     updateStats();
 }
 
-// ============================================
-// GELD EN STATISTIEKEN
-// ============================================
+function processIncomingItem(x, y) {
+    const id = key(x, y);
+    const building = buildings[id];
+    const item = items[id];
 
-function updateStats() {
-    document.getElementById("money").textContent =
-        `€${money.toLocaleString("nl-NL")}`;
+    if (!building || !item) return;
 
-    document.getElementById("sold").textContent =
-        sold.toLocaleString("nl-NL");
+    // SMELTER: erts wordt metaal.
+    if (building.type === "smelter") {
+        if (item.type === "ore") {
+            item.type = "metal";
+        }
+    }
 
-    document.getElementById("production").textContent =
-        `${lastProduction}/min`;
+    // ASSEMBLER: twee metalen worden een tandwiel.
+    if (building.type === "assembler") {
+        if (item.type === "metal") {
+            assemblerBuffers[id] = (assemblerBuffers[id] || 0) + 1;
+            delete items[id];
 
-    document.getElementById("lastSale").textContent = lastSale;
+            if (assemblerBuffers[id] >= 2) {
+                assemblerBuffers[id] -= 2;
+                createItem("gear", x, y);
+            }
+        }
+    }
 
-    document.getElementById("buildingCount").textContent =
-        `${cells.flat().filter(cell => cell.building).length} geplaatst`;
-
-    document.getElementById("itemsMoving").textContent =
-        `${items.length} producten`;
+    // VERKOOPSTATION: verkoopt ieder product.
+    if (building.type === "sell") {
+        sellItem(item);
+        delete items[id];
+    }
 }
 
-// ============================================
+function moveItems() {
+    // Van rechts naar links verwerken zodat producten
+    // niet twee vakjes in dezelfde beurt overslaan.
+    for (let x = WIDTH - 1; x >= 0; x--) {
+        for (let y = HEIGHT - 1; y >= 0; y--) {
+            const id = key(x, y);
+            const item = items[id];
+            const building = buildings[id];
+
+            if (!item || !building) continue;
+
+            if (building.type === "sell") {
+                continue;
+            }
+
+            // Producten op een machine kunnen verder reizen.
+            const next = getNextPosition(x, y, building);
+
+            if (!canReceive(next.x, next.y)) continue;
+
+            const nextId = key(next.x, next.y);
+
+            if (items[nextId]) continue;
+
+            delete items[id];
+            items[nextId] = item;
+
+            processIncomingItem(next.x, next.y);
+        }
+    }
+
+    render();
+}
+
+// ------------------------------------------------------
+// PRODUCTIE
+// ------------------------------------------------------
+
+function produceItems() {
+    for (let y = 0; y < HEIGHT; y++) {
+        for (let x = 0; x < WIDTH; x++) {
+            const id = key(x, y);
+            const building = buildings[id];
+
+            if (!building || building.type !== "miner") continue;
+
+            const nextX = x + 1;
+            const nextY = y;
+
+            if (!canReceive(nextX, nextY)) continue;
+
+            if (getItem(nextX, nextY)) continue;
+
+            minerCounters[id] = (minerCounters[id] || 0) + 1;
+
+            const productionSpeed = building.upgraded ? 1 : 2;
+
+            if (minerCounters[id] < productionSpeed) continue;
+
+            minerCounters[id] = 0;
+
+            // Mijnmachines maken afwisselend steen en erts.
+            const cycle = Math.floor(Math.random() * 2);
+            const type = cycle === 0 ? "stone" : "ore";
+
+            createItem(type, nextX, nextY);
+            processIncomingItem(nextX, nextY);
+        }
+    }
+
+    render();
+}
+
+// ------------------------------------------------------
 // OPSLAAN EN LADEN
-// ============================================
+// ------------------------------------------------------
 
 function saveGame() {
-    const data = {
+    const saveData = {
         money,
         sold,
-        totalSales,
-        lastSale,
-        cells: cells.map(row =>
-            row.map(cell => ({
-                building: cell.building
-            }))
-        ),
-        items
+        buildings,
+        items,
+        assemblerBuffers,
+        minerCounters,
+        nextItemId
     };
 
     try {
-        localStorage.setItem("factoryWorldSave", JSON.stringify(data));
-        showToast("Game opgeslagen!");
+        localStorage.setItem("factoryWorldSave", JSON.stringify(saveData));
+        showToast("💾 Fabriek opgeslagen!");
     } catch (error) {
         showToast("Opslaan is niet gelukt.");
-        console.error(error);
     }
 }
 
@@ -525,156 +485,81 @@ function loadGame() {
     try {
         const data = JSON.parse(saved);
 
-        if (
-            !data ||
-            !Array.isArray(data.cells) ||
-            data.cells.length !== HEIGHT
-        ) {
-            return false;
-        }
-
         money = Number(data.money) || 0;
         sold = Number(data.sold) || 0;
-        totalSales = Number(data.totalSales) || 0;
-        lastSale = data.lastSale || "Nog niets verkocht";
+        buildings = data.buildings || {};
+        items = data.items || {};
+        assemblerBuffers = data.assemblerBuffers || {};
+        minerCounters = data.minerCounters || {};
+        nextItemId = data.nextItemId || 1;
 
-        for (let y = 0; y < HEIGHT; y++) {
-            for (let x = 0; x < WIDTH; x++) {
-                const savedCell = data.cells[y]?.[x];
-
-                cells[y][x].building =
-                    savedCell && BUILDINGS[savedCell.building]
-                        ? savedCell.building
-                        : null;
-
-                cells[y][x].cooldown = 0;
-            }
-        }
-
-        items = Array.isArray(data.items)
-            ? data.items.filter(item =>
-                Number.isInteger(item.x) &&
-                Number.isInteger(item.y) &&
-                item.x >= 0 &&
-                item.x < WIDTH &&
-                item.y >= 0 &&
-                item.y < HEIGHT &&
-                PRODUCTS[item.product] &&
-                cells[item.y][item.x].building
-            ).map(item => ({
-                x: item.x,
-                y: item.y,
-                product: item.product
-            }))
-            : [];
-
-        renderGrid();
         updateStats();
+        render();
 
         return true;
     } catch (error) {
-        console.error("Save laden mislukt:", error);
+        console.error("Savebestand kon niet worden geladen:", error);
         return false;
     }
 }
 
-function resetGame() {
+// ------------------------------------------------------
+// KNOPPEN
+// ------------------------------------------------------
+
+document.getElementById("saveButton").addEventListener("click", saveGame);
+
+document.getElementById("resetButton").addEventListener("click", () => {
     const confirmed = confirm(
-        "Weet je zeker dat je een nieuwe fabriek wilt beginnen? Je opgeslagen game wordt verwijderd."
+        "Weet je zeker dat je een nieuwe fabriek wilt beginnen? Je huidige fabriek wordt verwijderd."
     );
 
     if (!confirmed) return;
 
+    money = 250;
+    sold = 0;
+    buildings = {};
+    items = {};
+    assemblerBuffers = {};
+    minerCounters = {};
+    nextItemId = 1;
+
     localStorage.removeItem("factoryWorldSave");
 
-    money = 500;
-    sold = 0;
-    totalSales = 0;
-    lastSale = "Nog niets verkocht";
-    lastProduction = 0;
-
-    cancelSelection();
-    createGrid();
     updateStats();
+    render();
 
     showToast("Nieuwe fabriek gestart!");
-}
+});
 
-// ============================================
-// MELDINGEN
-// ============================================
+// ------------------------------------------------------
+// START
+// ------------------------------------------------------
 
-let toastTimeout;
-
-function showToast(message) {
-    const toast = document.getElementById("toast");
-
-    toast.textContent = message;
-    toast.classList.add("show");
-
-    clearTimeout(toastTimeout);
-
-    toastTimeout = setTimeout(() => {
-        toast.classList.remove("show");
-    }, 1800);
-}
-
-// ============================================
-// GAME LOOP
-// ============================================
-
-let lastMove = 0;
-let lastProductionReset = Date.now();
-
-function gameLoop() {
-    const now = Date.now();
-
-    if (now - lastMove >= 550) {
-        moveItems();
-        renderGrid();
-        lastMove = now;
-    }
-
-    produceItems(100);
-
-    if (now - lastProductionReset >= 60000) {
-        lastProduction = 0;
-        lastProductionReset = now;
-        updateStats();
-    }
-
-    requestAnimationFrame(gameLoop);
-}
-
-// ============================================
-// KNOPPEN
-// ============================================
-
-document.getElementById("cancelButton").addEventListener(
-    "click",
-    cancelSelection
-);
-
-document.getElementById("saveButton").addEventListener(
-    "click",
-    saveGame
-);
-
-document.getElementById("resetButton").addEventListener(
-    "click",
-    resetGame
-);
-
-// ============================================
-// START GAME
-// ============================================
-
-createBuildingMenu();
-createGrid();
+createWorld();
 
 if (loadGame()) {
-    showToast("Welkom terug in je fabriek!");
+    showToast("Je vorige fabriek is geladen!");
 }
 
 updateStats();
-requestAnimationFrame(gameLoop);
+selectBuild("miner");
+
+// Productie en transport draaien automatisch.
+setInterval(produceItems, 1000);
+setInterval(moveItems, 550);
+
+// Automatisch opslaan.
+setInterval(() => {
+    const saveData = {
+        money,
+        sold,
+        buildings,
+        items,
+        assemblerBuffers,
+        minerCounters,
+        nextItemId
+    };
+
+    localStorage.setItem("factoryWorldSave", JSON.stringify(saveData));
+}, 10000);
