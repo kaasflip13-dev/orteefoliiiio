@@ -7,135 +7,83 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header class="topbar">
-        <div class="brand">
-            <span class="brand-icon">⚙️</span>
+<header class="topbar">
+    <div class="brand">
+        <div class="logo">⚙</div>
+        <div>
+            <h1>FACTORY WORLD</h1>
+            <p>BUILD YOUR OWN INDUSTRIAL EMPIRE</p>
+        </div>
+    </div>
+    <div class="top-stats">
+        <div class="stat"><span>💰</span><div><small>GELD</small><strong id="money">€500</strong></div></div>
+        <div class="stat"><span>📦</span><div><small>VERKOCHT</small><strong id="sold">0</strong></div></div>
+        <div class="stat"><span>🏭</span><div><small>GEBOUWEN</small><strong id="buildingCount">0</strong></div></div>
+    </div>
+</header>
+
+<main class="layout">
+    <aside class="sidebar">
+        <div class="side-heading">
+            <h2>BOUWMENU</h2>
+            <span class="online-dot"></span>
+        </div>
+        <p class="muted">Kies een gebouw en klik ergens op het terrein.</p>
+        <div id="buildMenu"></div>
+
+        <div class="tools">
+            <h3>GEREEDSCHAP</h3>
+            <button class="tool-button active" data-tool="build">＋ Bouwen</button>
+            <button class="tool-button" data-tool="erase">🧹 Verwijderen</button>
+            <button class="tool-button" data-tool="upgrade">⚡ Upgrade plaatsen</button>
+            <button class="tool-button" data-tool="inspect">🔍 Bekijken</button>
+            <button class="tool-button" data-tool="rotate">🔄 Draaien</button>
+        </div>
+
+        <div class="side-actions">
+            <button id="saveButton">💾 Opslaan</button>
+            <button id="resetButton">Nieuwe fabriek</button>
+        </div>
+    </aside>
+
+    <section class="main-area">
+        <div class="heading">
             <div>
-                <h1>FACTORY WORLD</h1>
-                <p>Build. Produce. Sell.</p>
+                <h2>Mijn fabriek</h2>
+                <p id="status">Kies een gebouw om te beginnen.</p>
             </div>
+            <div class="running"><span></span> PRODUCTIE ACTIEF</div>
         </div>
 
-        <div class="stats">
-            <div class="stat">
-                <span>💰</span>
-                <div><small>GELD</small><strong id="money">€250</strong></div>
+        <div class="world-frame">
+            <div class="world-topline">
+                <span>FABRIEKSTERREIN</span>
+                <span>VRIJ BOUWEN · GEEN VASTE VOLGORDE</span>
             </div>
-            <div class="stat">
-                <span>📦</span>
-                <div><small>VERKOCHT</small><strong id="sold">0</strong></div>
-            </div>
+            <div id="world" class="world"></div>
         </div>
-    </header>
 
-    <main class="layout">
-        <aside class="sidebar">
-            <h2>BOUW MENU</h2>
-            <p class="help">Kies een gebouw en klik daarna op een vakje.</p>
-
-            <div class="category">PRODUCTIE</div>
-            <button class="build-button selected" data-build="miner">
-                <span class="build-icon">⛏️</span>
-                <span><strong>Mijnmachine</strong><small>Maakt steen en erts</small></span>
-                <b>€50</b>
-            </button>
-
-            <button class="build-button" data-build="smelter">
-                <span class="build-icon">🔥</span>
-                <span><strong>Smelter</strong><small>Maakt erts tot metaal</small></span>
-                <b>€75</b>
-            </button>
-
-            <button class="build-button" data-build="assembler">
-                <span class="build-icon">🏭</span>
-                <span><strong>Assembler</strong><small>Maakt tandwielen</small></span>
-                <b>€100</b>
-            </button>
-
-            <div class="category">TRANSPORT</div>
-            <button class="build-button" data-build="belt">
-                <span class="build-icon">➡️</span>
-                <span><strong>Transportband</strong><small>Verplaatst producten</small></span>
-                <b>€10</b>
-            </button>
-
-            <button class="build-button" data-build="sell">
-                <span class="build-icon">💰</span>
-                <span><strong>Verkoopstation</strong><small>Verkoopt producten</small></span>
-                <b>€25</b>
-            </button>
-
-            <div class="category">UPGRADES</div>
-            <button class="build-button upgrade-button" data-build="upgrade">
-                <span class="build-icon">⚡</span>
-                <span><strong>Productie-upgrade</strong><small>Dubbele productie van mijnmachine</small></span>
-                <b>€150</b>
-            </button>
-
-            <div class="category">GEREEDSCHAP</div>
-            <button class="build-button" data-build="erase">
-                <span class="build-icon">🧹</span>
-                <span><strong>Verwijderen</strong><small>Haal een gebouw weg</small></span>
-                <b>Gratis</b>
-            </button>
-
-            <button class="build-button" data-build="rotate">
-                <span class="build-icon">🔄</span>
-                <span><strong>Draai transportband</strong><small>Verander de richting</small></span>
-                <b>Gratis</b>
-            </button>
-
-            <div class="sidebar-bottom">
-                <button id="saveButton" class="secondary-button">💾 Opslaan</button>
-                <button id="resetButton" class="danger-button">Nieuwe fabriek</button>
-            </div>
-        </aside>
-
-        <section class="game-area">
-            <div class="game-heading">
-                <div>
-                    <h2>Mijn fabriek</h2>
-                    <p id="status">Selecteer een gebouw om te beginnen.</p>
+        <div class="info-grid">
+            <section class="panel">
+                <h3>📦 PRODUCTWAARDES</h3>
+                <div id="productValues" class="product-values"></div>
+            </section>
+            <section class="panel">
+                <h3>🔎 GEBOUW INFORMATIE</h3>
+                <div id="buildingInfo" class="building-info">
+                    Klik op een gebouw om de informatie te bekijken.
                 </div>
-                <div class="live-status"><span></span> PRODUCTIE ACTIEF</div>
-            </div>
+            </section>
+        </div>
 
-            <div class="world-frame">
-                <div id="world" class="world"></div>
-            </div>
+        <div class="tip">
+            <span>💡</span>
+            Machines zoeken automatisch naar geschikte grondstoffen in de buurt. Je hoeft ze niet aan elkaar vast te zetten.
+        </div>
+    </section>
+</main>
 
-            <div class="legend">
-                <span>⛏️ Mijnmachine</span>
-                <span>🔥 Smelter</span>
-                <span>🏭 Assembler</span>
-                <span>➡️ Transportband</span>
-                <span>💰 Verkoopstation</span>
-            </div>
-
-            <div class="bottom-panels">
-                <section class="info-panel">
-                    <h3>📦 Productinformatie</h3>
-                    <div class="product-list">
-                        <div><span>🪨 Steen</span><b>€2</b></div>
-                        <div><span>🟠 Ruw erts</span><b>€5</b></div>
-                        <div><span>🔩 Metaal</span><b>€15</b></div>
-                        <div><span>⚙️ Tandwiel</span><b>€40</b></div>
-                    </div>
-                </section>
-
-                <section class="info-panel">
-                    <h3>📋 Spelregels</h3>
-                    <p>1. Zet een mijnmachine neer.</p>
-                    <p>2. Plaats transportbanden naar je machines.</p>
-                    <p>3. Verwerk erts tot metaal en tandwielen.</p>
-                    <p>4. Breng producten naar een verkoopstation.</p>
-                </section>
-            </div>
-        </section>
-    </main>
-
-    <div id="toast" class="toast"></div>
-
-    <script src="app.js"></script>
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
 </body>
 </html>
