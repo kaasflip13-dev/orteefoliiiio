@@ -340,98 +340,11 @@ function createProductList() {
 // ------------------------------------------------------
 
 function createWorld() {
-    world.innerHTML = "";
-
-    for (let y = 0; y < H; y++) {
-        for (let x = 0; x < W; x++) {
-            const cell = document.createElement("div");
-            cell.className = "cell";
-            cell.dataset.x = x;
-            cell.dataset.y = y;
-
-            cell.addEventListener("click", () => {
-                handleCellClick(x, y);
-            });
-
-            world.appendChild(cell);
-        }
-    }
-
+    GFX.init();
     render();
 }
 
 function render() {
-    world.querySelectorAll(".cell").forEach(cell => {
-        const x = Number(cell.dataset.x);
-        const y = Number(cell.dataset.y);
-        const id = key(x, y);
-
-        const building = buildings[id];
-        const item = items[id];
-
-        cell.innerHTML = "";
-        cell.className = "cell";
-
-        if (building) {
-            const type = building.type;
-            const data = catalog[type];
-
-            cell.classList.add("occupied", type);
-
-            const icon = document.createElement("div");
-            icon.className = "building-icon";
-
-            if (type === "belt") {
-                icon.textContent = directions[building.direction || 0].icon;
-            } else {
-                icon.textContent = data.icon;
-            }
-
-            cell.appendChild(icon);
-
-            const label = document.createElement("div");
-            label.className = "building-label";
-            label.textContent = data.name.toUpperCase();
-            cell.appendChild(label);
-
-            if (building.upgraded) {
-                const upgrade = document.createElement("div");
-                upgrade.className = "upgrade-mark";
-                upgrade.textContent = "⚡";
-                cell.appendChild(upgrade);
-            }
-        }
-
-        if (item) {
-            const product = products[item.type];
-
-            if (building && building.type === "belt") {
-                // Speciale weergave voor producten OP transportbanden.
-                const cargo = document.createElement("div");
-                cargo.className = "belt-cargo";
-                cargo.textContent = product.icon;
-                cargo.title = product.name;
-                cell.appendChild(cargo);
-
-                const value = document.createElement("div");
-                value.className = "belt-cargo-value";
-                value.textContent = product.name;
-                cell.appendChild(value);
-            } else {
-                const icon = document.createElement("div");
-                icon.className = "item";
-                icon.textContent = product.icon;
-
-                const value = document.createElement("div");
-                value.className = "item-value";
-                value.textContent = `€${product.value}`;
-
-                cell.appendChild(icon);
-                cell.appendChild(value);
-            }
-        }
-    });
-
     updateStats();
 }
 
