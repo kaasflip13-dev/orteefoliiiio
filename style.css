@@ -264,3 +264,8 @@ button { font: inherit; cursor: pointer; }
     .info-grid { grid-template-columns: 1fr; }
     .heading { align-items: flex-start; flex-direction: column; }
 }
+
+/* ===== Nieuwe graphics ===== */
+.world { display: block; min-width: 680px; max-width: 1100px; }
+.world canvas { width: 100%; display: block; border-radius: 10px; cursor: crosshair; box-shadow: 0 0 0 1px #3a4d5f, 0 10px 40px #000a; image-rendering: auto; }
+.world-frame { background: linear-gradient(180deg, #0b1118, #0f1a22); }
