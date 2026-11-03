@@ -1,5 +1,6 @@
 // ======================================================
 // FACTORY WORLD - COMPLETE GAME
+// MET ZICHTBARE PRODUCTEN OP TRANSPORTBANDEN
 // ======================================================
 
 const world = document.getElementById("world");
@@ -11,6 +12,54 @@ const statusDisplay = document.getElementById("status");
 const buildingInfo = document.getElementById("buildingInfo");
 const productValues = document.getElementById("productValues");
 const toast = document.getElementById("toast");
+
+// Zichtbare lading op transportbanden
+const beltCargoStyle = document.createElement("style");
+beltCargoStyle.textContent = `
+    .cell { position: relative; }
+
+    .belt-cargo {
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 30 !important;
+        width: 34px !important;
+        height: 34px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: 2px solid #fff !important;
+        border-radius: 10px !important;
+        background: linear-gradient(145deg, #fff8d8, #e8b84f) !important;
+        box-shadow: 0 3px 9px #0009, 0 0 0 2px #65451c !important;
+        font-size: 23px !important;
+        line-height: 1 !important;
+        pointer-events: none !important;
+        animation: beltCargoBounce .55s ease-in-out infinite alternate;
+    }
+
+    .belt-cargo-value {
+        position: absolute;
+        z-index: 31;
+        left: 50%;
+        top: calc(50% + 19px);
+        transform: translateX(-50%);
+        padding: 1px 4px;
+        border-radius: 5px;
+        background: #17212b;
+        color: white;
+        font: 700 9px/1.3 Arial, sans-serif;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+
+    @keyframes beltCargoBounce {
+        from { margin-top: -2px; }
+        to { margin-top: 2px; }
+    }
+`;
+document.head.appendChild(beltCargoStyle);
 
 const W = 14;
 const H = 8;
@@ -150,7 +199,6 @@ let storage = {};
 let counters = {};
 let nextItemId = 1;
 let selectedCell = null;
-let lastSave = 0;
 
 const directions = [
     { x: 1, y: 0, icon: "➡️" },
@@ -357,16 +405,30 @@ function render() {
         if (item) {
             const product = products[item.type];
 
-            const icon = document.createElement("div");
-            icon.className = "item";
-            icon.textContent = product.icon;
+            if (building && building.type === "belt") {
+                // Speciale weergave voor producten OP transportbanden.
+                const cargo = document.createElement("div");
+                cargo.className = "belt-cargo";
+                cargo.textContent = product.icon;
+                cargo.title = product.name;
+                cell.appendChild(cargo);
 
-            const value = document.createElement("div");
-            value.className = "item-value";
-            value.textContent = `€${product.value}`;
+                const value = document.createElement("div");
+                value.className = "belt-cargo-value";
+                value.textContent = product.name;
+                cell.appendChild(value);
+            } else {
+                const icon = document.createElement("div");
+                icon.className = "item";
+                icon.textContent = product.icon;
 
-            cell.appendChild(icon);
-            cell.appendChild(value);
+                const value = document.createElement("div");
+                value.className = "item-value";
+                value.textContent = `€${product.value}`;
+
+                cell.appendChild(icon);
+                cell.appendChild(value);
+            }
         }
     });
 
@@ -611,8 +673,6 @@ function processMachines() {
         if (!recipe) return;
 
         const [x, y] = id.split(",").map(Number);
-
-        // Eerst controleren of ALLE grondstoffen aanwezig zijn.
         const selectedItems = {};
 
         for (const [type, amount] of Object.entries(recipe.input)) {
@@ -625,7 +685,6 @@ function processMachines() {
             selectedItems[type] = found;
         }
 
-        // Alleen als het complete recept aanwezig is, verwerken.
         Object.values(selectedItems).flat().forEach(position => {
             delete items[key(position.x, position.y)];
         });
@@ -684,7 +743,6 @@ function sellNearbyProducts() {
 
         const [x, y] = id.split(",").map(Number);
 
-        // Losse producten in de buurt verkopen.
         for (let iy = 0; iy < H; iy++) {
             for (let ix = 0; ix < W; ix++) {
                 if (distance(x, y, ix, iy) > 3) continue;
@@ -699,7 +757,6 @@ function sellNearbyProducts() {
             }
         }
 
-        // Producten uit nabije magazijnen verkopen.
         Object.entries(buildings).forEach(([warehouseId, warehouse]) => {
             if (warehouse.type !== "warehouse") return;
 
