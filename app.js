@@ -1,3 +1,185 @@
+// roundRect fallback voor oudere browsers
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath();
+    };
+}
+// ======================================================
+// FACTORY WORLD - GRAFISCHE ENGINE (canvas)
+// ======================================================
+const FWGraphics = (() => {
+    const T = 64, DPR = 2, EXTRUDE = 14;
+    let cv, ctx, hover = null;
+    const track = {}, parts = [];
+    const COL = {
+        miner:"#9a8433", crystal:"#8a4fd0", quarry:"#7d7568", copper:"#c8702e", coal:"#4a4f5c",
+        smelter:"#c2481f", crusher:"#a8602f", press:"#c27a2a",
+        assembler:"#2f78c4", circuit:"#1f9bb0", battery:"#3aa04f", workshop:"#5a64c8",
+        warehouse:"#2f9a6a", sell:"#d4a21f", belt:"#2a313b"
+    };
+    const ICOL = { ore:"#ff9a3c", crystal:"#c58bff", stone:"#b8b2a4", copperOre:"#e8803a", coal:"#6b7280",
+        metal:"#cfd8e3", gravel:"#e4e0d6", plate:"#58a6ff", gear:"#ffd34d", circuit:"#37e0c0", battery:"#6ee86e", tool:"#ff7ad1" };
+    const RANGE = t => t === "sell" ? 3 : t === "warehouse" ? 2 : (typeof recipes !== "undefined" && recipes[t]) ? 3 : 0;
+
+    const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+    const shade = (hex, f) => { const n = parseInt(hex.slice(1), 16);
+        const c = i => Math.max(0, Math.min(255, Math.round(((n >> i) & 255) * f)));
+        return `rgb(${c(16)},${c(8)},${c(0)})`; };
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+
+    function init() {
+        const host = document.getElementById("world");
+        host.innerHTML = "";
+        cv = document.createElement("canvas");
+        cv.width = W * T * DPR; cv.height = H * T * DPR;
+        host.appendChild(cv);
+        ctx = cv.getContext("2d");
+        const pos = e => { const r = cv.getBoundingClientRect();
+            return { x: Math.floor((e.clientX - r.left) / r.width * W), y: Math.floor((e.clientY - r.top) / r.height * H) }; };
+                cv.style.touchAction = "none";
+        cv.addEventListener("pointermove", e => hover = pos(e));
+        cv.addEventListener("pointerleave", () => hover = null);
+        cv.addEventListener("pointerdown", e => {
+            if (e.pointerType === "mouse" && e.button !== 0) return;
+            e.preventDefault();
+            const p = pos(e);
+            if (p.x < 0 || p.y < 0 || p.x >= W || p.y >= H) return;
+            hover = p;
+            updateStatus("Vakje " + (p.x + 1) + "," + (p.y + 1) + " aangeklikt");
+            try { handleCellClick(p.x, p.y); } catch (err) { notify("Fout: " + err.message); console.error(err); }
+            burst(p.x * T + T / 2, p.y * T + T / 2, "#ffffff", 5);
+        });
+        requestAnimationFrame(frame);
+    }
+
+    function burst(x, y, color, n = 8) {
+        for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, s = 0.6 + Math.random() * 1.6;
+            parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 0.4, life: 1, c: color, r: 2 + Math.random() * 2, g: 0.02 }); }
+    }
+    function smoke(x, y) { parts.push({ x, y, vx: (Math.random() - .5) * .3, vy: -0.5 - Math.random() * .4, life: 1, c: "rgba(190,190,200,", r: 4 + Math.random() * 4, smoke: true, g: 0 }); }
+
+    function ground() {
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+            const h = hash(x, y), px = x * T, py = y * T;
+            const g = ctx.createLinearGradient(px, py, px + T, py + T);
+            const b = (x + y) % 2 ? 0.92 : 1;
+            g.addColorStop(0, shade("#2c4a3e", b + h * .12)); g.addColorStop(1, shade("#1e3630", b + h * .12));
+            ctx.fillStyle = g; ctx.fillRect(px, py, T, T);
+            ctx.fillStyle = "rgba(255,255,255,.05)";
+            for (let i = 0; i < 4; i++) ctx.fillRect(px + hash(x + i, y * 3) * (T - 3), py + hash(y + i, x * 5) * (T - 3), 2, 2);
+        }
+        ctx.strokeStyle = "rgba(255,255,255,.06)"; ctx.lineWidth = 1; ctx.beginPath();
+        for (let x = 0; x <= W; x++) { ctx.moveTo(x * T, 0); ctx.lineTo(x * T, H * T); }
+        for (let y = 0; y <= H; y++) { ctx.moveTo(0, y * T); ctx.lineTo(W * T, y * T); }
+        ctx.stroke();
+    }
+
+    function drawBelt(x, y, dir, t) {
+        const px = x * T, py = y * T;
+        ctx.save(); ctx.translate(px + T / 2, py + T / 2); ctx.rotate(dir * Math.PI / 2);
+        rr(-T / 2 + 3, -T / 2 + 10, T - 6, T - 20, 6); ctx.fillStyle = "#1a2028"; ctx.fill();
+        ctx.strokeStyle = "#556477"; ctx.lineWidth = 3; ctx.stroke();
+        ctx.save(); rr(-T / 2 + 3, -T / 2 + 10, T - 6, T - 20, 6); ctx.clip();
+        const off = (t / 25) % 16;
+        ctx.strokeStyle = "rgba(255,210,90,.75)"; ctx.lineWidth = 3; ctx.lineCap = "round";
+        for (let i = -T / 2 - 16; i < T / 2 + 16; i += 16) { const cx = i + off;
+            ctx.beginPath(); ctx.moveTo(cx - 4, -9); ctx.lineTo(cx + 4, 0); ctx.lineTo(cx - 4, 9); ctx.stroke(); }
+        ctx.restore(); ctx.restore();
+    }
+
+    function drawBlock(x, y, type, b, t, alpha = 1, upg = false) {
+        const px = x * T, py = y * T, base = COL[type] || "#667", h = EXTRUDE;
+        ctx.save(); ctx.globalAlpha = alpha;
+        ctx.fillStyle = "rgba(0,0,0,.4)"; rr(px + 8, py + 10, T - 8, T - 8, 10); ctx.fill();
+        // voorkant
+        ctx.fillStyle = shade(base, .55); rr(px + 4, py + T - 4 - h - 6, T - 8, h + 6, 8); ctx.fill();
+        // bovenkant
+        const top = ctx.createLinearGradient(px, py - h, px + T, py + T - h);
+        top.addColorStop(0, shade(base, 1.35)); top.addColorStop(1, shade(base, .85));
+        ctx.fillStyle = top; rr(px + 4, py + 4 - h + 4, T - 8, T - 12, 10); ctx.fill();
+        ctx.strokeStyle = upg ? `rgba(255,215,90,${.6 + .4 * Math.sin(t / 200)})` : "rgba(255,255,255,.25)";
+        ctx.lineWidth = upg ? 3 : 1.5; ctx.stroke();
+        // icoon
+        const bob = Math.sin(t / 380 + x * 2 + y) * 1.5;
+        ctx.font = "28px 'Segoe UI Emoji','Apple Color Emoji',sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+        ctx.fillText(catalog[type].icon, px + T / 2, py + T / 2 - h + 2 + bob);
+        ctx.shadowColor = "transparent";
+        ctx.font = "800 7px Inter, Arial"; ctx.fillStyle = "rgba(255,255,255,.85)";
+        ctx.fillText(catalog[type].name.toUpperCase(), px + T / 2, py + T - 10);
+        if (b) { ctx.fillStyle = "#48d69b"; ctx.shadowColor = "#48d69b"; ctx.shadowBlur = 8;
+            ctx.beginPath(); ctx.arc(px + 12, py + 12 - h + 4, 3, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; }
+        if (upg) { ctx.font = "14px sans-serif"; ctx.fillText("⚡", px + T - 12, py + 12 - h + 4); }
+        ctx.restore();
+    }
+
+    function range(x, y, r, color) {
+        if (!r) return; const cx = x * T + T / 2, cy = y * T + T / 2, d = (r + .5) * T;
+        ctx.save(); ctx.beginPath(); ctx.moveTo(cx, cy - d); ctx.lineTo(cx + d, cy); ctx.lineTo(cx, cy + d); ctx.lineTo(cx - d, cy); ctx.closePath();
+        ctx.fillStyle = color + "22"; ctx.fill(); ctx.setLineDash([6, 5]); ctx.strokeStyle = color + "aa"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+    }
+
+    function drawItem(it, k, t) {
+        const [x, y] = k.split(",").map(Number); let tr = track[it.id];
+        if (!tr) tr = track[it.id] = { fx: x, fy: y, tx: x, ty: y, t, born: t, seen: t };
+        if (tr.tx !== x || tr.ty !== y) { tr.fx = tr.tx; tr.fy = tr.ty; tr.tx = x; tr.ty = y; tr.t = t; }
+        tr.seen = t;
+        let p = Math.min(1, (t - tr.t) / 600); p = p * p * (3 - 2 * p);
+        const cx = (tr.fx + (tr.tx - tr.fx) * p) * T + T / 2, cy = (tr.fy + (tr.ty - tr.fy) * p) * T + T / 2;
+        const pop = Math.min(1, (t - tr.born) / 250), s = 0.4 + .6 * (1 - Math.pow(1 - pop, 3)) , bob = Math.sin(t / 150 + it.id) * 1.5;
+        if (t - tr.born < 40) burst(cx, cy, ICOL[it.type] || "#fff", 6);
+        const col = ICOL[it.type] || "#fff", g = ctx.createRadialGradient(cx, cy + bob, 2, cx, cy + bob, 20 * s);
+        g.addColorStop(0, col + "cc"); g.addColorStop(1, col + "00");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy + bob, 20 * s, 0, 6.28); ctx.fill();
+        ctx.fillStyle = "rgba(10,14,20,.8)"; ctx.strokeStyle = col; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy + bob, 13 * s, 0, 6.28); ctx.fill(); ctx.stroke();
+        ctx.font = `${17 * s}px 'Segoe UI Emoji','Apple Color Emoji',sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(products[it.type].icon, cx, cy + bob + 1);
+    }
+
+    function frame(t) {
+        try { draw(t); } catch (err) { console.error('Teken-fout:', err); }
+        requestAnimationFrame(frame);
+    }
+
+    function draw(t) {
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.clearRect(0, 0, W * T, H * T);
+        ground();
+        const bl = Object.entries(buildings).map(([k, b]) => { const [x, y] = k.split(",").map(Number); return { x, y, b }; });
+        bl.filter(o => o.b.type === "belt").forEach(o => drawBelt(o.x, o.y, o.b.direction || 0, t));
+        bl.filter(o => o.b.type !== "belt").sort((a, c) => a.y - c.y).forEach(o => {
+            drawBlock(o.x, o.y, o.b.type, true, t, 1, o.b.upgraded);
+            if ((recipes[o.b.type] || producers[o.b.type]) && Math.random() < (o.b.upgraded ? .12 : .06) && ["smelter", "coal", "crusher", "press"].includes(o.b.type)) smoke(o.x * T + T / 2 + 8, o.y * T + 6);
+        });
+        Object.entries(items).forEach(([k, it]) => { if (products[it.type]) drawItem(it, k, t); });
+        for (const id in track) if (t - track[id].seen > 2000) delete track[id];
+        // deeltjes
+        for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i];
+            p.x += p.vx; p.y += p.vy; p.vy += p.g; p.life -= p.smoke ? .012 : .03;
+            if (p.life <= 0) { parts.splice(i, 1); continue; }
+            ctx.globalAlpha = p.life * (p.smoke ? .45 : 1);
+            ctx.fillStyle = p.smoke ? p.c + "1)" : p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (p.smoke ? 2 - p.life : p.life), 0, 6.28); ctx.fill(); }
+        ctx.globalAlpha = 1;
+        // hover
+        if (hover && hover.x >= 0 && hover.y >= 0 && hover.x < W && hover.y < H) {
+            const hb = buildings[key(hover.x, hover.y)], tc = { build: "#f4b64e", erase: "#ff6b6b", upgrade: "#ffd34d", inspect: "#6ec1ff", rotate: "#48d69b" }[tool];
+            if (tool === "build" && !hb && catalog[selectedBuild]) { range(hover.x, hover.y, RANGE(selectedBuild), "#f4b64e");
+                drawBlock(hover.x, hover.y, selectedBuild, false, t, .55); }
+            else if (hb) range(hover.x, hover.y, RANGE(hb.type), "#6ec1ff");
+            ctx.strokeStyle = tc; ctx.lineWidth = 3; ctx.shadowColor = tc; ctx.shadowBlur = 14;
+            rr(hover.x * T + 2, hover.y * T + 2, T - 4, T - 4, 8); ctx.stroke(); ctx.shadowBlur = 0;
+        }
+        // vignette
+        const v = ctx.createRadialGradient(W * T / 2, H * T / 2, H * T * .45, W * T / 2, H * T / 2, W * T * .62);
+        v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.45)");
+        ctx.fillStyle = v; ctx.fillRect(0, 0, W * T, H * T);
+    }
+    return { init };
+})();
+
 // ======================================================
 // FACTORY WORLD - COMPLETE GAME
 // MET ZICHTBARE PRODUCTEN OP TRANSPORTBANDEN
@@ -340,7 +522,7 @@ function createProductList() {
 // ------------------------------------------------------
 
 function createWorld() {
-    GFX.init();
+    FWGraphics.init();
     render();
 }
 
@@ -750,7 +932,8 @@ function saveGame(showMessage = true) {
 }
 
 function loadGame() {
-    const raw = localStorage.getItem("factoryWorldSaveV2");
+    let raw = null;
+    try { raw = localStorage.getItem("factoryWorldSaveV2"); } catch (e) { return false; }
 
     if (!raw) return false;
 
@@ -789,7 +972,7 @@ document.getElementById("resetButton").addEventListener("click", () => {
     counters = {};
     nextItemId = 1;
 
-    localStorage.removeItem("factoryWorldSaveV2");
+    try { localStorage.removeItem("factoryWorldSaveV2"); } catch (e) {}
 
     render();
     buildingInfo.textContent = "Klik op een gebouw om informatie te bekijken.";
@@ -801,6 +984,8 @@ document.getElementById("resetButton").addEventListener("click", () => {
 // ------------------------------------------------------
 
 createMenu();
+updateToolButtons();
+updateStatus("Ore Miner geselecteerd: klik op het terrein om te bouwen.");
 createProductList();
 createWorld();
 
